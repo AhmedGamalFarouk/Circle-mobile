@@ -6,6 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "circle-mobile",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -13,9 +14,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
+      "package": "com.merge_conflicts.circle",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -23,7 +27,30 @@
       "edgeToEdgeEnabled": true
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "config": {
+        "firebase": {
+          "apiKey": "AIzaSyAW0f0DzBx3e769VkVdUimATL6-gnW4cTo",
+          "authDomain": "circle-26a87.firebaseapp.com",
+          "projectId": "circle-26a87",
+          "storageBucket": "circle-26a87.firebasestorage.app",
+          "messagingSenderId": "141731835688",
+          "appId": "1:141731835688:web:69bd763eeda258b0eb6a1d"
+        }
+      }
+    },
+    "plugins": [
+      "expo-web-browser",
+      "@react-native-google-signin/google-signin",
+      "expo-build-properties"
+    ],
+    "extra": {
+      "webClientId": "141731835688-n2l055sgl1h5bna83k7f5s50lkop8epg.apps.googleusercontent.com",
+      "androidClientId": "YOUR_ANDROID_CLIENT_ID",
+      "iosClientId": "YOUR_IOS_CLIENT_ID",
+      "eas": {
+        "projectId": "55e87d87-070f-49de-9af1-41160bd0bcc9"
+      }
     }
   }
 }
