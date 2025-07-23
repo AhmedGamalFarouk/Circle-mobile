@@ -26,7 +26,7 @@ const SignInScreen = ({ navigation }) => {
       // TODO: Uncomment the following lines to enable Firebase authentication
       // await signInWithEmailAndPassword(auth, email, password);
       // Alert.alert("Success", "Logged in successfully!");
-      navigation.navigate('Home');
+      navigation.navigate('Main', { screen: 'Home' });
     } catch (error) {
       Alert.alert("Login Error", error.message);
     }
@@ -55,7 +55,7 @@ const SignInScreen = ({ navigation }) => {
       signInWithCredential(auth, credential)
         .then(() => {
           Alert.alert("Success", "Logged in with Google successfully!");
-          navigation.navigate('Home');
+          navigation.navigate('Main', { screen: 'Home' });
         })
         .catch((error) => {
           Alert.alert("Google Login Error", error.message);

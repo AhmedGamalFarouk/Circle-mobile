@@ -51,7 +51,7 @@ const SettingsScreen = ({ navigation }) => {
                 <MyPlan />
             </ScrollView>
 
-            <BottomNavBar />
+
         </View>
     );
 };

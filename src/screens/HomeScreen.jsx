@@ -1,5 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+
+import { useNavigation } from '@react-navigation/native';
 
 import Header from '../components/Header';
 import PrivateGroupPollCard from '../components/PrivateGroupPollCard';
@@ -11,21 +13,27 @@ import BottomNavBar from '../components/BottomNavBar';
 
 const HomeScreen = () => {
   const userName = "User"; // Placeholder for user's name
+  const navigation = useNavigation();
 
   return (
     <View style={styles.container}>
-      <Header />
       <ScrollView style={styles.feedContainer}>
         {/* Render cards based on logic, for now, just placeholders */}
+        <EmptyState userName={userName} />
         <PrivateGroupPollCard />
         <DiscoveryConnectionCard />
         <UnreadChatMessageCard />
         <MemoryPromptCard />
-        <EmptyState userName={userName} />
-        <MemoryPromptCard />
 
+
+
+        <TouchableOpacity
+          style={styles.createCircleButton}
+          onPress={() => navigation.navigate('CreationForm')}
+        >
+          <Text style={styles.createCircleButtonText}>Create a new circle</Text>
+        </TouchableOpacity>
       </ScrollView>
-      <BottomNavBar />
     </View>
   );
 };
@@ -38,6 +46,20 @@ const styles = StyleSheet.create({
   feedContainer: {
     flex: 1,
     padding: 10,
+  },
+  createCircleButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  createCircleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

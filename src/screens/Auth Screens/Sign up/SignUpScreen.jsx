@@ -34,7 +34,7 @@ const SignUpScreen = () => {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       Alert.alert("Success", "Account created successfully!");
-      navigation.navigate('Home');
+      navigation.navigate('Main', { screen: 'Home' });
     } catch (error) {
       Alert.alert("Sign Up Error", error.message);
     }
@@ -66,7 +66,7 @@ const SignUpScreen = () => {
       signInWithCredential(auth, credential)
         .then(() => {
           Alert.alert("Success", "Account created with Google successfully!");
-          navigation.navigate('Home');
+          navigation.navigate('Main', { screen: 'Home' });
         })
         .catch((error) => {
           Alert.alert("Google Sign Up Error", error.message);
