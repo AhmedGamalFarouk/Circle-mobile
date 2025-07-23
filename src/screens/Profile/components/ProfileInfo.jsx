@@ -42,13 +42,14 @@ const styles = StyleSheet.create({
     profileInfo: {
         alignItems: 'center',
         marginBottom: 20,
-        paddingTop: 70,
+        paddingTop: 60, // Reduced for better consistency
     },
     userName: {
         color: COLORS.light,
         fontSize: 28,
         fontWeight: 'bold',
         marginBottom: 5,
+        height: 40, // Fixed height for consistency
     },
     userNameInput: {
         color: COLORS.light,
@@ -60,11 +61,13 @@ const styles = StyleSheet.create({
         width: '80%',
         textAlign: 'center',
         paddingVertical: 5,
+        height: 40, // Match display height
     },
     userBio: {
         color: COLORS.text,
         fontSize: 16,
         textAlign: 'center',
+        height: 60, // Fixed height for consistency
     },
     userBioInput: {
         color: COLORS.text,
@@ -73,8 +76,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: COLORS.text,
         width: '80%',
-        paddingVertical: 5,
-        minHeight: 60,
+        paddingVertical: 8, // Increased for better alignment
+        height: 60, // Match display height
     },
 });
 

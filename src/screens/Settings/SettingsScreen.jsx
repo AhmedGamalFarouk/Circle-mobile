@@ -18,7 +18,7 @@ const SettingsScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* <SettingsHeader navigation={navigation} /> */}
+            <SettingsHeader navigation={navigation} />
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <SettingsSection title="Privacy">
@@ -51,7 +51,7 @@ const SettingsScreen = ({ navigation }) => {
                 <MyPlan />
             </ScrollView>
 
-            {/* <BottomNavBar /> */}
+            <BottomNavBar />
         </View>
     );
 };
