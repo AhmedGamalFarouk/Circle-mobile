@@ -2,9 +2,12 @@ import { StyleSheet } from 'react-native';
 import React from 'react';
 import { View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import useCurrentLocation from '../hooks/useCurrentLocation';
 
 const Explore = () => {
   const DEFAULT_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
+  const { location, errorMsg } = useCurrentLocation();
+  console.error(location);
 
   return (
     <View style={styles.container}>
