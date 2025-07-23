@@ -14,7 +14,6 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
       <ScrollView style={styles.feedContainer}>
         {/* Render cards based on logic, for now, just placeholders */}
         <PrivateGroupPollCard />
@@ -25,7 +24,6 @@ const HomeScreen = () => {
         <MemoryPromptCard />
 
       </ScrollView>
-      <BottomNavBar />
     </View>
   );
 };
