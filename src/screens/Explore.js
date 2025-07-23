@@ -1,43 +1,42 @@
-import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
-import { LeafletView } from 'react-native-leaflet-view';
-import '../../assets/leaflet.html'
-
+import { StyleSheet } from 'react-native';
+import React from 'react';
+import { View } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 
 const Explore = () => {
+  const DEFAULT_LOCATION = { latitude: 30.0444, longitude: 31.2357 };
 
-    const DEFAULT_LOCATION = { latitude: -23.5489, longitude: -46.6388 };
+  return (
+    <View style={styles.container}>
+    <MapView style={styles.map}
+    initialRegion={{
+      latitude: DEFAULT_LOCATION.latitude,
+      longitude: DEFAULT_LOCATION.longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    }}
+    >
+    <Marker
+    coordinate={{
+      latitude: DEFAULT_LOCATION.latitude,
+      longitude: DEFAULT_LOCATION.longitude,  
+    }}
+    image={require('../../assets/favicon.png')}
+    />
+    </MapView>
+    </View>
+  
+  );
+};
 
-    return (
-      <LeafletView
-          mapCenterPosition={{
-            lat: DEFAULT_LOCATION.latitude,
-            lng: DEFAULT_LOCATION.longitude,
-          }}
-          mapLayers={[
-            {
-              baseLayer: true,
-              url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-              minNativeZoom: 11,
-              maxNativeZoom: 18,
-              minZoom: 11,
-              maxZoom: 20,
-            },
-          ]}
-          mapMarkers={[
-            {
-              id: 'my-marker',
-              position: { lat: DEFAULT_LOCATION.latitude, lng: DEFAULT_LOCATION.longitude },
-              icon: 'https://cdn-icons-png.flaticon.com/64/2776/2776067.png',
-              size: [64, 64],
-              iconAnchor: [32, 64],
-            },
-          ]}
-          onMessage={(message) => console.log('Message from Leaflet:', message)}
-        />
-      );
-  };
+export default Explore;
 
-export default Explore
-
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+});
