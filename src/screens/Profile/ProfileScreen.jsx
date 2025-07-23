@@ -209,7 +209,7 @@ const ProfileScreen = ({ navigation }) => {
                 </Animated.View>
             </DraggableCard>
 
-            <BottomNavBar />
+            {/* <BottomNavBar /> */}
         </View>
     );
 };
@@ -236,7 +236,7 @@ const getStyles = (height) => StyleSheet.create({
     },
     profileImageContainer: {
         position: 'absolute',
-        top: -40,
+        top: -40, // Adjusted for better positioning
         alignSelf: 'center',
         zIndex: 1,
     },

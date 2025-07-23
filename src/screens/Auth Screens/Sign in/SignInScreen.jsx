@@ -23,7 +23,7 @@ const SignInScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      // // TODO: Uncomment the following lines to enable Firebase authentication
+      // TODO: Uncomment the following lines to enable Firebase authentication
       // await signInWithEmailAndPassword(auth, email, password);
       // Alert.alert("Success", "Logged in successfully!");
       navigation.navigate('Home');

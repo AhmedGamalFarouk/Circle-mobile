@@ -56,7 +56,8 @@ const getStyles = (height) => StyleSheet.create({
     container: {
         flex: 1,
         width: '100%',
-        marginTop: 50, // Account for the draggable handle
+        marginTop: 40,
+        paddingBottom: 40,
         alignItems: 'center',
     },
 });

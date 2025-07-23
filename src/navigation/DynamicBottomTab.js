@@ -13,52 +13,52 @@ import { FONTS } from '../constants/constants'
 const Tab = createBottomTabNavigator();
 
 const DynamicBottomTab = () => {
-  return (
-    <Tab.Navigator screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.text,
-        tabBarStyle: {
-            backgroundColor: COLORS.dark,
-            borderColor:COLORS.primary,
-        },
-        headerStyle:{
-            height:80,
-            backgroundColor:COLORS.dark,
-            borderColor:COLORS.primary,
-            borderBottomWidth:1,
-        },
-        headerTintColor:COLORS.primary,
-        headerTitleStyle:{
-            fontFamily:FONTS.bold,
-        }
-    }}>
-        <Tab.Screen name="Home" component={HomeScreen} options={{
-            tabBarIcon: ({ color, size }) => (
-                <Ionicons name="home" color={color} size={size} />
-            ),
-        }} />
-        <Tab.Screen name="Profile" component={ProfileScreen} options={{
-            tabBarIcon: ({ color, size }) => (
-                <Ionicons name="person" color={color} size={size} />
-            ),
-        }} />
-        <Tab.Screen name="Explore" component={Explore} options={{
-            tabBarIcon: ({ color, size }) => (
-                <Ionicons name="search" color={color} size={size} />
-            ),
-        }} />
-        <Tab.Screen name="Circle" component={CircleScreen} options={{
-            tabBarIcon: ({ color, size }) => (
-                <Ionicons name="people" color={color} size={size} />
-            ),
-        }} />
-        <Tab.Screen name="Settings" component={SettingsScreen} options={{
-            tabBarIcon: ({ color, size }) => (
-                <Ionicons name="settings" color={color} size={size} />
-            ),
-        }} />
-    </Tab.Navigator>
-  );
+    return (
+        <Tab.Navigator screenOptions={{
+            tabBarActiveTintColor: COLORS.primary,
+            tabBarInactiveTintColor: COLORS.text,
+            tabBarStyle: {
+                backgroundColor: COLORS.dark,
+                borderColor: COLORS.primary,
+            },
+            headerStyle: {
+                height: 80,
+                backgroundColor: COLORS.dark,
+                borderColor: COLORS.primary,
+                borderBottomWidth: 1,
+            },
+            headerTintColor: COLORS.primary,
+            headerTitleStyle: {
+                fontFamily: FONTS.bold,
+            }
+        }}>
+            <Tab.Screen name="Home" component={HomeScreen} options={{
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name="home" color={color} size={size} />
+                ),
+            }} />
+            <Tab.Screen name="Profile" component={ProfileScreen} options={{
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name="person" color={color} size={size} />
+                ),
+            }} />
+            <Tab.Screen name="Explore" component={Explore} options={{
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name="search" color={color} size={size} />
+                ),
+            }} />
+            <Tab.Screen name="Circle" component={CircleScreen} options={{
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name="people" color={color} size={size} />
+                ),
+            }} />
+            <Tab.Screen name="Settings" component={SettingsScreen} options={{
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name="settings" color={color} size={size} />
+                ),
+            }} />
+        </Tab.Navigator>
+    );
 };
 
 export default DynamicBottomTab;
