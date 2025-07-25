@@ -3,13 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 
 import { useNavigation } from '@react-navigation/native';
 
-import Header from '../components/Header';
 import PrivateGroupPollCard from '../components/PrivateGroupPollCard';
 import DiscoveryConnectionCard from '../components/DiscoveryConnectionCard';
 import UnreadChatMessageCard from '../components/UnreadChatMessageCard';
 import MemoryPromptCard from '../components/MemoryPromptCard';
 import EmptyState from '../components/EmptyState';
-import BottomNavBar from '../components/BottomNavBar';
 
 const HomeScreen = () => {
   const userName = "User"; // Placeholder for user's name

@@ -28,15 +28,10 @@
     "react": "19.0.0",
     "react-native": "0.79.5",
     "react-native-safe-area-context": "5.4.0",
-<<<<<<< HEAD
     "react-native-screens": "~4.11.1",
     "react-redux": "^9.2.0",
     "react-native-maps": "1.20.1",
     "expo-location": "~18.1.6"
-=======
-    "react-native-screens": "^4.11.1",
-    "react-redux": "^9.2.0"
->>>>>>> 36bb6f4c51e5a3d3e2f88f24963520338ac1148f
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

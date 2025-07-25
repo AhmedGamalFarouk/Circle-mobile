@@ -38,3 +38,6 @@ yarn-error.*
 
 # YoYo AI version control directory
 .yoyo/
+
+# Firebase configuration
+src/firebase/config.js

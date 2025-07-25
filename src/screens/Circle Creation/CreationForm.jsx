@@ -4,8 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { COLORS, RADII, SHADOWS } from '../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { db } from '../../firebase/config';
-import { addDoc, collection, serverTimestamp, doc } from 'firebase/firestore';
+import { db, storage } from '../../firebase/config';
+import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import useAuth from '../../hooks/useAuth';
 
 const CreationForm = ({ navigation }) => {
@@ -22,24 +23,24 @@ const CreationForm = ({ navigation }) => {
 
     const handleCreate = async () => {
         if (!user) {
-            // Handle user not logged in
+            alert("Please log in to create a circle."); // Provide UI feedback
             return;
         }
-        console.log("Attempting to create circle with data:", {
-            circleName,
-            description,
-            photoUrl,
-            circlePrivacy,
-            circleType,
-            expiresAt: circleType === 'flash' ? expiresAt : null,
-            interests,
-            createdBy: user.uid,
-        });
+        // console.log("Attempting to create circle with data:", { // Removed temporary log
+        //     circleName,
+        //     description,
+        //     photoUrl,
+        //     circlePrivacy,
+        //     circleType,
+        //     expiresAt: circleType === 'flash' ? expiresAt : null,
+        //     interests,
+        //     createdBy: user.uid,
+        // });
         try {
             const circleRef = await addDoc(collection(db, 'circles'), {
                 circleName,
                 description,
-                photoUrl, // TODO: Upload to Firebase Storage and get URL
+                photoUrl: null, // Placeholder, will be updated after upload
                 circlePrivacy,
                 circleType,
                 expiresAt: circleType === 'flash' ? expiresAt : null,
@@ -47,6 +48,21 @@ const CreationForm = ({ navigation }) => {
                 createdAt: serverTimestamp(),
                 createdBy: user.uid,
             });
+
+            let uploadedPhotoUrl = null;
+            if (photoUrl) {
+                const response = await fetch(photoUrl);
+                const blob = await response.blob();
+                const storageRef = ref(storage, `circle_images/${circleRef.id}`);
+                await uploadBytes(storageRef, blob);
+                uploadedPhotoUrl = await getDownloadURL(storageRef);
+
+                // Update the Firestore document with the actual photo URL
+                await updateDoc(doc(db, 'circles', circleRef.id), {
+                    photoUrl: uploadedPhotoUrl,
+                });
+            }
+
             console.log("Circle created successfully with ID:", circleRef.id);
             navigation.navigate('InviteAndShare', { circleName, circleId: circleRef.id });
         } catch (error) {
@@ -56,7 +72,7 @@ const CreationForm = ({ navigation }) => {
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            mediaTypes: ImagePicker.MediaTypeOptions.Images, // Changed to Images only
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,

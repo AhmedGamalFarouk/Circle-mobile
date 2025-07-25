@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { auth } from '../../../firebase/config'; // Import auth
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
 import Constants from "expo-constants";
