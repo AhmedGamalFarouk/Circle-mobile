@@ -22,10 +22,13 @@ export default function App() {
         <Stack.Screen name="Landing" component={LandingScreen} />
         <Stack.Screen name="SignIn" component={SignInScreen} />
         <Stack.Screen name="SignUp" component={SignUpScreen} />
+        <Stack.Screen name="Main" component={DynamicBottomTab} />
+        <Stack.Screen name="CreationForm" component={CreationForm} options={{ presentation: 'modal' }} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Circle" component={CircleScreen} />
+        <Stack.Screen name="InviteAndShare" component={InviteAndShare} options={{ presentation: 'modal' }} />
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>
