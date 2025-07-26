@@ -17,7 +17,7 @@ export const styles = StyleSheet.create({
     },
     headerSection: {
         alignItems: 'center',
-        marginBottom: 48,
+        marginBottom: 24,
     },
     logo: {
         width: 80,
@@ -54,16 +54,14 @@ export const styles = StyleSheet.create({
         height: 56,
         backgroundColor: COLORS.glass,
         borderRadius: RADII.rounded,
-        marginBottom: 16,
+        marginBottom: 12,
         paddingHorizontal: 20,
         borderWidth: 1,
         borderColor: 'rgba(197, 198, 199, 0.1)',
-        ...SHADOWS.card,
     },
     inputFocused: {
         borderColor: COLORS.primary,
         borderWidth: 2,
-        ...SHADOWS.softPrimary,
     },
     input: {
         flex: 1,
@@ -94,7 +92,7 @@ export const styles = StyleSheet.create({
         borderRadius: RADII.rounded,
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 32,
+        marginBottom: 24,
         ...SHADOWS.btnPrimary,
     },
     loginButtonPressed: {
@@ -130,7 +128,7 @@ export const styles = StyleSheet.create({
     },
     socialSection: {
         width: '100%',
-        marginBottom: 40,
+        marginBottom: 24,
     },
     socialButtonsContainer: {
         width: '100%',
@@ -198,6 +196,22 @@ export const styles = StyleSheet.create({
     },
     signUpLink: {
         color: COLORS.primary,
+        fontWeight: '600',
+        fontFamily: FONTS.body,
+    },
+    locationButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(139, 69, 255, 0.1)',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: RADII.small,
+        borderWidth: 1,
+        borderColor: 'rgba(139, 69, 255, 0.3)',
+    },
+    locationButtonText: {
+        color: COLORS.primary,
+        fontSize: 12,
         fontWeight: '600',
         fontFamily: FONTS.body,
     },

@@ -13,7 +13,7 @@ const ProfileActions = ({ isFollowed, onFollow }) => {
                 onPress={onFollow}
             >
                 <Text style={styles.buttonText}>
-                    {isFollowed ? 'Followed' : 'Follow'}
+                    {isFollowed ? 'Connected' : 'Connect'}
                 </Text>
             </TouchableOpacity>
         </View>

@@ -82,6 +82,7 @@ export const RADII = {
   pill: 50,
   rounded: 20,
   largeRounded: 30,
+  small: 8,
 };
 
 export const Z_INDEX = {

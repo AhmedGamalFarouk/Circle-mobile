@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import Constants from "expo-constants";
 import { auth } from '../../../firebase/config';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
@@ -94,12 +95,14 @@ const SignInScreen = ({ navigation }) => {
 
   const [request, response, promptAsync] = useAuthRequest(
     {
-      clientId: '141731835688-n2l055sgl1h5bna83k7f5s50lkop8epg.apps.googleusercontent.com',
+      clientId: Constants.expoConfig.extra.webClientId,
+      androidClientId: Constants.expoConfig.extra.androidClientId,
+      iosClientId: Constants.expoConfig.extra.iosClientId,
       scopes: ['profile', 'email'],
       redirectUri: redirectUri,
     },
     {
-      projectNameForProxy: 'YOUR_EXPO_USERNAME/YOUR_PROJECT_SLUG',
+      projectNameForProxy: '@ahmed-gamal/Circle-mobile',
     }
   );
 

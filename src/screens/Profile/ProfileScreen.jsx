@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, Image, Animated, PanResponder, useWindowDimensions, TouchableOpacity, Text, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS } from '../../constants/constants';
@@ -11,44 +11,63 @@ import MediaGrid from './components/MediaGrid';
 import DraggableCard from './components/DraggableCard';
 import MySquad from './components/MySquad';
 import JoinedCircles from './components/JoinedCircles';
+import { auth, db } from '../../firebase/config'; // Import auth and db
+import { doc, setDoc } from 'firebase/firestore'; // Import doc and setDoc
+import useUserProfile from '../../hooks/useUserProfile';
 
 const ProfileScreen = ({ navigation }) => {
+    const currentUser = auth.currentUser;
+    const { profile } = useUserProfile(currentUser?.uid);
+
     const [isFollowed, setIsFollowed] = useState(false);
-    const [userName, setUserName] = useState('Adel Shakal');
-    const [userBio, setUserBio] = useState("Don't tell anyone, but Friends is overrated.");
+    const [userName, setUserName] = useState('');
+    const [userBio, setUserBio] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [userImages, setUserImages] = useState([
-        'https://picsum.photos/200?random=1',
-        'https://picsum.photos/200?random=2',
-        'https://picsum.photos/200?random=3',
-    ]);
     const [coverImage, setCoverImage] = useState(require('../../../assets/Avatar.jpg'));
     const [profileImage, setProfileImage] = useState(require('../../../assets/Avatar.jpg'));
+
+    useEffect(() => {
+        if (profile) {
+            setUserName(profile.username || '');
+            setUserBio(profile.bio || '');
+            if (profile.profileImage) {
+                setProfileImage({ uri: profile.profileImage });
+            }
+            if (profile.coverImage) {
+                setCoverImage({ uri: profile.coverImage });
+            }
+        }
+    }, [profile]);
 
     const handleFollow = () => {
         setIsFollowed(!isFollowed);
     };
 
-    const handleSave = () => {
-        console.log('Saving Name:', userName);
-        console.log('Saving Bio:', userBio);
-        setIsEditing(false);
+    const handleSave = async () => {
+        if (!currentUser) {
+            Alert.alert("Error", "No user logged in.");
+            return;
+        }
+        try {
+            await setDoc(doc(db, 'users', currentUser.uid), {
+                username: userName, // Changed to 'username' to match Firestore field
+                bio: userBio,
+                profileImage: profileImage.uri || '',
+                coverImage: coverImage.uri || '',
+                userImages: userImages,
+            }, { merge: true }); // Use merge to update only specified fields
+            Alert.alert("Success", "Profile updated successfully!");
+            setIsEditing(false);
+        } catch (error) {
+            console.error('Error saving profile:', error);
+            Alert.alert("Error", "Failed to save profile.");
+        }
     };
 
     const handleEdit = () => {
         setIsEditing(true);
     };
 
-    const handleAddImages = (newImages) => {
-        setUserImages(prevImages => {
-            const combinedImages = [...prevImages, ...newImages];
-            return combinedImages.slice(0, 6); // Maximum 6 images
-        });
-    };
-
-    const handleRemoveImage = (index) => {
-        setUserImages(prevImages => prevImages.filter((_, i) => i !== index));
-    };
 
     const handleChangeCoverImage = async () => {
         try {
@@ -193,20 +212,6 @@ const ProfileScreen = ({ navigation }) => {
 
                 <JoinedCircles />
 
-                <Animated.View style={{
-                    opacity: pan.y.interpolate({
-                        inputRange: [expandedMarginTop, initialMarginTop],
-                        outputRange: [1, 0],
-                        extrapolate: 'clamp',
-                    })
-                }}>
-                    <MediaGrid
-                        images={userImages}
-                        isEditing={isEditing}
-                        onAddImages={handleAddImages}
-                        onRemoveImage={handleRemoveImage}
-                    />
-                </Animated.View>
             </DraggableCard>
 
             {/* <BottomNavBar /> */}
