@@ -9,8 +9,11 @@ import ProfileScreen from './src/screens/Profile/ProfileScreen';
 import SettingsScreen from './src/screens/Settings/SettingsScreen';
 import CircleScreen from './src/screens/Circle/CircleScreen';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DynamicNativeStack from './src/navigation/DynamicNativeStack';
 import DynamicBottomTab from './src/navigation/DynamicBottomTab';
+
+const Stack = createNativeStackNavigator();
 import CreationForm from './src/screens/Circle Creation/CreationForm';
 import InviteAndShare from './src/screens/Circle Creation/InviteAndShare';
 

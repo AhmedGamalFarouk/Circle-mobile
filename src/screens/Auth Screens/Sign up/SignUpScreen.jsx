@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform, TouchableOpacity, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import { auth } from '../../../firebase/config'; // Import auth
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
 import Constants from "expo-constants";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import useCurrentLocation from '../../../src/hooks/useCurrentLocation'; // Import the hook
 import {
   AuthContainer,
   Logo,
@@ -26,19 +28,47 @@ const SignUpScreen = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [dateOfBirth, setDateOfBirth] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const { location, errorMsg: locationErrorMsg } = useCurrentLocation();
 
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
       Alert.alert("Error", "Passwords do not match.");
       return;
     }
+
+    const today = new Date();
+    const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    if (dateOfBirth > eighteenYearsAgo) {
+      Alert.alert("Error", "You must be at least 18 years old to sign up.");
+      return;
+    }
+
+    if (locationErrorMsg) {
+      Alert.alert("Location Error", locationErrorMsg);
+      return;
+    }
+
+    if (!location) {
+      Alert.alert("Location Error", "Could not retrieve your current location. Please ensure location services are enabled.");
+      return;
+    }
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+      // Here you would typically save dateOfBirth and location to your user profile in Firestore or a similar database
       Alert.alert("Success", "Account created successfully!");
       navigation.navigate('Main', { screen: 'Home' });
     } catch (error) {
       Alert.alert("Sign Up Error", error.message);
     }
+  };
+
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || dateOfBirth;
+    setShowDatePicker(Platform.OS === 'ios');
+    setDateOfBirth(currentDate);
   };
 
   const redirectUri = makeRedirectUri({
@@ -90,6 +120,21 @@ const SignUpScreen = () => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      <TouchableOpacity onPress={() => setShowDatePicker(true)} style={{ width: '80%', marginBottom: 10, padding: 15, borderWidth: 1, borderColor: '#ccc', borderRadius: 5 }}>
+        <Text style={{ color: dateOfBirth ? '#000' : '#888' }}>
+          {dateOfBirth.toLocaleDateString()}
+        </Text>
+      </TouchableOpacity>
+      {showDatePicker && (
+        <DateTimePicker
+          testID="datePicker"
+          value={dateOfBirth}
+          mode="date"
+          display="default"
+          onChange={onDateChange}
+          maximumDate={new Date()} // Cannot select a future date
+        />
+      )}
       <AuthInput
         placeholder="Password"
         value={password}
@@ -106,6 +151,12 @@ const SignUpScreen = () => {
         showPassword={showConfirmPassword}
         toggleShowPassword={() => setShowConfirmPassword(!showConfirmPassword)}
       />
+      {locationErrorMsg && <Text style={{ color: 'red', marginBottom: 10 }}>{locationErrorMsg}</Text>}
+      {location && (
+        <Text style={{ marginBottom: 10 }}>
+          Location: {location.coords.latitude}, {location.coords.longitude}
+        </Text>
+      )}
       <SubmitButton title="Sign Up" onPress={handleSignUp} />
       <OrDivider />
       <SocialButtons onGooglePress={handleGoogleSignUp} disabled={!request} />
