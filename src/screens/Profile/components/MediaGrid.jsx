@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, Image, StyleSheet, useWindowDimensions, View, TouchableOpacity, Alert, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { RADII, COLORS, SHADOWS } from '../../../constants/constants';
+import { RADII, COLORS } from '../../../constants/constants';
 
 const MediaGrid = ({ images = [], isEditing = false, onAddImages, onRemoveImage }) => {
     const { width } = useWindowDimensions();
@@ -122,7 +122,7 @@ const getStyles = (width) => {
             height: itemSize,
             borderRadius: RADII.rounded,
             overflow: 'hidden',
-            ...SHADOWS.card,
+            //...SHADOWS.card,
         },
         mediaItem: {
             width: '100%',
@@ -149,7 +149,7 @@ const getStyles = (width) => {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 2,
-            ...SHADOWS.softPrimary,
+            // ...SHADOWS.softPrimary,
         },
         addButton: {
             width: itemSize,
@@ -161,7 +161,7 @@ const getStyles = (width) => {
             justifyContent: 'center',
             alignItems: 'center',
             backgroundColor: COLORS.primary + '10',
-            ...SHADOWS.card,
+            // ...SHADOWS.card,
         },
         addButtonContent: {
             alignItems: 'center',

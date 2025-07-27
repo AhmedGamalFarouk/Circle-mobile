@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, SHADOWS, RADII } from '../../../constants/constants';
+import { COLORS, RADII } from '../../../constants/constants';
 
 const plans = [
     {
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
         borderRadius: RADII.rounded,
         padding: 20,
         marginBottom: 15,
-        ...SHADOWS.card,
+        // ...SHADOWS.card,
     },
     selectedPlan: {
         borderColor: COLORS.primary,

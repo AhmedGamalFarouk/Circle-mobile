@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADII, SHADOWS } from '../../../constants/constants';
+import { COLORS, FONTS, RADII } from '../../../constants/constants';
 
 const SelectOption = ({ title, options, selectedValue, onSelect }) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
         borderRadius: RADII.rounded,
         width: '80%',
         maxHeight: '60%',
-        ...SHADOWS.glassCard,
+        // ...SHADOWS.glassCard,
     },
     modalHeader: {
         flexDirection: 'row',

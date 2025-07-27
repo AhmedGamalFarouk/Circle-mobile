@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONTS, RADII, SHADOWS } from '../../../constants/constants';
+import { COLORS, FONTS, RADII } from '../../../constants/constants';
 
 const SettingsSection = ({ title, children }) => {
     return (
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.glass,
         borderRadius: RADII.rounded,
         padding: 20,
-        ...SHADOWS.glassCard,
+        // ...SHADOWS.glassCard,
     },
 });
 

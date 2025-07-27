@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, Pressable, Platform, Ac
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from './styles';
-import { COLORS } from '../../../constants/constants';
+import { COLORS, SHADOWS } from '../../../constants/constants';
 
 export const AuthContainer = ({ children }) => (
     <View style={styles.container}>

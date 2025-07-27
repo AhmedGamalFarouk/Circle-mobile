@@ -2,8 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
-const EventConfirmedState = ({ data, onRsvp }) => {
-    const { event, currentUser } = data;
+const EventConfirmedState = ({ eventData, onRsvp }) => {
+    const { winningActivity, winningPlace, rsvps, currentUser } = eventData;
 
     const renderRsvpList = (status) => {
         return event.rsvps
@@ -18,8 +18,8 @@ const EventConfirmedState = ({ data, onRsvp }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.eventTitle}>{event.title}</Text>
-            <Text style={styles.eventDetails}>{event.location} • {event.dateTime}</Text>
+            <Text style={styles.eventTitle}>EVENT CONFIRMED</Text>
+            <Text style={styles.eventDetails}>{winningActivity} at {winningPlace}</Text>
             <View style={styles.rsvpButtons}>
                 <TouchableOpacity
                     style={[styles.button, currentUser.rsvp === 'going' && styles.selectedButton]}
@@ -59,68 +59,70 @@ const EventConfirmedState = ({ data, onRsvp }) => {
 const styles = StyleSheet.create({
     container: {
         backgroundColor: COLORS.dark,
-        borderBottomLeftRadius: RADII.rounded,
-        borderBottomRightRadius: RADII.rounded,
-        padding: 20,
+        borderBottomLeftRadius: RADII.largeRounded,
+        borderBottomRightRadius: RADII.largeRounded,
+        padding: 25,
         width: '100%',
     },
     eventTitle: {
-        color: COLORS.text,
-        fontFamily: FONTS.bold,
-        fontSize: 20,
+        color: COLORS.accent,
+        fontFamily: FONTS.heading,
+        fontSize: 24,
         textAlign: 'center',
-        marginBottom: 5,
+        marginBottom: 8,
     },
     eventDetails: {
-        color: COLORS.text,
+        color: COLORS.light,
         fontFamily: FONTS.body,
-        fontSize: 14,
+        fontSize: 18,
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 25,
     },
     rsvpButtons: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginBottom: 20,
+        marginBottom: 25,
     },
     button: {
-        backgroundColor: COLORS.lightGrey,
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: RADII.rounded,
+        backgroundColor: COLORS.darker,
+        paddingVertical: 12,
+        paddingHorizontal: 22,
+        borderRadius: RADII.pill,
     },
     selectedButton: {
         backgroundColor: COLORS.primary,
+        // ...SHADOWS.btnPrimary,
     },
     buttonText: {
-        color: COLORS.white,
-        fontFamily: FONTS.bold,
+        color: COLORS.light,
+        fontFamily: FONTS.body,
+        fontWeight: 'bold',
         fontSize: 14,
     },
     rsvpSection: {
-        marginBottom: 15,
+        marginBottom: 20,
     },
     sectionTitle: {
-        color: COLORS.text,
-        fontFamily: FONTS.bold,
-        fontSize: 16,
-        marginBottom: 10,
+        color: COLORS.light,
+        fontFamily: FONTS.heading,
+        fontSize: 18,
+        marginBottom: 12,
     },
     rsvpUser: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 5,
+        marginBottom: 8,
     },
     profilePic: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        marginRight: 10,
+        width: 35,
+        height: 35,
+        borderRadius: 17.5,
+        marginRight: 12,
     },
     userName: {
         color: COLORS.text,
         fontFamily: FONTS.body,
-        fontSize: 14,
+        fontSize: 15,
     },
 });
 

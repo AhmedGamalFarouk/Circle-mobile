@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, useWindowDimensions } from 'react-native';
-import { COLORS, RADII, SHADOWS } from '../../../constants/constants';
+import { COLORS, RADII } from '../../../constants/constants';
 
 const ProfileActions = ({ isFollowed, onFollow }) => {
     const { width } = useWindowDimensions();
@@ -33,7 +33,7 @@ const getStyles = (width) => StyleSheet.create({
         borderRadius: RADII.rounded,
         width: '80%',
         alignItems: 'center',
-        ...SHADOWS.btnPrimary,
+        //...SHADOWS.btnPrimary,
     },
     buttonText: {
         color: COLORS.light,

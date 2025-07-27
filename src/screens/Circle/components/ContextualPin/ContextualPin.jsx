@@ -59,27 +59,26 @@ const dummyData = {
     },
 };
 
-const ContextualPin = () => {
+const ContextualPin = ({ currentStage, onStartPlan, activityPollData, placePollData, onFinishVoting, onVote, eventData }) => {
+    const renderContent = () => {
+        switch (currentStage) {
+            case 'Idle':
+                return <DefaultState onStartPlan={onStartPlan} />;
+            case 'Planning the Activity':
+                return <ActivePollState pollData={activityPollData} onFinishVoting={onFinishVoting} onVote={onVote} />;
+            case 'Planning the Place':
+                return <ActivePollState pollData={placePollData} onFinishVoting={onFinishVoting} onVote={onVote} />;
+            case 'Event Confirmed':
+                return <EventConfirmedState eventData={eventData} />;
+            default:
+                return <DefaultState onStartPlan={onStartPlan} />;
+        }
+    };
+
     return (
-        <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            style={styles.scrollView}
-        >
-            <View style={styles.stateContainer}>
-                <DefaultState data={dummyData.default} />
-            </View>
-            <View style={styles.stateContainer}>
-                <ActivePollState data={dummyData.active_poll} />
-            </View>
-            <View style={styles.stateContainer}>
-                <PollClosedState data={dummyData.poll_closed} />
-            </View>
-            <View style={styles.stateContainer}>
-                <EventConfirmedState data={dummyData.event_confirmed} />
-            </View>
-        </ScrollView>
+        <View style={styles.stateContainer}>
+            {renderContent()}
+        </View>
     );
 };
 
