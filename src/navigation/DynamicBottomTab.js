@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { COLORS } from '../constants/constants'
 import Explore from '../screens/Explore'
 import { FONTS } from '../constants/constants'
+import Circle2 from '../screens/circle2/circle2'
 
 const Tab = createBottomTabNavigator();
 
@@ -47,7 +48,12 @@ const DynamicBottomTab = () => {
                     <Ionicons name="search" color={color} size={size} />
                 ),
             }} />
-            <Tab.Screen name="Circle" component={CircleScreen} options={{
+            {/* <Tab.Screen name="Circle" component={CircleScreen} options={{
+                tabBarIcon: ({ color, size }) => (
+                    <Ionicons name="people" color={color} size={size} />
+                ),
+            }} /> */}
+            <Tab.Screen name="Circle2" component={Circle2} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="people" color={color} size={size} />
                 ),

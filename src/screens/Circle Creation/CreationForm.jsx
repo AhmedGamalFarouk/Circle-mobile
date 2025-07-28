@@ -231,6 +231,8 @@ const CreationForm = ({ navigation }) => {
                 <TouchableOpacity style={[styles.fullWidthButton, isCreateDisabled && styles.disabledFullWidthButton]} onPress={handleCreate} disabled={isCreateDisabled}>
                     <Text style={styles.fullWidthButtonText}>Create Circle</Text>
                 </TouchableOpacity>
+                
+            
             </ScrollView>
         </SafeAreaView>
     );

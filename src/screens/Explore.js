@@ -69,8 +69,8 @@ const Explore = () => {
     <MapView
       style={styles.map}
       initialRegion={{
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
+        latitude: location.coords.latitude || 30.06263,
+        longitude: location.coords.longitude || 31.25,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       }}
