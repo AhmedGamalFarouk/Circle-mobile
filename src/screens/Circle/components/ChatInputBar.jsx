@@ -6,10 +6,35 @@ import {
     Text,
     StyleSheet,
 } from "react-native";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../../firebase/config";
+import useAuth from "../../../hooks/useAuth";
 import { COLORS, RADII } from "../../../constants/constants";
+import useUserProfile from "../../../hooks/useUserProfile";
 
-const ChatInputBar = () => {
+const ChatInputBar = ({ circleId }) => {
     const [message, setMessage] = useState("");
+    const { user } = useAuth();
+    const { userProfile } = useUserProfile(user?.uid);
+
+    const handleSend = async () => {
+        if (message.trim() === "" || !userProfile) return;
+
+        try {
+            await addDoc(collection(db, "circles", circleId, "messages"), {
+                text: message,
+                createdAt: serverTimestamp(),
+                sender: {
+                    id: user.uid,
+                    name: userProfile.name,
+                    avatar: userProfile.avatar,
+                },
+            });
+            setMessage("");
+        } catch (error) {
+            console.error("Error sending message: ", error);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -26,6 +51,7 @@ const ChatInputBar = () => {
             <TouchableOpacity
                 style={[styles.sendButton, !message && styles.disabledButton]}
                 disabled={!message}
+                onPress={handleSend}
             >
                 <Text style={styles.sendText}>Send</Text>
             </TouchableOpacity>

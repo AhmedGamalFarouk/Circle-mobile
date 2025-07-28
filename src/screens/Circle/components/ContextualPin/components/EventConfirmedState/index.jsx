@@ -1,19 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../../../../../firebase/config';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
+
+const UserProfile = ({ userId }) => {
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const userRef = doc(db, 'users', userId);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+                setUser(userSnap.data());
+            }
+        };
+        fetchUser();
+    }, [userId]);
+
+    if (!user) return null;
+
+    return (
+        <View style={styles.rsvpUser}>
+            <Image source={{ uri: user.avatar }} style={styles.profilePic} />
+            <Text style={styles.userName}>{user.name}</Text>
+        </View>
+    );
+};
+
 
 const EventConfirmedState = ({ eventData, onRsvp }) => {
     const { winningActivity, winningPlace, rsvps, currentUser } = eventData;
 
     const renderRsvpList = (status) => {
-        return event.rsvps
-            .filter(rsvp => rsvp.status === status)
-            .map(rsvp => (
-                <View key={rsvp.user.id} style={styles.rsvpUser}>
-                    <Image source={{ uri: rsvp.user.profilePic }} style={styles.profilePic} />
-                    <Text style={styles.userName}>{rsvp.user.name}</Text>
-                </View>
-            ));
+        if (!rsvps) return null;
+        return Object.entries(rsvps)
+            .filter(([_, rsvpStatus]) => rsvpStatus === status)
+            .map(([userId]) => <UserProfile key={userId} userId={userId} />);
     };
 
     return (

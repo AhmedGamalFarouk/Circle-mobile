@@ -11,8 +11,8 @@ import MediaGrid from './components/MediaGrid';
 import DraggableCard from './components/DraggableCard';
 import MySquad from './components/MySquad';
 import JoinedCircles from './components/JoinedCircles';
-import { auth, db } from '../../firebase/config'; // Import auth and db
-import { doc, setDoc } from 'firebase/firestore'; // Import doc and setDoc
+import { auth, db } from '../../firebase/config';
+import { doc, setDoc } from 'firebase/firestore';
 import useUserProfile from '../../hooks/useUserProfile';
 
 const ProfileScreen = ({ route, navigation }) => {

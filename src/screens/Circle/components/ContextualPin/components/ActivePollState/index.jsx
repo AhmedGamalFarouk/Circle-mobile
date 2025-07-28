@@ -8,7 +8,10 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote }) => {
         return null;
     }
 
-
+    const getVoteCount = (option) => {
+        if (!pollData.votes) return 0;
+        return Object.values(pollData.votes).filter(vote => vote === option).length;
+    };
 
     return (
         <View style={styles.container}>
@@ -16,7 +19,7 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote }) => {
             {pollData.options.map((option, index) => (
                 <TouchableOpacity key={index} style={styles.optionContainer} onPress={() => onVote(option)}>
                     <Text style={styles.optionText}>{option}</Text>
-                    <Text style={styles.voteCount}>{pollData.votes[option] || 0}</Text>
+                    <Text style={styles.voteCount}>{getVoteCount(option)}</Text>
                 </TouchableOpacity>
             ))}
             <TouchableOpacity style={styles.finishButton} onPress={onFinishVoting}>

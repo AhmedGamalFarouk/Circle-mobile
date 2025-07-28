@@ -1,21 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image } from 'react-native';
+import { collection, query, onSnapshot, orderBy } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import useAuth from '../../../hooks/useAuth';
 import { COLORS, RADII, FONTS } from '../../../constants/constants';
 
-const ChatFeed = () => {
-    // Dummy data for chat messages
-    const messages = [
-        { id: 1, type: 'system', text: 'You joined the circle.' },
-        { id: 2, sender: 'John Doe', text: 'Hey everyone! What is up?', isCurrentUser: false, avatar: 'https://randomuser.me/api/portraits/men/1.jpg' },
-        { id: 3, sender: 'John Doe', text: 'This is a new message from me.', isCurrentUser: false },
-        { id: 4, text: 'Hey John! Welcome to the circle.', isCurrentUser: true },
-        { id: 5, type: 'system', text: 'Jane Doe joined the circle.' },
-        { id: 6, sender: 'Jane Doe', text: 'Hi all!', isCurrentUser: false, avatar: 'https://randomuser.me/api/portraits/women/1.jpg' },
-    ];
+const ChatFeed = ({ circleId }) => {
+    const [messages, setMessages] = useState([]);
+    const { user } = useAuth();
+    const scrollViewRef = useRef();
+
+    useEffect(() => {
+        if (!circleId) return;
+
+        const q = query(collection(db, 'circles', circleId, 'messages'), orderBy('createdAt', 'asc'));
+
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const messagesData = [];
+            querySnapshot.forEach((doc) => {
+                messagesData.push({ id: doc.id, ...doc.data() });
+            });
+            setMessages(messagesData);
+        });
+
+        return () => unsubscribe();
+    }, [circleId]);
+
+    useEffect(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, [messages]);
+
 
     const renderMessages = () => {
         let lastSender = null;
-        return messages.map((message, index) => {
+        return messages.map((message) => {
             if (message.type === 'system') {
                 return (
                     <View key={message.id} style={styles.systemMessageContainer}>
@@ -24,18 +42,19 @@ const ChatFeed = () => {
                 );
             }
 
-            const showSenderInfo = message.sender !== lastSender;
-            lastSender = message.sender;
+            const isCurrentUser = message.sender.id === user.uid;
+            const showSenderInfo = message.sender.id !== lastSender;
+            lastSender = message.sender.id;
 
             return (
-                <View key={message.id} style={[styles.messageContainer, message.isCurrentUser ? styles.currentUserMessageContainer : styles.otherUserMessageContainer]}>
-                    {!message.isCurrentUser && showSenderInfo && (
+                <View key={message.id} style={[styles.messageContainer, isCurrentUser ? styles.currentUserMessageContainer : styles.otherUserMessageContainer]}>
+                    {!isCurrentUser && showSenderInfo && (
                         <View style={styles.senderInfoContainer}>
-                            {message.avatar && <Image source={{ uri: message.avatar }} style={styles.avatar} />}
-                            <Text style={styles.senderName}>{message.sender}</Text>
+                            {message.sender.avatar && <Image source={{ uri: message.sender.avatar }} style={styles.avatar} />}
+                            <Text style={styles.senderName}>{message.sender.name}</Text>
                         </View>
                     )}
-                    <View style={[styles.messageBubble, message.isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble]}>
+                    <View style={[styles.messageBubble, isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble]}>
                         <Text style={styles.messageText}>{message.text}</Text>
                     </View>
                 </View>
@@ -44,7 +63,11 @@ const ChatFeed = () => {
     };
 
     return (
-        <ScrollView style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            ref={scrollViewRef}
+            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+        >
             {renderMessages()}
         </ScrollView>
     );

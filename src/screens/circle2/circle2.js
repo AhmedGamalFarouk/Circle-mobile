@@ -53,7 +53,7 @@ const circle2 = ({ navigation }) => {
         console.log('Pressed circle:', circle.circleName)
         // Navigate to circle details or chat
         if (navigation) {
-            navigation.navigate('Circle', { circleId: circle.id, circleName: circle.circleName })
+            navigation.navigate('Circle', { circleId: circle.id, name: circle.circleName })
         }
     }
 

@@ -1,17 +1,19 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
 import { COLORS, FONTS, RADII } from "../../../constants/constants";
+import { useNavigation } from "@react-navigation/native";
 
-const CircleHeader = () => {
+const CircleHeader = ({ name, imageUrl }) => {
+  const navigation = useNavigation();
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.iconContainer}>
+      <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.goBack()}>
         <Text style={styles.iconText}>{'<'}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.centerContainer}>
-        <View style={styles.profilePic} />
-        <Text style={styles.groupName}>The Weekend Crew</Text>
+        <Image source={{ uri: imageUrl }} style={styles.profilePic} />
+        <Text style={styles.groupName}>{name}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.iconContainer}>

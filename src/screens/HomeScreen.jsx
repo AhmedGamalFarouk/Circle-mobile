@@ -32,6 +32,12 @@ const HomeScreen = () => {
           <Text style={styles.createCircleButtonText}>Create a new circle</Text>
         </TouchableOpacity>
       </ScrollView>
+      <TouchableOpacity
+        style={styles.circleScreenButton}
+        onPress={() => navigation.navigate('CircleScreen')}
+      >
+        <Text style={styles.circleScreenButtonText}>Go to Circle Screen</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -55,6 +61,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   createCircleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  circleScreenButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  circleScreenButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
