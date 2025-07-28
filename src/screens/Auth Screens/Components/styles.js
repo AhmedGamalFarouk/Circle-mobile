@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { COLORS, RADII, SHADOWS, FONTS } from '../../../constants/constants';
+import { COLORS, RADII, FONTS } from '../../../constants/constants';
 
 export const styles = StyleSheet.create({
     container: {
@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
         borderRadius: RADII.circle,
         backgroundColor: COLORS.glass,
         resizeMode: 'contain',
-        ...SHADOWS.softPrimary,
+        // ...SHADOWS.softPrimary,
     },
     welcomeText: {
         color: COLORS.light,
@@ -93,10 +93,10 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 24,
-        ...SHADOWS.btnPrimary,
+        //...SHADOWS.btnPrimary,
     },
     loginButtonPressed: {
-        ...SHADOWS.btnPrimaryHover,
+        //...SHADOWS.btnPrimaryHover,
         transform: [{ scale: 0.98 }],
     },
     loginButtonText: {
@@ -144,11 +144,11 @@ export const styles = StyleSheet.create({
         borderRadius: RADII.rounded,
         borderWidth: 1,
         borderColor: 'rgba(0, 0, 0, 0.1)',
-        ...SHADOWS.card,
+        //...SHADOWS.card,
     },
     googleButtonPressed: {
         backgroundColor: '#f8f9fa',
-        ...SHADOWS.btnSecondaryHover,
+        //...SHADOWS.btnSecondaryHover,
         transform: [{ scale: 0.98 }],
     },
     googleButtonDisabled: {
@@ -179,10 +179,10 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(197, 198, 199, 0.1)',
         marginHorizontal: 8,
-        ...SHADOWS.card,
+        //...SHADOWS.card,
     },
     socialButtonPressed: {
-        ...SHADOWS.btnSecondaryHover,
+        //...SHADOWS.btnSecondaryHover,
         transform: [{ scale: 0.95 }],
     },
     bottomSection: {

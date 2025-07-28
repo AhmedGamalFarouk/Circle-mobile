@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { COLORS, RADII, SHADOWS } from '../../constants/constants';
+import { COLORS, RADII } from '../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db, storage } from '../../firebase/config';
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 2,
         borderColor: COLORS.primary,
-        ...SHADOWS.softPrimary,
+        //...SHADOWS.softPrimary,
     },
     addPhotoText: {
         color: COLORS.text,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     },
     toggleButtonActive: {
         backgroundColor: COLORS.primary,
-        ...SHADOWS.btnPrimary,
+        //...SHADOWS.btnPrimary,
     },
     toggleButtonText: {
         color: COLORS.text,
@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         borderRadius: RADII.rounded,
         marginLeft: 10,
-        ...SHADOWS.btnSecondaryHover,
+        //...SHADOWS.btnSecondaryHover,
     },
     addButtonText: {
         color: COLORS.light,
@@ -406,11 +406,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 20,
         marginBottom: 40,
-        ...SHADOWS.btnPrimary,
+        // ...SHADOWS.btnPrimary,
     },
     disabledFullWidthButton: {
         backgroundColor: COLORS.dark,
-        ...SHADOWS.card,
+        // ...SHADOWS.card,
     },
     fullWidthButtonText: {
         color: COLORS.light,

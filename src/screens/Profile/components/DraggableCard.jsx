@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Animated, StyleSheet, useWindowDimensions } from 'react-native';
-import { COLORS, RADII, SHADOWS } from '../../../constants/constants';
+import { COLORS, RADII } from '../../../constants/constants';
 
 const DraggableCard = ({ children, pan, panResponder }) => {
     const { height } = useWindowDimensions();
@@ -34,7 +34,7 @@ const getStyles = (height) => StyleSheet.create({
         marginTop: -RADII.largeRounded,
         paddingTop: 20,
         alignItems: 'center',
-        ...SHADOWS.card,
+        //...SHADOWS.card,
     },
     draggableHandle: {
         width: '100%',

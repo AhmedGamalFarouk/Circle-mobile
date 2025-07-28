@@ -1,32 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
-const ActivePollState = ({ pollData, onFinishVoting, onVote }) => {
-
-    if (!pollData) {
-        return null;
-    }
-
-
-
-    return (
-        <View style={styles.container}>
-            <Text style={styles.pollQuestion}>{pollData.question}</Text>
-            {pollData.options.map((option, index) => (
-                <TouchableOpacity key={index} style={styles.optionContainer} onPress={() => onVote(option)}>
-                    <Text style={styles.optionText}>{option}</Text>
-                    <Text style={styles.voteCount}>{pollData.votes[option] || 0}</Text>
-                </TouchableOpacity>
-            ))}
-            <TouchableOpacity style={styles.finishButton} onPress={onFinishVoting}>
-                <Text style={styles.finishButtonText}>Finish Voting</Text>
-            </TouchableOpacity>
-        </View>
-    );
-};
-
-const styles = StyleSheet.create({
+export default StyleSheet.create({
     container: {
         backgroundColor: COLORS.dark,
         borderBottomLeftRadius: RADII.largeRounded,
@@ -76,5 +51,3 @@ const styles = StyleSheet.create({
         fontSize: 18,
     },
 });
-
-export default ActivePollState;
