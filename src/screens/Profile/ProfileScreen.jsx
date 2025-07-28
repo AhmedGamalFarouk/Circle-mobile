@@ -15,29 +15,19 @@ import { auth, db } from '../../firebase/config'; // Import auth and db
 import { doc, setDoc } from 'firebase/firestore'; // Import doc and setDoc
 import useUserProfile from '../../hooks/useUserProfile';
 
-const ProfileScreen = ({ navigation }) => {
+const ProfileScreen = ({ route, navigation }) => {
+    const { userId } = route.params || {};
     const currentUser = auth.currentUser;
-    const { profile } = useUserProfile(currentUser?.uid);
+    const profileId = userId || currentUser?.uid;
+    const { profile } = useUserProfile(profileId);
+    const isOwnProfile = !userId || userId === currentUser?.uid;
 
     const [isFollowed, setIsFollowed] = useState(false);
-    const [userName, setUserName] = useState('');
-    const [userBio, setUserBio] = useState('');
     const [isEditing, setIsEditing] = useState(false);
-    const [coverImage, setCoverImage] = useState(require('../../../assets/Avatar.jpg'));
-    const [profileImage, setProfileImage] = useState(require('../../../assets/Avatar.jpg'));
-
-    useEffect(() => {
-        if (profile) {
-            setUserName(profile.username || '');
-            setUserBio(profile.bio || '');
-            if (profile.profileImage) {
-                setProfileImage({ uri: profile.profileImage });
-            }
-            if (profile.coverImage) {
-                setCoverImage({ uri: profile.coverImage });
-            }
-        }
-    }, [profile]);
+    const [editingUserName, setEditingUserName] = useState('');
+    const [editingUserBio, setEditingUserBio] = useState('');
+    const [editingProfileImage, setEditingProfileImage] = useState(null);
+    const [editingCoverImage, setEditingCoverImage] = useState(null);
 
     const handleFollow = () => {
         setIsFollowed(!isFollowed);
@@ -50,12 +40,11 @@ const ProfileScreen = ({ navigation }) => {
         }
         try {
             await setDoc(doc(db, 'users', currentUser.uid), {
-                username: userName, // Changed to 'username' to match Firestore field
-                bio: userBio,
-                profileImage: profileImage.uri || '',
-                coverImage: coverImage.uri || '',
-                userImages: userImages,
-            }, { merge: true }); // Use merge to update only specified fields
+                username: editingUserName,
+                bio: editingUserBio,
+                profileImage: editingProfileImage?.uri || profile?.profileImage || '',
+                coverImage: editingCoverImage?.uri || profile?.coverImage || '',
+            }, { merge: true });
             Alert.alert("Success", "Profile updated successfully!");
             setIsEditing(false);
         } catch (error) {
@@ -66,6 +55,10 @@ const ProfileScreen = ({ navigation }) => {
 
     const handleEdit = () => {
         setIsEditing(true);
+        setEditingUserName(profile?.username || '');
+        setEditingUserBio(profile?.bio || '');
+        setEditingProfileImage(profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/Avatar.jpg'));
+        setEditingCoverImage(profile?.coverImage ? { uri: profile.coverImage } : require('../../../assets/Avatar.jpg'));
     };
 
 
@@ -86,7 +79,7 @@ const ProfileScreen = ({ navigation }) => {
             });
 
             if (!result.canceled) {
-                setCoverImage({ uri: result.assets[0].uri });
+                setEditingCoverImage({ uri: result.assets[0].uri });
             }
         } catch (error) {
             console.error('Error picking image:', error);
@@ -111,7 +104,7 @@ const ProfileScreen = ({ navigation }) => {
             });
 
             if (!result.canceled) {
-                setProfileImage({ uri: result.assets[0].uri });
+                setEditingProfileImage({ uri: result.assets[0].uri });
             }
         } catch (error) {
             console.error('Error picking image:', error);
@@ -159,7 +152,7 @@ const ProfileScreen = ({ navigation }) => {
                 disabled={!isEditing}
             >
                 <Image
-                    source={coverImage}
+                    source={isEditing ? editingCoverImage : (profile?.coverImage ? { uri: profile.coverImage } : require('../../../assets/Avatar.jpg'))}
                     style={[styles.coverImage, isEditing && styles.coverImageEditing]}
                 />
                 {isEditing && (
@@ -171,6 +164,7 @@ const ProfileScreen = ({ navigation }) => {
             <ProfileHeader
 
                 navigation={navigation}
+                isOwnProfile={isOwnProfile}
                 isEditing={isEditing}
                 onSave={handleSave}
                 onEdit={handleEdit}
@@ -183,7 +177,7 @@ const ProfileScreen = ({ navigation }) => {
                     disabled={!isEditing}
                 >
                     <Image
-                        source={profileImage}
+                        source={isEditing ? editingProfileImage : (profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/Avatar.jpg'))}
                         style={[styles.profileImage, isEditing && styles.profileImageEditing]}
                     />
                     {isEditing && (
@@ -193,19 +187,21 @@ const ProfileScreen = ({ navigation }) => {
                     )}
                 </TouchableOpacity>
                 <ProfileInfo
-                    userName={userName}
-                    userBio={userBio}
+                    userName={isEditing ? editingUserName : profile?.username}
+                    userBio={isEditing ? editingUserBio : profile?.bio}
                     isEditing={isEditing}
-                    onUserNameChange={setUserName}
-                    onUserBioChange={setUserBio}
+                    onUserNameChange={setEditingUserName}
+                    onUserBioChange={setEditingUserBio}
                 />
 
                 <ProfileStats />
 
-                <ProfileActions
-                    isFollowed={isFollowed}
-                    onFollow={handleFollow}
-                />
+                {isOwnProfile ? null : (
+                    <ProfileActions
+                        isFollowed={isFollowed}
+                        onFollow={handleFollow}
+                    />
+                )}
 
 
                 <MySquad />
