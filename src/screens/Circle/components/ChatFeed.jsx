@@ -13,7 +13,7 @@ const ChatFeed = ({ circleId }) => {
     useEffect(() => {
         if (!circleId) return;
 
-        const q = query(collection(db, 'circles', circleId, 'messages'), orderBy('createdAt', 'asc'));
+        const q = query(collection(db, 'circles', circleId, 'chat'), orderBy('createdAt', 'asc'));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const messagesData = [];
@@ -42,16 +42,16 @@ const ChatFeed = ({ circleId }) => {
                 );
             }
 
-            const isCurrentUser = message.sender.id === user.uid;
-            const showSenderInfo = message.sender.id !== lastSender;
-            lastSender = message.sender.id;
+            const isCurrentUser = message.user.userId === user.uid;
+            const showSenderInfo = message.user.userId !== lastSender;
+            lastSender = message.user.userId;
 
             return (
                 <View key={message.id} style={[styles.messageContainer, isCurrentUser ? styles.currentUserMessageContainer : styles.otherUserMessageContainer]}>
                     {!isCurrentUser && showSenderInfo && (
                         <View style={styles.senderInfoContainer}>
-                            {message.sender.avatar && <Image source={{ uri: message.sender.avatar }} style={styles.avatar} />}
-                            <Text style={styles.senderName}>{message.sender.name}</Text>
+                            {message.user.imageurl && <Image source={{ uri: message.user.imageurl }} style={styles.avatar} />}
+                            <Text style={styles.senderName}>{message.user.userName}</Text>
                         </View>
                     )}
                     <View style={[styles.messageBubble, isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble]}>

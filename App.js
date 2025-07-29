@@ -43,6 +43,7 @@ export default function App() {
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="InviteAndShare" component={InviteAndShare} options={{ presentation: 'modal' }} />
+        <Stack.Screen name="Circle" component={CircleScreen} />
       </Stack.Navigator>
       <StatusBar style="auto" />
     </NavigationContainer>

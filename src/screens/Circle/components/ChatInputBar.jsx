@@ -15,21 +15,24 @@ import useUserProfile from "../../../hooks/useUserProfile";
 const ChatInputBar = ({ circleId }) => {
     const [message, setMessage] = useState("");
     const { user } = useAuth();
-    const { userProfile } = useUserProfile(user?.uid);
+    const { profile: userProfile } = useUserProfile(user?.uid);
 
     const handleSend = async () => {
         if (message.trim() === "" || !userProfile) return;
 
+        const messageData = {
+            text: message,
+            createdAt: serverTimestamp(),
+            user: {
+                userId: user.uid,
+                userName: userProfile.username,
+                imageurl: userProfile.profileImage,
+            },
+        };
+
+
         try {
-            await addDoc(collection(db, "circles", circleId, "messages"), {
-                text: message,
-                createdAt: serverTimestamp(),
-                sender: {
-                    id: user.uid,
-                    name: userProfile.name,
-                    avatar: userProfile.avatar,
-                },
-            });
+            await addDoc(collection(db, "circles", circleId, "chat"), messageData);
             setMessage("");
         } catch (error) {
             console.error("Error sending message: ", error);
@@ -43,7 +46,7 @@ const ChatInputBar = ({ circleId }) => {
             </TouchableOpacity>
             <TextInput
                 style={styles.input}
-                placeholder="Message The Weekend Crew..."
+                placeholder="Type your message"
                 placeholderTextColor={COLORS.text}
                 value={message}
                 onChangeText={setMessage}

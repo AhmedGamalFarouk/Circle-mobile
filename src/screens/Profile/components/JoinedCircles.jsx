@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../../constants/constants';
 
 const JoinedCircles = ({ circles = [] }) => {
+    const navigation = useNavigation();
     // Mock data for demonstration - you can replace this with actual circle data
     const mockCircles = [
         { id: 1, name: 'Tech Enthusiasts', image: 'https://picsum.photos/70?random=20', memberCount: 245 },
@@ -17,8 +19,7 @@ const JoinedCircles = ({ circles = [] }) => {
     const displayCircles = circles.length > 0 ? circles : mockCircles;
 
     const handleCirclePress = (circle) => {
-        console.log('Pressed circle:', circle.name);
-        // Navigate to circle details or circle screen
+        navigation.navigate('Circle', { circleId: circle.id });
     };
 
     return (

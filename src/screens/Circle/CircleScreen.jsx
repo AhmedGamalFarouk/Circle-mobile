@@ -20,6 +20,7 @@ const PLANNING_STAGES = {
 const CircleScreen = () => {
     const route = useRoute();
     const { circleId } = route.params;
+    console.log("CircleScreen circleId:", circleId);
     const { user } = useAuth();
     const [circle, setCircle] = useState(null);
     const [plan, setPlan] = useState(null);
