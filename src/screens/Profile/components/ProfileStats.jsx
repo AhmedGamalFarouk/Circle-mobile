@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { COLORS } from '../../../constants/constants';
 
-const ProfileStats = ({ connections = 127, circles = 8, posts = 45, location = "Obour, Cairo" }) => {
+const ProfileStats = ({ connections, circles, location = "Obour, Cairo" }) => {
     return (
         <View style={styles.container}>
             <View style={styles.statsContainer}>
@@ -15,10 +15,7 @@ const ProfileStats = ({ connections = 127, circles = 8, posts = 45, location = "
                     <Text style={styles.statNumber}>{circles}</Text>
                     <Text style={styles.statLabel}>Circles</Text>
                 </View>
-                <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{posts}</Text>
-                    <Text style={styles.statLabel}>Posts</Text>
-                </View>
+
             </View>
             <View style={styles.locationContainer}>
                 <MaterialIcons name="location-on" size={18} color={COLORS.text} style={styles.locationIcon} />

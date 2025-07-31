@@ -2,19 +2,19 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
-const DefaultState = ({ onStartPlan }) => {
+const DefaultState = ({ onStartPoll }) => {
     return (
-        <View style={styles.planSomethingContainer}>
-            <Text style={styles.planSomethingText}>What's the plan?</Text>
-            <TouchableOpacity style={styles.button} onPress={onStartPlan}>
-                <Text style={styles.buttonText}>+ Start a Plan</Text>
+        <View style={styles.pollSomethingContainer}>
+            <Text style={styles.pollSomethingText}>What's the Plan?</Text>
+            <TouchableOpacity style={styles.button} onPress={onStartPoll}>
+                <Text style={styles.buttonText}>+ Start a Poll</Text>
             </TouchableOpacity>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    planSomethingContainer: {
+    pollSomethingContainer: {
         backgroundColor: COLORS.dark,
         borderBottomLeftRadius: RADII.largeRounded,
         borderBottomRightRadius: RADII.largeRounded,
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 220,
     },
-    planSomethingText: {
+    pollSomethingText: {
         color: COLORS.light,
         fontFamily: FONTS.heading,
         fontSize: 28,

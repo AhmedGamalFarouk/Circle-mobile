@@ -7,11 +7,12 @@ import EventConfirmedState from './components/EventConfirmedState';
 
 const { width } = Dimensions.get('window');
 
-const ContextualPin = ({ currentStage, onStartPlan, activityPollData, placePollData, onFinishVoting, onVote, eventData }) => {
+const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollData, onFinishVoting, onVote, eventData }) => {
+    console.log('[ContextualPin] Current poll state:', currentStage);
     const renderContent = () => {
         switch (currentStage) {
             case 'Idle':
-                return <DefaultState onStartPlan={onStartPlan} />;
+                return <DefaultState onStartPoll={onStartPoll} />;
             case 'Planning the Activity':
                 return <ActivePollState pollData={activityPollData} onFinishVoting={onFinishVoting} onVote={onVote} />;
             case 'Planning the Place':
@@ -19,7 +20,7 @@ const ContextualPin = ({ currentStage, onStartPlan, activityPollData, placePollD
             case 'Event Confirmed':
                 return <EventConfirmedState eventData={eventData} />;
             default:
-                return <DefaultState onStartPlan={onStartPlan} />;
+                return <DefaultState onStartPoll={onStartPoll} />;
         }
     };
 

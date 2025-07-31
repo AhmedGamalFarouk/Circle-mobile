@@ -83,9 +83,8 @@ const SignUpScreen = () => {
         profileImage: '', // Placeholder for profile image
         coverImage: '', // Placeholder for cover image
         bio: '', // Placeholder for bio
-        followers: 0,
-        following: 0,
-        posts: 0,
+        connections: 0,
+        circles: 0,
       });
 
       Alert.alert("Success", "Account created successfully!");

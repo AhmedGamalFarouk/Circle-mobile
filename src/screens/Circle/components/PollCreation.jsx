@@ -1,18 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS, FONTS, RADII } from '../../../constants/constants';
 
 const PollCreation = ({ onLaunchPoll, pollType }) => {
     const [question, setQuestion] = useState('');
     const [options, setOptions] = useState(['', '']);
-    const [newOption, setNewOption] = useState('');
-
-    const handleAddOption = () => {
-        if (newOption.trim() !== '') {
-            setOptions([...options, newOption.trim()]);
-            setNewOption('');
-        }
-    };
+    const [deadline, setDeadline] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleOptionChange = (text, index) => {
         const newOptions = [...options];
@@ -20,13 +15,32 @@ const PollCreation = ({ onLaunchPoll, pollType }) => {
         setOptions(newOptions);
     };
 
+    const handleAddOption = () => {
+        setOptions([...options, '']);
+    };
+
     const handleLaunch = () => {
         const pollData = {
             question,
-            options: options.filter(opt => opt.trim() !== ''),
+            options: options.filter(opt => opt.trim() !== '').map(opt => ({ text: opt, votes: 0 })),
+            deadline: deadline.toISOString(), // Convert to ISO string for storage
+            status: 'active', // Set initial status to active
         };
         onLaunchPoll(pollData);
     };
+
+    const onDateChange = (event, selectedDate) => {
+        const currentDate = selectedDate || deadline;
+        setShowDatePicker(Platform.OS === 'ios');
+        setDeadline(currentDate);
+    };
+
+    const showDatepicker = () => {
+        setShowDatePicker(true);
+    };
+
+    const areAllOptionsFilled = options.every(opt => opt.trim() !== '');
+    const isLaunchDisabled = question.trim() === '' || options.filter(opt => opt.trim() !== '').length < 2 || !deadline;
 
     const addSuggestionAsOption = (suggestion) => {
         setOptions([...options, suggestion]);
@@ -46,7 +60,7 @@ const PollCreation = ({ onLaunchPoll, pollType }) => {
         <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
                 <Text style={styles.title}>
-                    {pollType === 'activity' ? "What should we do?" : "Where should we go?"}
+                    {pollType === 'activity' ? "Plan an Activity" : "Where should we go?"}
                 </Text>
                 <TextInput
                     style={styles.input}
@@ -60,18 +74,31 @@ const PollCreation = ({ onLaunchPoll, pollType }) => {
                     renderItem={renderOption}
                     keyExtractor={(item, index) => index.toString()}
                 />
-                <View style={styles.addOptionContainer}>
-                    <TextInput
-                        style={[styles.input, { flex: 1 }]}
-                        placeholder="Add an option"
-                        placeholderTextColor={COLORS.text}
-                        value={newOption}
-                        onChangeText={setNewOption}
+                <TouchableOpacity
+                    style={[styles.addButton, !areAllOptionsFilled && styles.disabledButton]}
+                    onPress={handleAddOption}
+                    disabled={!areAllOptionsFilled}
+                >
+                    <Text style={styles.addButtonText}>+</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={showDatepicker} style={styles.datePickerButton}>
+                    <Text style={styles.datePickerButtonText}>
+                        {`Deadline: ${deadline.toLocaleDateString()} ${deadline.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                    </Text>
+                </TouchableOpacity>
+
+                {showDatePicker && (
+                    <DateTimePicker
+                        testID="dateTimePicker"
+                        value={deadline}
+                        mode="datetime"
+                        is24Hour={true}
+                        display="default"
+                        onChange={onDateChange}
+                        minimumDate={new Date()}
                     />
-                    <TouchableOpacity style={styles.addButton} onPress={handleAddOption}>
-                        <Text style={styles.addButtonText}>+</Text>
-                    </TouchableOpacity>
-                </View>
+                )}
 
                 <View style={styles.aiSuggestions}>
                     <Text style={styles.aiTitle}>AI Suggestions ✨</Text>
@@ -85,7 +112,11 @@ const PollCreation = ({ onLaunchPoll, pollType }) => {
                     </View>
                 </View>
 
-                <TouchableOpacity style={styles.launchButton} onPress={handleLaunch}>
+                <TouchableOpacity
+                    style={[styles.launchButton, isLaunchDisabled && styles.disabledButton]}
+                    onPress={handleLaunch}
+                    disabled={isLaunchDisabled}
+                >
                     <Text style={styles.launchButtonText}>Launch Poll</Text>
                 </TouchableOpacity>
             </View>
@@ -122,22 +153,30 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         fontFamily: FONTS.body,
     },
-    addOptionContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 25,
-    },
     addButton: {
         backgroundColor: COLORS.primary,
         padding: 18,
         borderRadius: RADII.rounded,
-        marginLeft: 10,
+        alignItems: 'center',
+        marginBottom: 12,
     },
     addButtonText: {
         color: COLORS.darker,
         fontSize: 22,
         fontFamily: FONTS.body,
         fontWeight: 'bold',
+    },
+    datePickerButton: {
+        backgroundColor: COLORS.dark,
+        padding: 18,
+        borderRadius: RADII.rounded,
+        marginBottom: 25,
+        alignItems: 'center',
+    },
+    datePickerButtonText: {
+        color: COLORS.text,
+        fontFamily: FONTS.body,
+        fontSize: 16,
     },
     aiSuggestions: {
         marginBottom: 25,
@@ -175,6 +214,10 @@ const styles = StyleSheet.create({
         fontFamily: FONTS.body,
         fontWeight: 'bold',
         fontSize: 18,
+    },
+    disabledButton: {
+        backgroundColor: COLORS.dark,
+        opacity: 0.5,
     },
 });
 

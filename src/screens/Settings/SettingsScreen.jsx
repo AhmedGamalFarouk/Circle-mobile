@@ -24,7 +24,7 @@ const SettingsScreen = ({ navigation }) => {
                 <SettingsSection title="Privacy">
                     <ToggleOption
                         title="Private Profile"
-                        description="Only approved followers can see your posts"
+                        description="Only approved followers can see your profile"
                         value={isPrivateProfile}
                         onToggle={setIsPrivateProfile}
                     />

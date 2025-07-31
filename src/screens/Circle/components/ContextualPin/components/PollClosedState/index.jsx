@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
-const PollClosedState = ({ data, onPlanNextStep }) => {
+const PollClosedState = ({ data, onPollNextStep }) => {
     const { winningOption, nextStep } = data;
 
     const getButtonText = () => {
-        if (nextStep === 'plan_venue') {
-            return 'Plan the Venue';
+        if (nextStep === 'poll_venue') {
+            return 'Poll the Venue';
         }
         return 'Finalize Event & Get RSVPs';
     };
@@ -19,7 +19,7 @@ const PollClosedState = ({ data, onPlanNextStep }) => {
                 <Image source={{ uri: 'https://img.icons8.com/ios-filled/50/ffffff/crown.png' }} style={styles.crown} />
                 <Text style={styles.winningOption}>{winningOption.text}</Text>
             </View>
-            <TouchableOpacity style={styles.button} onPress={onPlanNextStep}>
+            <TouchableOpacity style={styles.button} onPress={onPollNextStep}>
                 <Text style={styles.buttonText}>{getButtonText()}</Text>
             </TouchableOpacity>
         </View>

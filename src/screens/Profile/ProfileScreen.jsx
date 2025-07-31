@@ -19,7 +19,7 @@ const ProfileScreen = ({ route, navigation }) => {
     const { userId } = route.params || {};
     const currentUser = auth.currentUser;
     const profileId = userId || currentUser?.uid;
-    const { profile } = useUserProfile(profileId);
+    const { profile, connectionsCount, circlesCount } = useUserProfile(profileId);
     const isOwnProfile = !userId || userId === currentUser?.uid;
 
     const [isFollowed, setIsFollowed] = useState(false);
@@ -194,7 +194,7 @@ const ProfileScreen = ({ route, navigation }) => {
                     onUserBioChange={setEditingUserBio}
                 />
 
-                <ProfileStats />
+                <ProfileStats connections={connectionsCount} circles={circlesCount} />
 
                 {isOwnProfile ? null : (
                     <ProfileActions

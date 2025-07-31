@@ -12,7 +12,7 @@ import useAuth from "../../../hooks/useAuth";
 import { COLORS, RADII } from "../../../constants/constants";
 import useUserProfile from "../../../hooks/useUserProfile";
 
-const ChatInputBar = ({ circleId }) => {
+const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
     const [message, setMessage] = useState("");
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
@@ -28,25 +28,45 @@ const ChatInputBar = ({ circleId }) => {
                 userName: userProfile.username,
                 imageurl: userProfile.profileImage,
             },
+            replyingTo: replyingTo ? {
+                messageId: replyingTo.id,
+                text: replyingTo.text,
+                userName: replyingTo.user.userName,
+            } : null,
         };
 
 
         try {
             await addDoc(collection(db, "circles", circleId, "chat"), messageData);
             setMessage("");
+            if (replyingTo) {
+                onCancelReply();
+            }
         } catch (error) {
             console.error("Error sending message: ", error);
         }
     };
 
     return (
-        <View style={styles.container}>
-            <TouchableOpacity style={styles.plusButton}>
-                <Text style={styles.plusText}>+</Text>
-            </TouchableOpacity>
-            <TextInput
-                style={styles.input}
-                placeholder="Type your message"
+        <View>
+            {replyingTo && (
+                <View style={styles.replyingToContainer}>
+                    <View style={styles.replyingToContent}>
+                        <Text style={styles.replyingToUser}>{replyingTo.user.userName}</Text>
+                        <Text style={styles.replyingToText} numberOfLines={1}>{replyingTo.text}</Text>
+                    </View>
+                    <TouchableOpacity onPress={onCancelReply}>
+                        <Text style={styles.cancelReply}>X</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+            <View style={styles.container}>
+                <TouchableOpacity style={styles.plusButton}>
+                    <Text style={styles.plusText}>+</Text>
+                </TouchableOpacity>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Type your message"
                 placeholderTextColor={COLORS.text}
                 value={message}
                 onChangeText={setMessage}
@@ -59,10 +79,35 @@ const ChatInputBar = ({ circleId }) => {
                 <Text style={styles.sendText}>Send</Text>
             </TouchableOpacity>
         </View>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
+    replyingToContainer: {
+        backgroundColor: COLORS.dark,
+        padding: 10,
+        borderTopLeftRadius: RADII.rounded,
+        borderTopRightRadius: RADII.rounded,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    replyingToContent: {
+        flex: 1,
+    },
+    replyingToUser: {
+        color: COLORS.primary,
+        fontWeight: 'bold',
+    },
+    replyingToText: {
+        color: COLORS.text,
+    },
+    cancelReply: {
+        color: COLORS.text,
+        fontSize: 18,
+        marginLeft: 10,
+    },
     container: {
         flexDirection: "row",
         alignItems: "center",

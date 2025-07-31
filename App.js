@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { COLORS } from './src/constants/constants';
@@ -32,20 +33,22 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName={user ? "Main" : "Landing"} screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Landing" component={LandingScreen} />
-        <Stack.Screen name="SignIn" component={SignInScreen} />
-        <Stack.Screen name="SignUp" component={SignUpScreen} />
-        <Stack.Screen name="Main" component={DynamicBottomTab} />
-        <Stack.Screen name="CreationForm" component={CreationForm} options={{ presentation: 'modal' }} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
-        <Stack.Screen name="InviteAndShare" component={InviteAndShare} options={{ presentation: 'modal' }} />
-        <Stack.Screen name="Circle" component={CircleScreen} />
-      </Stack.Navigator>
-      <StatusBar style="auto" />
-    </NavigationContainer>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+          <NavigationContainer>
+              <Stack.Navigator initialRouteName={user ? "Main" : "Landing"} screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="Landing" component={LandingScreen} />
+                  <Stack.Screen name="SignIn" component={SignInScreen} />
+                  <Stack.Screen name="SignUp" component={SignUpScreen} />
+                  <Stack.Screen name="Main" component={DynamicBottomTab} />
+                  <Stack.Screen name="CreationForm" component={CreationForm} options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="Home" component={HomeScreen} />
+                  <Stack.Screen name="Profile" component={ProfileScreen} />
+                  <Stack.Screen name="Settings" component={SettingsScreen} />
+                  <Stack.Screen name="InviteAndShare" component={InviteAndShare} options={{ presentation: 'modal' }} />
+                  <Stack.Screen name="Circle" component={CircleScreen} />
+              </Stack.Navigator>
+              <StatusBar style="auto" />
+          </NavigationContainer>
+      </GestureHandlerRootView>
   );
 }

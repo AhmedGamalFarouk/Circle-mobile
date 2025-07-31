@@ -26,16 +26,16 @@ const CreationForm = ({ navigation }) => {
             alert("Please log in to create a circle."); // Provide UI feedback
             return;
         }
-        // console.log("Attempting to create circle with data:", { // Removed temporary log
-        //     circleName,
-        //     description,
-        //     photoUrl,
-        //     circlePrivacy,
-        //     circleType,
-        //     expiresAt: circleType === 'flash' ? expiresAt : null,
-        //     interests,
-        //     createdBy: user.uid,
-        // });
+        console.log("Attempting to create circle with data:", { // Removed temporary log
+            circleName,
+            description,
+            photoUrl,
+            circlePrivacy,
+            circleType,
+            expiresAt: circleType === 'flash' ? expiresAt : null,
+            interests,
+            createdBy: user.uid,
+        });
         try {
             const circleRef = await addDoc(collection(db, 'circles'), {
                 circleName,
@@ -131,7 +131,7 @@ const CreationForm = ({ navigation }) => {
                     <Text style={styles.label}>DESCRIPTION (OPTIONAL)</Text>
                     <TextInput
                         style={[styles.input, styles.descriptionInput]}
-                        placeholder="What's this circle for? e.g., Planning our weekly hangouts."
+                        placeholder={"What's this circle for?\n e.g., Planning our weekly hangouts."}
                         placeholderTextColor={COLORS.text}
                         value={description}
                         onChangeText={setDescription}
@@ -183,18 +183,21 @@ const CreationForm = ({ navigation }) => {
                             onPress={() => setShowDatePicker(true)}
                         >
                             <Text style={{ color: expiresAt ? COLORS.light : COLORS.text }}>
-                                {expiresAt ? expiresAt.toLocaleDateString() + ' ' + expiresAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Select expiry date'}
+                                {expiresAt ? expiresAt.toLocaleDateString() : 'Select expiry date'}
                             </Text>
                         </TouchableOpacity>
                         {showDatePicker && (
                             <DateTimePicker
                                 value={expiresAt || new Date()}
-                                mode="datetime"
+                                mode="date"
                                 display="default"
+                                minimumDate={new Date()}
                                 onChange={(event, date) => {
-                                    setShowDatePicker(false);
-                                    if (date) {
+                                    if (event.type === 'set') {
                                         setExpiresAt(date);
+                                        setShowDatePicker(false); // Close the picker after a date is selected
+                                    } else if (event.type === 'dismissed') {
+                                        setShowDatePicker(false); // Close the picker if dismissed without selection
                                     }
                                 }}
                             />
@@ -231,8 +234,8 @@ const CreationForm = ({ navigation }) => {
                 <TouchableOpacity style={[styles.fullWidthButton, isCreateDisabled && styles.disabledFullWidthButton]} onPress={handleCreate} disabled={isCreateDisabled}>
                     <Text style={styles.fullWidthButtonText}>Create Circle</Text>
                 </TouchableOpacity>
-                
-            
+
+
             </ScrollView>
         </SafeAreaView>
     );

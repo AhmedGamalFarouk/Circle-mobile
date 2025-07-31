@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -23,10 +23,11 @@ const CircleScreen = () => {
     console.log("CircleScreen circleId:", circleId);
     const { user } = useAuth();
     const [circle, setCircle] = useState(null);
-    const [plan, setPlan] = useState(null);
+    const [poll, setPoll] = useState(null);
     const [currentStage, setCurrentStage] = useState(PLANNING_STAGES.IDLE);
     const [isPollModalVisible, setPollModalVisible] = useState(false);
     const [pollType, setPollType] = useState(null);
+    const [replyingTo, setReplyingTo] = useState(null);
 
     useEffect(() => {
         const fetchCircleData = async () => {
@@ -42,14 +43,14 @@ const CircleScreen = () => {
 
         fetchCircleData();
 
-        const planQuery = collection(db, 'circles', circleId, 'plans');
-        const unsubscribe = onSnapshot(planQuery, (snapshot) => {
+        const pollQuery = collection(db, 'circles', circleId, 'polls');
+        const unsubscribe = onSnapshot(pollQuery, (snapshot) => {
             if (!snapshot.empty) {
-                const currentPlan = snapshot.docs[0].data();
-                setPlan({ id: snapshot.docs[0].id, ...currentPlan });
-                setCurrentStage(currentPlan.stage);
+                const currentPoll = snapshot.docs[0].data();
+                setPoll({ id: snapshot.docs[0].id, ...currentPoll });
+                setCurrentStage(currentPoll.stage);
             } else {
-                setPlan(null);
+                setPoll(null);
                 setCurrentStage(PLANNING_STAGES.IDLE);
             }
         });
@@ -57,22 +58,22 @@ const CircleScreen = () => {
         return () => unsubscribe();
     }, [circleId]);
 
-    const handleStartPlan = () => {
+    const handleStartPoll = () => {
         setPollType('activity');
         setPollModalVisible(true);
     };
 
     const handleLaunchPoll = async (pollData) => {
         setPollModalVisible(false);
-        const planRef = collection(db, 'circles', circleId, 'plans');
+        const pollRef = collection(db, 'circles', circleId, 'polls');
         if (pollType === 'activity') {
-            await addDoc(planRef, {
+            await addDoc(pollRef, {
                 stage: PLANNING_STAGES.PLANNING_ACTIVITY,
                 activityPoll: { ...pollData, votes: {} },
                 createdAt: serverTimestamp(),
             });
         } else if (pollType === 'place') {
-            await updateDoc(doc(db, 'circles', circleId, 'plans', plan.id), {
+            await updateDoc(doc(db, 'circles', circleId, 'polls', poll.id), {
                 stage: PLANNING_STAGES.PLANNING_PLACE,
                 placePoll: { ...pollData, votes: {} },
             });
@@ -80,30 +81,30 @@ const CircleScreen = () => {
     };
 
     const handleVote = async (option) => {
-        const planRef = doc(db, 'circles', circleId, 'plans', plan.id);
-        const newVotes = { ...plan[pollType + 'Poll'].votes };
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+        const newVotes = { ...poll[pollType + 'Poll'].votes };
         newVotes[user.uid] = option;
 
         if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
-            await updateDoc(planRef, { 'activityPoll.votes': newVotes });
+            await updateDoc(pollRef, { 'activityPoll.votes': newVotes });
         } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
-            await updateDoc(planRef, { 'placePoll.votes': newVotes });
+            await updateDoc(pollRef, { 'placePoll.votes': newVotes });
         }
     };
 
     const handleFinishVoting = async () => {
-        const planRef = doc(db, 'circles', circleId, 'plans', plan.id);
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
         if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
-            const winningOption = getWinningOption(plan.activityPoll.votes);
-            await updateDoc(planRef, {
+            const winningOption = getWinningOption(poll.activityPoll.votes);
+            await updateDoc(pollRef, {
                 stage: PLANNING_STAGES.PLANNING_PLACE,
                 winningActivity: winningOption,
             });
             setPollType('place');
             setPollModalVisible(true);
         } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
-            const winningOption = getWinningOption(plan.placePoll.votes);
-            await updateDoc(planRef, {
+            const winningOption = getWinningOption(poll.placePoll.votes);
+            await updateDoc(pollRef, {
                 stage: PLANNING_STAGES.EVENT_CONFIRMED,
                 winningPlace: winningOption,
             });
@@ -120,33 +121,45 @@ const CircleScreen = () => {
     };
 
     const handleRsvp = async (status) => {
-        const planRef = doc(db, 'circles', circleId, 'plans', plan.id);
-        const newRsvps = { ...plan.rsvps };
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+        const newRsvps = { ...poll.rsvps };
         newRsvps[user.uid] = status;
-        await updateDoc(planRef, { rsvps: newRsvps });
+        await updateDoc(pollRef, { rsvps: newRsvps });
+    };
+
+    const handleReply = (message) => {
+        setReplyingTo(message);
+    };
+
+    const handleCancelReply = () => {
+        setReplyingTo(null);
     };
 
     return (
-        <View style={styles.container}>
+        <KeyboardAvoidingView
+            style={styles.container}
+            behavior={Platform.OS === "ios" ? "padding" : "padding"} // Change Android behavior to "padding"
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 90} // Add a small offset for Android
+        >
             <ContextualPin
                 currentStage={currentStage}
-                onStartPlan={handleStartPlan}
-                activityPollData={plan?.activityPoll}
-                placePollData={plan?.placePoll}
+                onStartPoll={handleStartPoll}
+                activityPollData={poll?.activityPoll}
+                placePollData={poll?.placePoll}
                 onFinishVoting={handleFinishVoting}
                 onVote={handleVote}
                 eventData={{
-                    winningActivity: plan?.winningActivity,
-                    winningPlace: plan?.winningPlace,
-                    rsvps: plan?.rsvps || {},
-                    currentUser: { id: user?.uid, rsvp: plan?.rsvps?.[user?.uid] },
+                    winningActivity: poll?.winningActivity,
+                    winningPlace: poll?.winningPlace,
+                    rsvps: poll?.rsvps || {},
+                    currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
                 }}
                 onRsvp={handleRsvp}
             />
             <View style={styles.chatFeedContainer}>
-                <ChatFeed circleId={circleId} />
+                <ChatFeed circleId={circleId} onReply={handleReply} />
             </View>
-            <ChatInputBar circleId={circleId} />
+            <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} />
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -158,7 +171,7 @@ const CircleScreen = () => {
                     pollType={pollType}
                 />
             </Modal>
-        </View>
+        </KeyboardAvoidingView>
     );
 };
 
