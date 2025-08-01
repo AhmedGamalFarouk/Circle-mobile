@@ -67,18 +67,18 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Type your message"
-                placeholderTextColor={COLORS.text}
-                value={message}
-                onChangeText={setMessage}
-            />
-            <TouchableOpacity
-                style={[styles.sendButton, !message && styles.disabledButton]}
-                disabled={!message}
-                onPress={handleSend}
-            >
-                <Text style={styles.sendText}>Send</Text>
-            </TouchableOpacity>
-        </View>
+                    placeholderTextColor={COLORS.text}
+                    value={message}
+                    onChangeText={setMessage}
+                />
+                <TouchableOpacity
+                    style={[styles.sendButton, !message && styles.disabledButton]}
+                    disabled={!message}
+                    onPress={handleSend}
+                >
+                    <Text style={styles.sendText}>Send</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 };

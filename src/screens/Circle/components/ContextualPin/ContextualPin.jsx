@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, Dimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, Dimensions, Pressable, Text } from 'react-native';
 import DefaultState from './components/DefaultState';
 import ActivePollState from './components/ActivePollState';
 import PollClosedState from './components/PollClosedState';
@@ -7,7 +7,7 @@ import EventConfirmedState from './components/EventConfirmedState';
 
 const { width } = Dimensions.get('window');
 
-const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollData, onFinishVoting, onVote, eventData }) => {
+const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollData, onFinishVoting, onVote, eventData, onDismiss }) => {
     console.log('[ContextualPin] Current poll state:', currentStage);
     const renderContent = () => {
         switch (currentStage) {
@@ -26,6 +26,9 @@ const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollD
 
     return (
         <View style={styles.stateContainer}>
+            <Pressable style={styles.dismissButton} onPress={onDismiss}>
+                <Text style={styles.dismissIcon}>^</Text>
+            </Pressable>
             {renderContent()}
         </View>
     );
@@ -39,6 +42,16 @@ const styles = StyleSheet.create({
         width: width,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    dismissButton: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        zIndex: 1,
+    },
+    dismissIcon: {
+        fontSize: 20,
+        color: 'gray',
     },
 });
 

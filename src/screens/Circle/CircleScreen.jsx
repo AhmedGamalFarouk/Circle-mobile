@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform, LayoutAnimation, Pressable, Text } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -28,6 +28,7 @@ const CircleScreen = () => {
     const [isPollModalVisible, setPollModalVisible] = useState(false);
     const [pollType, setPollType] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
+    const [isPinVisible, setPinVisible] = useState(true);
 
     useEffect(() => {
         const fetchCircleData = async () => {
@@ -135,27 +136,61 @@ const CircleScreen = () => {
         setReplyingTo(null);
     };
 
+    const handleDismiss = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setPinVisible(false);
+    };
+
+    const handleShow = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setPinVisible(true);
+    };
+
+    const getShowPlanButtonText = () => {
+        if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY || currentStage === PLANNING_STAGES.PLANNING_PLACE) {
+            return "View Poll";
+        }
+        if (currentStage === PLANNING_STAGES.EVENT_CONFIRMED) {
+            return "View Event Details";
+        }
+        if (currentStage === PLANNING_STAGES.IDLE) {
+            return "Show Planning";
+        }
+        return null;
+    };
+
     return (
         <KeyboardAvoidingView
             style={styles.container}
             behavior={Platform.OS === "ios" ? "padding" : "padding"} // Change Android behavior to "padding"
             keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 90} // Add a small offset for Android
         >
-            <ContextualPin
-                currentStage={currentStage}
-                onStartPoll={handleStartPoll}
-                activityPollData={poll?.activityPoll}
-                placePollData={poll?.placePoll}
-                onFinishVoting={handleFinishVoting}
-                onVote={handleVote}
-                eventData={{
-                    winningActivity: poll?.winningActivity,
-                    winningPlace: poll?.winningPlace,
-                    rsvps: poll?.rsvps || {},
-                    currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
-                }}
-                onRsvp={handleRsvp}
-            />
+            {isPinVisible ? (
+                <ContextualPin
+                    currentStage={currentStage}
+                    onStartPoll={handleStartPoll}
+                    activityPollData={poll?.activityPoll}
+                    placePollData={poll?.placePoll}
+                    onFinishVoting={handleFinishVoting}
+                    onVote={handleVote}
+                    eventData={{
+                        winningActivity: poll?.winningActivity,
+                        winningPlace: poll?.winningPlace,
+                        rsvps: poll?.rsvps || {},
+                        currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
+                    }}
+                    onRsvp={handleRsvp}
+                    onDismiss={handleDismiss}
+                />
+            ) : (
+                getShowPlanButtonText() && (
+                    <View style={styles.showPlanButtonContainer}>
+                        <Pressable style={styles.showPlanButton} onPress={handleShow}>
+                            <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
+                        </Pressable>
+                    </View>
+                )
+            )}
             <View style={styles.chatFeedContainer}>
                 <ChatFeed circleId={circleId} onReply={handleReply} />
             </View>
@@ -182,6 +217,21 @@ const styles = StyleSheet.create({
     },
     chatFeedContainer: {
         flex: 1,
+    },
+    showPlanButtonContainer: {
+        padding: 10,
+        backgroundColor: COLORS.dark,
+    },
+    showPlanButton: {
+        backgroundColor: COLORS.primary,
+        borderRadius: 20,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        alignSelf: 'center',
+    },
+    showPlanButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
 });
 
