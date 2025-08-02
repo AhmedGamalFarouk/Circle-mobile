@@ -1,66 +1,256 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS } from '../../../constants/constants';
+import { COLORS, FONTS, RADII, SHADOWS } from '../../../constants/constants';
 
-const ProfileStats = ({ connections, circles, location = "Obour, Cairo" }) => {
+const ProfileStats = ({
+    connections,
+    circles,
+    location = "Obour, Cairo",
+    shimmerAnimation,
+    loading,
+    onConnectionsPress,
+    onCirclesPress
+}) => {
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    const isLandscape = screenWidth > screenHeight;
+    const dynamicStyles = getResponsiveStyles(isLandscape);
+
+    if (loading) {
+        const shimmerTranslate = shimmerAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-screenWidth, screenWidth],
+        });
+
+        return (
+            <View style={[styles.container, dynamicStyles.container]}>
+                <View style={styles.statsContainer}>
+                    {[1, 2].map((item) => (
+                        <View key={item} style={styles.statItem}>
+                            <View style={[styles.statNumberSkeleton, dynamicStyles.statNumberSkeleton]}>
+                                <Animated.View
+                                    style={[
+                                        styles.shimmerOverlay,
+                                        { transform: [{ translateX: shimmerTranslate }] },
+                                    ]}
+                                />
+                            </View>
+                            <View style={[styles.statLabelSkeleton, dynamicStyles.statLabelSkeleton]}>
+                                <Animated.View
+                                    style={[
+                                        styles.shimmerOverlay,
+                                        { transform: [{ translateX: shimmerTranslate }] },
+                                    ]}
+                                />
+                            </View>
+                        </View>
+                    ))}
+                </View>
+                <View style={[styles.locationSkeleton, dynamicStyles.locationSkeleton]}>
+                    <Animated.View
+                        style={[
+                            styles.shimmerOverlay,
+                            { transform: [{ translateX: shimmerTranslate }] },
+                        ]}
+                    />
+                </View>
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, dynamicStyles.container]}>
+            {/* Enhanced Stats Container */}
             <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{connections}</Text>
-                    <Text style={styles.statLabel}>Connections</Text>
-                </View>
-                <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{circles}</Text>
-                    <Text style={styles.statLabel}>Circles</Text>
-                </View>
+                <TouchableOpacity
+                    style={[styles.statItem, styles.glassmorphicStat]}
+                    onPress={onConnectionsPress}
+                    activeOpacity={0.8}
+                >
+                    <Text style={[styles.statNumber, dynamicStyles.statNumber]}>
+                        {connections || 0}
+                    </Text>
+                    <Text style={[styles.statLabel, dynamicStyles.statLabel]}>
+                        Connections
+                    </Text>
+                    <View style={styles.statIndicator} />
+                </TouchableOpacity>
 
+                <View style={styles.statDivider} />
+
+                <TouchableOpacity
+                    style={[styles.statItem, styles.glassmorphicStat]}
+                    onPress={onCirclesPress}
+                    activeOpacity={0.8}
+                >
+                    <Text style={[styles.statNumber, dynamicStyles.statNumber]}>
+                        {circles || 0}
+                    </Text>
+                    <Text style={[styles.statLabel, dynamicStyles.statLabel]}>
+                        Circles
+                    </Text>
+                    <View style={styles.statIndicator} />
+                </TouchableOpacity>
             </View>
-            <View style={styles.locationContainer}>
-                <MaterialIcons name="location-on" size={18} color={COLORS.text} style={styles.locationIcon} />
-                <Text style={styles.locationText}>{location}</Text>
+
+            {/* Enhanced Location Container */}
+            <View style={[styles.locationContainer, dynamicStyles.locationContainer]}>
+                <View style={styles.locationIconContainer}>
+                    <MaterialIcons
+                        name="location-on"
+                        size={isLandscape ? 16 : 18}
+                        color={COLORS.primary}
+                    />
+                </View>
+                <Text style={[styles.locationText, dynamicStyles.locationText]}>
+                    {location}
+                </Text>
             </View>
+
+
         </View>
     );
 };
 
+const getResponsiveStyles = (isLandscape) => ({
+    container: {
+        marginBottom: isLandscape ? 15 : 20,
+    },
+    statNumber: {
+        fontSize: isLandscape ? 18 : 22,
+    },
+    statLabel: {
+        fontSize: isLandscape ? 10 : 11,
+    },
+    locationContainer: {
+        marginBottom: isLandscape ? 8 : 12,
+    },
+    locationText: {
+        fontSize: isLandscape ? 14 : 16,
+    },
+
+    statNumberSkeleton: {
+        width: isLandscape ? 35 : 40,
+        height: isLandscape ? 20 : 24,
+    },
+    statLabelSkeleton: {
+        width: isLandscape ? 50 : 60,
+        height: isLandscape ? 14 : 16,
+    },
+    locationSkeleton: {
+        width: isLandscape ? 100 : 120,
+        height: isLandscape ? 18 : 20,
+    },
+});
+
 const styles = StyleSheet.create({
     container: {
         width: '100%',
-        marginBottom: 20,
+        paddingHorizontal: 20,
+        alignItems: 'center',
     },
     statsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'center',
+        alignItems: 'center',
         width: '100%',
-        marginBottom: 15,
+        marginBottom: 20,
+        paddingHorizontal: 20,
     },
     statItem: {
         alignItems: 'center',
+        flex: 1,
+        paddingVertical: 16,
+        paddingHorizontal: 20,
+        position: 'relative',
+    },
+    glassmorphicStat: {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: RADII.rounded,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        marginHorizontal: 8,
     },
     statNumber: {
         color: COLORS.light,
-        fontSize: 22,
-        fontWeight: 'bold',
+        fontFamily: FONTS.heading,
+        fontWeight: '700',
+        marginBottom: 4,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     statLabel: {
         color: COLORS.text,
-        fontSize: 14,
+        fontFamily: FONTS.body,
+        fontWeight: '500',
+        textTransform: 'uppercase',
+        letterSpacing: 0.2,
+        opacity: 0.8,
+        fontSize: 11,
+    },
+    statIndicator: {
+        position: 'absolute',
+        bottom: 0,
+        alignSelf: 'center',
+        width: 30,
+        height: 2,
+        backgroundColor: COLORS.primary,
+        borderRadius: 1,
+    },
+    statDivider: {
+        width: 1,
+        height: 40,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        marginHorizontal: 4,
     },
     locationContainer: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingHorizontal: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: RADII.pill,
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
-    locationIcon: {
+    locationIconContainer: {
         marginRight: 8,
+        padding: 2,
     },
     locationText: {
         color: COLORS.text,
-        fontSize: 16,
+        fontFamily: FONTS.body,
         fontWeight: '500',
+        opacity: 0.9,
+    },
+
+    // Skeleton styles
+    statNumberSkeleton: {
+        backgroundColor: COLORS.dark,
+        borderRadius: RADII.small,
+        marginBottom: 5,
+        overflow: 'hidden',
+    },
+    statLabelSkeleton: {
+        backgroundColor: COLORS.dark,
+        borderRadius: RADII.small,
+        overflow: 'hidden',
+    },
+    locationSkeleton: {
+        backgroundColor: COLORS.dark,
+        borderRadius: RADII.pill,
+        overflow: 'hidden',
+    },
+    shimmerOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        transform: [{ skewX: '-20deg' }],
     },
 });
 

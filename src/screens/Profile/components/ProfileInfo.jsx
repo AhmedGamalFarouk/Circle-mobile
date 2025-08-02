@@ -1,83 +1,195 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { COLORS } from '../../../constants/constants';
+import { View, Text, TextInput, StyleSheet, Animated, useWindowDimensions } from 'react-native';
+import { COLORS, FONTS, RADII } from '../../../constants/constants';
 
 const ProfileInfo = ({
     userName,
     userBio,
     isEditing,
     onUserNameChange,
-    onUserBioChange
+    onUserBioChange,
+    shimmerAnimation,
+    loading
 }) => {
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    const isLandscape = screenWidth > screenHeight;
+    const dynamicStyles = getResponsiveStyles(isLandscape);
+
+    if (loading) {
+        const shimmerTranslate = shimmerAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-screenWidth, screenWidth],
+        });
+
+        return (
+            <View style={[styles.profileInfo, dynamicStyles.profileInfo]}>
+                <View style={[styles.userNameSkeleton, dynamicStyles.userNameSkeleton]}>
+                    <Animated.View
+                        style={[
+                            styles.shimmerOverlay,
+                            { transform: [{ translateX: shimmerTranslate }] },
+                        ]}
+                    />
+                </View>
+                <View style={[styles.userBioSkeleton, dynamicStyles.userBioSkeleton]}>
+                    <Animated.View
+                        style={[
+                            styles.shimmerOverlay,
+                            { transform: [{ translateX: shimmerTranslate }] },
+                        ]}
+                    />
+                </View>
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.profileInfo}>
+        <View style={[styles.profileInfo, dynamicStyles.profileInfo]}>
+            {/* Enhanced Username Display */}
             {isEditing ? (
                 <TextInput
-                    style={styles.userNameInput}
+                    style={[styles.userNameInput, dynamicStyles.userNameInput]}
                     value={userName}
                     onChangeText={onUserNameChange}
                     autoFocus
+                    placeholder="Enter your name"
+                    placeholderTextColor={COLORS.text}
+                    selectionColor={COLORS.primary}
                 />
             ) : (
-                <Text style={styles.userName}>{userName}</Text>
+                <Text style={[styles.userName, dynamicStyles.userName]} numberOfLines={1}>
+                    {userName || 'Unknown User'}
+                </Text>
             )}
+
+            {/* Enhanced Bio Display */}
             {isEditing ? (
                 <TextInput
-                    style={styles.userBioInput}
+                    style={[styles.userBioInput, dynamicStyles.userBioInput]}
                     value={userBio}
                     onChangeText={onUserBioChange}
                     multiline
                     numberOfLines={3}
+                    placeholder="Tell us about yourself..."
+                    placeholderTextColor={COLORS.text}
+                    selectionColor={COLORS.primary}
+                    textAlignVertical="top"
                 />
             ) : (
-                <Text style={styles.userBio} numberOfLines={3} ellipsizeMode='tail'>
-                    {userBio}
+                <Text style={[styles.userBio, dynamicStyles.userBio]} numberOfLines={3} ellipsizeMode='tail'>
+                    {userBio || 'No bio available'}
                 </Text>
             )}
+
+
         </View>
     );
 };
+
+const getResponsiveStyles = (isLandscape) => ({
+    profileInfo: {
+        paddingTop: isLandscape ? 50 : 60,
+    },
+    userName: {
+        fontSize: isLandscape ? 24 : 28,
+    },
+    userNameInput: {
+        fontSize: isLandscape ? 24 : 28,
+    },
+    userBio: {
+        fontSize: isLandscape ? 14 : 16,
+        height: isLandscape ? 50 : 60,
+    },
+    userBioInput: {
+        fontSize: isLandscape ? 14 : 16,
+        height: isLandscape ? 50 : 60,
+    },
+    userNameSkeleton: {
+        width: isLandscape ? 120 : 150,
+        height: isLandscape ? 28 : 32,
+    },
+    userBioSkeleton: {
+        width: isLandscape ? 160 : 200,
+        height: isLandscape ? 50 : 60,
+    },
+
+});
 
 const styles = StyleSheet.create({
     profileInfo: {
         alignItems: 'center',
         marginBottom: 20,
-        paddingTop: 60, // Reduced for better consistency
+        paddingHorizontal: 20,
+        width: '100%',
     },
     userName: {
         color: COLORS.light,
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 5,
-        height: 40, // Fixed height for consistency
+        fontFamily: FONTS.heading,
+        fontWeight: '700',
+        marginBottom: 8,
+        textAlign: 'center',
+        letterSpacing: 0.5,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     userNameInput: {
         color: COLORS.light,
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 5,
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.light,
-        width: '80%',
+        fontFamily: FONTS.heading,
+        fontWeight: '700',
+        marginBottom: 8,
+        borderBottomWidth: 2,
+        borderBottomColor: COLORS.primary,
+        width: '90%',
         textAlign: 'center',
-        paddingVertical: 5,
-        height: 40, // Match display height
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: RADII.small,
     },
     userBio: {
         color: COLORS.text,
-        fontSize: 16,
+        fontFamily: FONTS.body,
         textAlign: 'center',
-        height: 60, // Fixed height for consistency
+        lineHeight: 22,
+        marginBottom: 12,
+        paddingHorizontal: 16,
+        opacity: 0.9,
     },
     userBioInput: {
         color: COLORS.text,
-        fontSize: 16,
+        fontFamily: FONTS.body,
         textAlign: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: COLORS.text,
-        width: '80%',
-        paddingVertical: 8, // Increased for better alignment
-        height: 60, // Match display height
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+        borderRadius: RADII.rounded,
+        width: '90%',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        lineHeight: 20,
+    },
+
+    // Skeleton styles
+    userNameSkeleton: {
+        backgroundColor: COLORS.dark,
+        borderRadius: RADII.small,
+        marginBottom: 10,
+        overflow: 'hidden',
+    },
+    userBioSkeleton: {
+        backgroundColor: COLORS.dark,
+        borderRadius: RADII.small,
+        overflow: 'hidden',
+    },
+    shimmerOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        transform: [{ skewX: '-20deg' }],
     },
 });
 

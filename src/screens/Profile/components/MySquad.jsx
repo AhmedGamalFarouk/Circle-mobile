@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { COLORS } from '../../../constants/constants';
 
-const MySquad = ({ friends = [] }) => {
+const MySquad = ({ friends = [], shimmerAnimation, loading }) => {
     // Mock data for demonstration - you can replace this with actual friend data
     const mockFriends = [
         { id: 1, name: 'Sarah', avatar: 'https://picsum.photos/60?random=10' },

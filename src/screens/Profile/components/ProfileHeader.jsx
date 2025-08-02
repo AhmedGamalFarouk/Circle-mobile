@@ -1,30 +1,121 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated, useWindowDimensions, Platform, Vibration } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../../../constants/constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS, RADII, SHADOWS } from '../../../constants/constants';
 
-const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit }) => {
+const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, buttonScale }) => {
+    const { width, height } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
+    const isLandscape = width > height;
+
+    const handleBackPress = () => {
+        // Haptic feedback
+        if (Platform.OS === 'ios') {
+            Vibration.vibrate(10);
+        } else {
+            Vibration.vibrate(30);
+        }
+        navigation.goBack();
+    };
+
+    const handleSettingsPress = () => {
+        // Haptic feedback
+        if (Platform.OS === 'ios') {
+            Vibration.vibrate(10);
+        } else {
+            Vibration.vibrate(30);
+        }
+        navigation.navigate('Settings');
+    };
+
+    const handleEditSavePress = () => {
+        // Enhanced haptic feedback for save/edit
+        if (Platform.OS === 'ios') {
+            Vibration.vibrate(isEditing ? [10, 50, 10] : 10);
+        } else {
+            Vibration.vibrate(isEditing ? 100 : 30);
+        }
+        isEditing ? onSave() : onEdit();
+    };
+
+    const styles = getStyles(insets, isLandscape);
+
     return (
         <View style={styles.headerIcons}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-                <Ionicons name="arrow-back" size={24} color={COLORS.light} />
-            </TouchableOpacity>
+            {/* Enhanced Back Button */}
+            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                <TouchableOpacity
+                    onPress={handleBackPress}
+                    style={styles.iconButton}
+                    activeOpacity={0.7}
+                >
+                    <View style={styles.glassmorphicIcon}>
+                        <Ionicons
+                            name="arrow-back"
+                            size={isLandscape ? 20 : 24}
+                            color={COLORS.light}
+                        />
+                    </View>
+                </TouchableOpacity>
+            </Animated.View>
+
+            {/* Enhanced Right Icons */}
             <View style={styles.rightIcons}>
                 {isOwnProfile && (
                     <>
-                        <TouchableOpacity
-                            onPress={() => navigation.navigate('Settings')}
-                            style={styles.iconButton}
-                        >
-                            <Ionicons name="settings-outline" size={24} color={COLORS.light} />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={isEditing ? onSave : onEdit}>
-                            <Ionicons
-                                name={isEditing ? "checkmark-circle-outline" : "create-outline"}
-                                size={24}
-                                color={COLORS.light}
-                            />
-                        </TouchableOpacity>
+                        {/* Settings Button */}
+                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                            <TouchableOpacity
+                                onPress={handleSettingsPress}
+                                style={styles.iconButton}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.glassmorphicIcon}>
+                                    <Ionicons
+                                        name="settings-outline"
+                                        size={isLandscape ? 20 : 24}
+                                        color={COLORS.light}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
+
+                        {/* Edit/Save Button */}
+                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                            <TouchableOpacity
+                                onPress={handleEditSavePress}
+                                style={styles.iconButton}
+                                activeOpacity={0.7}
+                            >
+                                <View style={[
+                                    styles.glassmorphicIcon,
+                                    isEditing && styles.saveButtonActive
+                                ]}>
+                                    <Ionicons
+                                        name={isEditing ? "checkmark-circle-outline" : "create-outline"}
+                                        size={isLandscape ? 20 : 24}
+                                        color={isEditing ? COLORS.accent : COLORS.light}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
+
+                        {/* Share Button */}
+                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                            <TouchableOpacity
+                                style={styles.iconButton}
+                                activeOpacity={0.7}
+                            >
+                                <View style={styles.glassmorphicIcon}>
+                                    <Ionicons
+                                        name="share-outline"
+                                        size={isLandscape ? 20 : 24}
+                                        color={COLORS.light}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
                     </>
                 )}
             </View>
@@ -32,22 +123,41 @@ const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit }) 
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (insets, isLandscape) => StyleSheet.create({
     headerIcons: {
         position: 'absolute',
-        top: 40,
         left: 20,
         right: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        zIndex: 1,
+        alignItems: 'center',
+        zIndex: 100,
     },
     rightIcons: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     iconButton: {
-        marginRight: 15,
+        marginLeft: isLandscape ? 10 : 12,
+    },
+    glassmorphicIcon: {
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: RADII.circle,
+        padding: isLandscape ? 8 : 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        ...SHADOWS.card,
+        // Enhanced glassmorphism effect
+        backdropFilter: 'blur(10px)',
+    },
+    saveButtonActive: {
+        backgroundColor: 'rgba(0, 201, 177, 0.2)',
+        borderColor: COLORS.accent,
+        shadowColor: COLORS.accent,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
     },
 });
 

@@ -9,6 +9,7 @@ import ChatInputBar from './components/ChatInputBar';
 import { COLORS } from '../../constants/constants';
 import PollCreation from './components/PollCreation';
 import useAuth from '../../hooks/useAuth';
+import useUserProfile from '../../hooks/useUserProfile';
 
 const PLANNING_STAGES = {
     IDLE: 'Idle',
@@ -22,6 +23,7 @@ const CircleScreen = () => {
     const { circleId } = route.params;
     console.log("CircleScreen circleId:", circleId);
     const { user } = useAuth();
+    const { profile: userProfile } = useUserProfile(user?.uid);
     const [circle, setCircle] = useState(null);
     const [poll, setPoll] = useState(null);
     const [currentStage, setCurrentStage] = useState(PLANNING_STAGES.IDLE);
@@ -46,14 +48,31 @@ const CircleScreen = () => {
 
         const pollQuery = collection(db, 'circles', circleId, 'polls');
         const unsubscribe = onSnapshot(pollQuery, (snapshot) => {
-            if (!snapshot.empty) {
-                const currentPoll = snapshot.docs[0].data();
-                setPoll({ id: snapshot.docs[0].id, ...currentPoll });
+            console.log('Poll snapshot received, docs count:', snapshot.docs.length);
+
+            // Filter out archived polls
+            const activePoll = snapshot.docs.find(doc => !doc.data().archived);
+            if (activePoll) {
+                const currentPoll = activePoll.data();
+                console.log('Active poll found:', {
+                    id: activePoll.id,
+                    stage: currentPoll.stage,
+                    hasActivityPoll: !!currentPoll.activityPoll,
+                    hasPlacePoll: !!currentPoll.placePoll,
+                    winningActivity: currentPoll.winningActivity,
+                    winningPlace: currentPoll.winningPlace,
+                    rsvpCount: Object.keys(currentPoll.rsvps || {}).length
+                });
+
+                setPoll({ id: activePoll.id, ...currentPoll });
                 setCurrentStage(currentPoll.stage);
             } else {
+                console.log('No active poll found, setting to IDLE');
                 setPoll(null);
                 setCurrentStage(PLANNING_STAGES.IDLE);
             }
+        }, (error) => {
+            console.error('Error listening to polls:', error);
         });
 
         return () => unsubscribe();
@@ -66,66 +85,184 @@ const CircleScreen = () => {
 
     const handleLaunchPoll = async (pollData) => {
         setPollModalVisible(false);
-        const pollRef = collection(db, 'circles', circleId, 'polls');
-        if (pollType === 'activity') {
-            await addDoc(pollRef, {
-                stage: PLANNING_STAGES.PLANNING_ACTIVITY,
-                activityPoll: { ...pollData, votes: {} },
-                createdAt: serverTimestamp(),
-            });
-        } else if (pollType === 'place') {
-            await updateDoc(doc(db, 'circles', circleId, 'polls', poll.id), {
-                stage: PLANNING_STAGES.PLANNING_PLACE,
-                placePoll: { ...pollData, votes: {} },
-            });
+
+        try {
+            if (pollType === 'activity') {
+                const pollRef = collection(db, 'circles', circleId, 'polls');
+                await addDoc(pollRef, {
+                    stage: PLANNING_STAGES.PLANNING_ACTIVITY,
+                    activityPoll: { ...pollData, votes: {} },
+                    createdAt: serverTimestamp(),
+                });
+
+                // Add system message to chat about activity poll start
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `🗳️ Activity poll started: "${pollData.question}"`,
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log('Activity poll created successfully');
+            } else if (pollType === 'place') {
+                const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+                await updateDoc(pollRef, {
+                    stage: PLANNING_STAGES.PLANNING_PLACE,
+                    placePoll: { ...pollData, votes: {} },
+                });
+
+                // Add system message to chat about place poll start
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `📍 Place poll started: "${pollData.question}"`,
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log('Place poll created successfully');
+            }
+        } catch (error) {
+            console.error('Error launching poll:', error);
         }
     };
 
     const handleVote = async (option) => {
-        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
-        const newVotes = { ...poll[pollType + 'Poll'].votes };
-        newVotes[user.uid] = option;
+        if (!poll?.id || !userProfile) return;
 
-        if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
-            await updateDoc(pollRef, { 'activityPoll.votes': newVotes });
-        } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
-            await updateDoc(pollRef, { 'placePoll.votes': newVotes });
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+
+        try {
+            if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
+                const newVotes = { ...poll.activityPoll.votes };
+                newVotes[user.uid] = option;
+                await updateDoc(pollRef, { 'activityPoll.votes': newVotes });
+                console.log(`Activity vote cast: ${userProfile?.username || 'Unknown user'} voted for ${option}`);
+            } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
+                const newVotes = { ...poll.placePoll.votes };
+                newVotes[user.uid] = option;
+                await updateDoc(pollRef, { 'placePoll.votes': newVotes });
+                console.log(`Place vote cast: ${userProfile?.username || 'Unknown user'} voted for ${option}`);
+            }
+        } catch (error) {
+            console.error('Error casting vote:', error);
         }
     };
 
     const handleFinishVoting = async () => {
+        if (!poll?.id) return;
+
         const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
-        if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
-            const winningOption = getWinningOption(poll.activityPoll.votes);
-            await updateDoc(pollRef, {
-                stage: PLANNING_STAGES.PLANNING_PLACE,
-                winningActivity: winningOption,
-            });
-            setPollType('place');
-            setPollModalVisible(true);
-        } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
-            const winningOption = getWinningOption(poll.placePoll.votes);
-            await updateDoc(pollRef, {
-                stage: PLANNING_STAGES.EVENT_CONFIRMED,
-                winningPlace: winningOption,
-            });
+
+        try {
+            if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
+                const winningOption = getWinningOption(poll.activityPoll.votes);
+                if (!winningOption) {
+                    console.warn('No votes cast for activity poll');
+                    return;
+                }
+
+                await updateDoc(pollRef, {
+                    stage: PLANNING_STAGES.PLANNING_PLACE,
+                    winningActivity: winningOption,
+                });
+
+                // Add system message to chat about activity selection
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `📊 Activity poll closed! "${winningOption}" won. Now let's decide where to go!`,
+                    createdAt: serverTimestamp(),
+                });
+
+                setPollType('place');
+                setPollModalVisible(true);
+                console.log(`Activity poll finished. Winner: ${winningOption}`);
+
+            } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
+                const winningOption = getWinningOption(poll.placePoll.votes);
+                if (!winningOption) {
+                    console.warn('No votes cast for place poll');
+                    return;
+                }
+
+                await updateDoc(pollRef, {
+                    stage: PLANNING_STAGES.EVENT_CONFIRMED,
+                    winningPlace: winningOption,
+                    rsvps: {}, // Initialize empty RSVP object
+                });
+
+                // Add system message to chat about event confirmation
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `🎉 Event confirmed! ${winningOption} for ${poll.winningActivity}. Please RSVP above!`,
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log(`Place poll finished. Winner: ${winningOption}. Event confirmed!`);
+            }
+        } catch (error) {
+            console.error('Error finishing voting:', error);
         }
     };
 
     const getWinningOption = (votes) => {
-        if (!votes || Object.keys(votes).length === 0) return null;
+        if (!votes || Object.keys(votes).length === 0) {
+            console.warn('No votes to count');
+            return null;
+        }
+
         const voteCounts = Object.values(votes).reduce((acc, option) => {
-            acc[option] = (acc[option] || 0) + 1;
+            if (option && typeof option === 'string') {
+                acc[option] = (acc[option] || 0) + 1;
+            }
             return acc;
         }, {});
-        return Object.keys(voteCounts).reduce((a, b) => voteCounts[a] > voteCounts[b] ? a : b);
+
+        console.log('Vote counts:', voteCounts);
+
+        const options = Object.keys(voteCounts);
+        if (options.length === 0) {
+            console.warn('No valid votes found');
+            return null;
+        }
+
+        const winner = options.reduce((a, b) =>
+            voteCounts[a] > voteCounts[b] ? a : b
+        );
+
+        console.log('Winning option:', winner, 'with', voteCounts[winner], 'votes');
+        return winner;
     };
 
     const handleRsvp = async (status) => {
+        if (!poll?.id || !userProfile) return;
+
         const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
-        const newRsvps = { ...poll.rsvps };
+        const newRsvps = { ...poll.rsvps || {} };
+        const previousRsvp = newRsvps[user.uid];
         newRsvps[user.uid] = status;
-        await updateDoc(pollRef, { rsvps: newRsvps });
+
+        try {
+            await updateDoc(pollRef, { rsvps: newRsvps });
+
+            // Add system message for RSVP changes (only if it's a new RSVP or change)
+            if (previousRsvp !== status) {
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                const statusEmoji = status === 'yes' ? '✅' : status === 'maybe' ? '❓' : '❌';
+                const statusText = status === 'yes' ? 'is going' : status === 'maybe' ? 'might go' : 'can\'t make it';
+
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `${statusEmoji} ${userProfile?.username || 'Someone'} ${statusText}`,
+                    createdAt: serverTimestamp(),
+                });
+            }
+
+            console.log(`RSVP updated: ${userProfile?.username || 'Unknown user'} - ${status}`);
+        } catch (error) {
+            console.error('Error updating RSVP:', error);
+        }
     };
 
     const handleReply = (message) => {
@@ -144,6 +281,36 @@ const CircleScreen = () => {
     const handleShow = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setPinVisible(true);
+    };
+
+    const handleStartNewPoll = async () => {
+        try {
+            // Archive the current poll and start fresh
+            if (poll?.id) {
+                const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+                await updateDoc(pollRef, {
+                    archived: true,
+                    archivedAt: serverTimestamp(),
+                });
+
+                // Add system message about starting new planning
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: '🆕 Starting new event planning!',
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log('Poll archived and new planning started');
+            }
+
+            // Reset local state
+            setCurrentStage(PLANNING_STAGES.IDLE);
+            setPoll(null);
+            setPollType(null);
+        } catch (error) {
+            console.error('Error starting new poll:', error);
+        }
     };
 
     const getShowPlanButtonText = () => {
@@ -180,6 +347,7 @@ const CircleScreen = () => {
                         currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
                     }}
                     onRsvp={handleRsvp}
+                    onStartNewPoll={handleStartNewPoll}
                     onDismiss={handleDismiss}
                 />
             ) : (
@@ -219,8 +387,10 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     showPlanButtonContainer: {
-        padding: 10,
-        backgroundColor: COLORS.dark,
+        position: 'absolute',
+        top: 15,
+        right: 15,
+        zIndex: 1,
     },
     showPlanButton: {
         backgroundColor: COLORS.primary,
@@ -236,3 +406,4 @@ const styles = StyleSheet.create({
 });
 
 export default CircleScreen;
+

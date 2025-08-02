@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { COLORS } from '../../../constants/constants';
 
-const JoinedCircles = ({ circles = [] }) => {
+const JoinedCircles = ({ circles = [], shimmerAnimation, loading }) => {
     const navigation = useNavigation();
     // Mock data for demonstration - you can replace this with actual circle data
     const mockCircles = [

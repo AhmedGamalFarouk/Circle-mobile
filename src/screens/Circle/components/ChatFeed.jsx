@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Animated, PanResponder, Keyboard, Alert } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Animated, Keyboard, Alert, TextInput, Vibration, BackHandler, Dimensions } from 'react-native';
 import { collection, query, onSnapshot, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import useAuth from '../../../hooks/useAuth';
-import { COLORS, RADII, FONTS } from '../../../constants/constants';
+import useUserProfile from '../../../hooks/useUserProfile';
+import { COLORS, RADII, FONTS, SHADOWS } from '../../../constants/constants';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
@@ -11,16 +12,56 @@ import { Ionicons } from '@expo/vector-icons';
 
 const EMOJI_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
+// Animation utility functions
+const createBounceAnimation = (animatedValue, toValue = 1, duration = 300) => {
+    return Animated.spring(animatedValue, {
+        toValue,
+        tension: 300,
+        friction: 6,
+        useNativeDriver: true,
+    });
+};
+
+const createPulseAnimation = (animatedValue) => {
+    return Animated.sequence([
+        Animated.timing(animatedValue, {
+            toValue: 1.2,
+            duration: 150,
+            useNativeDriver: true,
+        }),
+        Animated.timing(animatedValue, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: true,
+        }),
+    ]);
+};
+
 const ChatFeed = ({ circleId, onReply }) => {
     const [messages, setMessages] = useState([]);
     const { user } = useAuth();
+    const { profile: userProfile } = useUserProfile(user?.uid);
     const scrollViewRef = useRef();
     const swipeableRefs = useRef({});
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [showEmojis, setShowEmojis] = useState(false);
     const [showOptions, setShowOptions] = useState(false);
+    const [optionsPosition, setOptionsPosition] = useState({ x: 0, y: 0 });
     const scale = useRef(new Animated.Value(0)).current;
     const optionsScale = useRef(new Animated.Value(0)).current;
+    const optionsSlideX = useRef(new Animated.Value(-100)).current;
+    const optionsOpacity = useRef(new Animated.Value(0)).current;
+    const [editingMessage, setEditingMessage] = useState(null);
+    const [editedText, setEditedText] = useState('');
+
+    // Enhanced animation refs for reactions
+    const emojiScales = useRef(EMOJI_OPTIONS.reduce((acc, emoji) => {
+        acc[emoji] = new Animated.Value(1);
+        return acc;
+    }, {})).current;
+    const reactionAnimations = useRef({}).current;
+    const [reactionParticles, setReactionParticles] = useState([]);
+    const messageBubbleAnimations = useRef({}).current;
 
     useEffect(() => {
         if (!circleId) return;
@@ -32,7 +73,32 @@ const ChatFeed = ({ circleId, onReply }) => {
             querySnapshot.forEach((doc) => {
                 messagesData.push({ id: doc.id, ...doc.data() });
             });
-            setMessages(messagesData);
+
+            // Animate new reactions
+            setMessages(prevMessages => {
+                const newMessages = messagesData;
+                newMessages.forEach(newMessage => {
+                    const prevMessage = prevMessages.find(m => m.id === newMessage.id);
+                    if (prevMessage && newMessage.reactions && prevMessage.reactions) {
+                        const newReactions = newMessage.reactions.filter(newReaction =>
+                            !prevMessage.reactions.some(prevReaction =>
+                                prevReaction.userId === newReaction.userId &&
+                                prevReaction.emoji === newReaction.emoji
+                            )
+                        );
+
+                        // Animate new reactions
+                        newReactions.forEach(reaction => {
+                            const reactionKey = `${newMessage.id}-${reaction.emoji}`;
+                            if (!reactionAnimations[reactionKey]) {
+                                reactionAnimations[reactionKey] = new Animated.Value(0);
+                                createBounceAnimation(reactionAnimations[reactionKey], 1, 400).start();
+                            }
+                        });
+                    }
+                });
+                return newMessages;
+            });
         });
         //TODO: ADJUST SCROLL TO END WHEN KEYBOARD IS VISIBLE 
 
@@ -49,39 +115,187 @@ const ChatFeed = ({ circleId, onReply }) => {
         };
     }, [circleId]);
 
+    // Handle back button press to close options menu
+    useEffect(() => {
+        const backAction = () => {
+            if (showOptions) {
+                hideOptionsMenu();
+                return true; // Prevent default back action
+            }
+            if (showEmojis) {
+                setShowEmojis(false);
+                setSelectedMessage(null);
+                return true; // Prevent default back action
+            }
+            return false; // Allow default back action
+        };
+
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+
+        return () => backHandler.remove();
+    }, [showOptions, showEmojis]);
 
 
-    const handleLongPress = (message) => {
+
+    const handleLongPress = (message, event) => {
         setSelectedMessage(message);
+
+        // Enhanced haptic feedback pattern
+        Vibration.vibrate([0, 100, 50, 100]);
+
         const isCurrentUser = message.user.userId === user.uid;
 
         if (isCurrentUser) {
             // Show options menu for current user's messages
-            setShowOptions(true);
-            Animated.spring(optionsScale, {
-                toValue: 1,
-                friction: 5,
-                useNativeDriver: true,
-            }).start();
+            handleShowOptions(message, event);
         } else {
             // Show emoji reactions for other users' messages
             setShowEmojis(true);
-            Animated.spring(scale, {
-                toValue: 1,
-                friction: 5,
-                useNativeDriver: true,
-            }).start();
+
+            // Enhanced bounce animation with stagger effect
+            scale.setValue(0);
+            createBounceAnimation(scale, 1, 400).start();
+
+            // Stagger emoji animations
+            EMOJI_OPTIONS.forEach((emoji, index) => {
+                const emojiScale = emojiScales[emoji];
+                emojiScale.setValue(0);
+                setTimeout(() => {
+                    createBounceAnimation(emojiScale, 1, 300).start();
+                }, index * 50);
+            });
         }
     };
 
+    const handleShowOptions = (message, event) => {
+        setSelectedMessage(message);
+        const isCurrentUser = message.user.userId === user.uid;
+
+        // Get touch coordinates and measure ScrollView to get relative position
+        const { pageX, pageY } = event.nativeEvent;
+
+        // Calculate position for the options menu
+        const screenWidth = Dimensions.get('window').width;
+        const menuWidth = 150;
+
+        let adjustedX = pageX;
+        let adjustedY = pageY - 120; // Position above the message
+
+        // Adjust horizontal position based on user type and screen bounds
+        if (isCurrentUser) {
+            // For current user (right side), position menu to the left of touch
+            adjustedX = Math.max(20, pageX - menuWidth);
+        } else {
+            // For other users (left side), position menu to the right of touch
+            adjustedX = Math.min(screenWidth - menuWidth - 20, pageX);
+        }
+
+        // Since the overlay is now positioned relative to the ChatFeed wrapper,
+        // we need to adjust the Y coordinate to account for the ContextualPin
+        scrollViewRef.current?.measure((x, y, width, height, pageXContainer, pageYContainer) => {
+            // Adjust Y coordinate to be relative to the ChatFeed wrapper
+            const adjustedYRelative = adjustedY - pageYContainer;
+
+            // Ensure menu stays within the ChatFeed bounds
+            let finalY = adjustedYRelative;
+            if (finalY < 20) {
+                finalY = (pageY - pageYContainer) + 40; // Position below if not enough space above
+            } else if (finalY > height - 120) {
+                finalY = height - 120;
+            }
+
+            setOptionsPosition({
+                x: adjustedX,
+                y: finalY
+            });
+        });
+
+        // Reset animation values
+        optionsSlideX.setValue(isCurrentUser ? 30 : -30);
+        optionsOpacity.setValue(0);
+        optionsScale.setValue(0.95);
+
+        setShowOptions(true);
+        setShowEmojis(false); // Hide emoji picker when showing options
+
+        // Add haptic feedback
+        Vibration.vibrate(50);
+
+        // Animate options menu in with smooth effect
+        Animated.parallel([
+            Animated.timing(optionsSlideX, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(optionsOpacity, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            }),
+            Animated.timing(optionsScale, {
+                toValue: 1,
+                duration: 200,
+                useNativeDriver: true,
+            })
+        ]).start();
+    };
+
     const handleSelectEmoji = async (emoji) => {
-        if (!selectedMessage) return;
+        if (!selectedMessage || !userProfile) return;
+
+        // Enhanced haptic feedback
+        Vibration.vibrate([10, 50, 10]);
+
+        // Animate emoji selection
+        const emojiScale = emojiScales[emoji];
+        createPulseAnimation(emojiScale).start();
+
+        // Create particle effect
+        const particleId = Date.now();
+        const particleOpacity = new Animated.Value(1);
+        const particleScale = new Animated.Value(1);
+        const particleY = new Animated.Value(0);
+
+        setReactionParticles(prev => [...prev, {
+            id: particleId,
+            emoji,
+            x: Math.random() * 200 + 50,
+            y: Math.random() * 100 + 100,
+            opacity: particleOpacity,
+            scale: particleScale,
+            translateY: particleY
+        }]);
+
+        // Animate particle
+        Animated.parallel([
+            Animated.timing(particleOpacity, {
+                toValue: 0,
+                duration: 800,
+                useNativeDriver: true,
+            }),
+            Animated.timing(particleScale, {
+                toValue: 1.5,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+            Animated.timing(particleY, {
+                toValue: -50,
+                duration: 800,
+                useNativeDriver: true,
+            })
+        ]).start();
+
+        // Remove particle after animation
+        setTimeout(() => {
+            setReactionParticles(prev => prev.filter(p => p.id !== particleId));
+        }, 800);
 
         const messageRef = doc(db, 'circles', circleId, 'chat', selectedMessage.id);
         const reaction = {
             emoji,
             userId: user.uid,
-            userName: user.displayName,
+            userName: userProfile?.username || 'Unknown user',
         };
 
         const existingReaction = selectedMessage.reactions?.find(
@@ -105,16 +319,70 @@ const ChatFeed = ({ circleId, onReply }) => {
                 reactions: arrayUnion(reaction),
             });
         }
-        setShowEmojis(false);
-        setSelectedMessage(null);
+
+        // Smooth close animation
+        Animated.timing(scale, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+        }).start(() => {
+            setShowEmojis(false);
+            setSelectedMessage(null);
+        });
     };
 
     const handleEditMessage = () => {
-        // TODO: Implement edit functionality
-        // For now, just close the options menu
-        setShowOptions(false);
-        setSelectedMessage(null);
-        Alert.alert('Edit Message', 'Edit functionality will be implemented soon');
+        if (!selectedMessage) return;
+
+        const now = new Date();
+        const messageTime = selectedMessage.createdAt.toDate();
+        const diffInMinutes = (now - messageTime) / (1000 * 60);
+
+        if (diffInMinutes > 3) {
+            Alert.alert("Can't Edit", "You can only edit messages for 3 minutes after sending.");
+            hideOptionsMenu();
+            return;
+        }
+
+        setEditingMessage(selectedMessage);
+        setEditedText(selectedMessage.text);
+        hideOptionsMenu();
+    };
+
+    const hideOptionsMenu = () => {
+        Animated.parallel([
+            Animated.timing(optionsOpacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: true,
+            }),
+            Animated.timing(optionsScale, {
+                toValue: 0.95,
+                duration: 150,
+                useNativeDriver: true,
+            })
+        ]).start(() => {
+            setShowOptions(false);
+            setSelectedMessage(null);
+        });
+    };
+
+    const handleUpdateMessage = async () => {
+        if (!editingMessage) return;
+
+        const messageRef = doc(db, 'circles', circleId, 'chat', editingMessage.id);
+        await updateDoc(messageRef, {
+            text: editedText,
+            editedAt: new Date(),
+        });
+
+        setEditingMessage(null);
+        setEditedText('');
+    };
+
+    const handleCancelEdit = () => {
+        setEditingMessage(null);
+        setEditedText('');
     };
 
     const handleDeleteMessage = async () => {
@@ -122,15 +390,12 @@ const ChatFeed = ({ circleId, onReply }) => {
 
         Alert.alert(
             'Delete Message',
-            'Are you sure you want to delete this message?',
+            'Are you sure you want to delete this message for everyone?',
             [
                 {
                     text: 'Cancel',
                     style: 'cancel',
-                    onPress: () => {
-                        setShowOptions(false);
-                        setSelectedMessage(null);
-                    }
+                    onPress: hideOptionsMenu
                 },
                 {
                     text: 'Delete',
@@ -138,11 +403,11 @@ const ChatFeed = ({ circleId, onReply }) => {
                     onPress: async () => {
                         try {
                             await deleteDoc(doc(db, 'circles', circleId, 'chat', selectedMessage.id));
-                            setShowOptions(false);
-                            setSelectedMessage(null);
+                            hideOptionsMenu();
                         } catch (error) {
                             console.error('Error deleting message:', error);
                             Alert.alert('Error', 'Failed to delete message');
+                            hideOptionsMenu();
                         }
                     }
                 }
@@ -150,98 +415,264 @@ const ChatFeed = ({ circleId, onReply }) => {
         );
     };
 
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onPanResponderRelease: () => {
-                setShowEmojis(false);
-                setShowOptions(false);
-                setSelectedMessage(null);
-            },
-        })
-    ).current;
+    const handleDeleteForMe = async () => {
+        if (!selectedMessage) return;
+
+        Alert.alert(
+            'Delete for Me',
+            'This message will only be hidden for you. Others will still see it.',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                    onPress: hideOptionsMenu
+                },
+                {
+                    text: 'Delete for Me',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const messageRef = doc(db, 'circles', circleId, 'chat', selectedMessage.id);
+                            const hiddenBy = selectedMessage.hiddenBy || [];
+
+                            if (!hiddenBy.includes(user.uid)) {
+                                await updateDoc(messageRef, {
+                                    hiddenBy: arrayUnion(user.uid)
+                                });
+                            }
+                            hideOptionsMenu();
+                        } catch (error) {
+                            console.error('Error hiding message:', error);
+                            Alert.alert('Error', 'Failed to hide message');
+                            hideOptionsMenu();
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    // Group reactions by emoji with enhanced display
+    const groupReactions = (reactions) => {
+        if (!reactions || reactions.length === 0) return [];
+
+        const grouped = reactions.reduce((acc, reaction) => {
+            if (!acc[reaction.emoji]) {
+                acc[reaction.emoji] = {
+                    emoji: reaction.emoji,
+                    count: 0,
+                    users: [],
+                    hasCurrentUser: false
+                };
+            }
+            acc[reaction.emoji].count++;
+            acc[reaction.emoji].users.push(reaction.userName);
+            if (reaction.userId === user.uid) {
+                acc[reaction.emoji].hasCurrentUser = true;
+            }
+            return acc;
+        }, {});
+
+        return Object.values(grouped).sort((a, b) => b.count - a.count);
+    };
+
+    // Handle reaction press with animation
+    const handleReactionPress = async (message, emoji) => {
+        if (!userProfile) return;
+
+        // Create reaction animation
+        const reactionKey = `${message.id}-${emoji}`;
+        if (!reactionAnimations[reactionKey]) {
+            reactionAnimations[reactionKey] = new Animated.Value(1);
+        }
+
+        createPulseAnimation(reactionAnimations[reactionKey]).start();
+
+        const messageRef = doc(db, 'circles', circleId, 'chat', message.id);
+        const reaction = {
+            emoji,
+            userId: user.uid,
+            userName: userProfile?.username || 'Unknown user',
+        };
+
+        const existingReaction = message.reactions?.find(
+            (r) => r.userId === user.uid && r.emoji === emoji
+        );
+
+        if (existingReaction) {
+            await updateDoc(messageRef, {
+                reactions: arrayRemove(existingReaction),
+            });
+        } else {
+            const userPreviousReaction = message.reactions?.find(
+                (r) => r.userId === user.uid
+            );
+            if (userPreviousReaction) {
+                await updateDoc(messageRef, {
+                    reactions: arrayRemove(userPreviousReaction),
+                });
+            }
+            await updateDoc(messageRef, {
+                reactions: arrayUnion(reaction),
+            });
+        }
+
+        // Haptic feedback
+        Vibration.vibrate(30);
+
+        // Animate message bubble
+        const bubbleKey = `bubble-${message.id}`;
+        if (!messageBubbleAnimations[bubbleKey]) {
+            messageBubbleAnimations[bubbleKey] = new Animated.Value(1);
+        }
+        createPulseAnimation(messageBubbleAnimations[bubbleKey]).start();
+    };
+
+
 
     const renderMessages = () => {
         let lastSender = null;
-        return messages.map((message) => {
-            if (message.type === 'system') {
+        return messages
+            .filter(message => !message.hiddenBy?.includes(user.uid)) // Filter out messages hidden by current user
+            .map((message) => {
+                if (message.type === 'system') {
+                    return (
+                        <View key={message.id} style={styles.systemMessageContainer}>
+                            <Text style={styles.systemMessageText}>{message.text}</Text>
+                        </View>
+                    );
+                }
+
+                const isCurrentUser = message.user.userId === user.uid;
+                const showSenderInfo = message.user.userId !== lastSender;
+                lastSender = message.user.userId;
+
+                const renderLeftActions = (progress, dragX) => {
+                    const scale = dragX.interpolate({
+                        inputRange: [0, 80],
+                        outputRange: [0, 1],
+                        extrapolate: 'clamp',
+                    });
+                    return (
+                        <View style={styles.replyAction}>
+                            <Animated.Text style={[styles.actionText, { transform: [{ scale }], fontSize: 18 }]}>
+                                ↩️
+                            </Animated.Text>
+                        </View>
+                    );
+                };
+
                 return (
-                    <View key={message.id} style={styles.systemMessageContainer}>
-                        <Text style={styles.systemMessageText}>{message.text}</Text>
-                    </View>
+                    <Swipeable
+                        key={message.id}
+                        ref={(ref) => {
+                            if (ref && message.id) {
+                                swipeableRefs.current[message.id] = ref;
+                            }
+                        }}
+                        renderLeftActions={renderLeftActions}
+                        onSwipeableLeftOpen={() => {
+                            onReply(message);
+                            if (swipeableRefs.current[message.id]) {
+                                swipeableRefs.current[message.id].close();
+                            }
+                        }}
+                    >
+                        <View style={[styles.messageContainer, isCurrentUser ? styles.currentUserMessageContainer : styles.otherUserMessageContainer]}>
+                            {!isCurrentUser && showSenderInfo && (
+                                <View style={styles.senderInfoContainer}>
+                                    {message.user.imageurl && <Image source={{ uri: message.user.imageurl }} style={styles.avatar} />}
+                                    <Text style={styles.senderName}>{message.user.userName}</Text>
+                                </View>
+                            )}
+                            <TouchableOpacity onLongPress={(event) => handleLongPress(message, event)} delayLongPress={200}>
+                                <Animated.View
+                                    style={[
+                                        styles.messageBubble,
+                                        isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
+                                        {
+                                            transform: [{
+                                                scale: messageBubbleAnimations[`bubble-${message.id}`] || 1
+                                            }]
+                                        }
+                                    ]}
+                                >
+                                    {message.replyingTo && (
+                                        <View style={styles.replyContainer}>
+                                            <Text style={styles.replyUser}>{message.replyingTo.userName}</Text>
+                                            <Text style={styles.replyText} numberOfLines={1}>{message.replyingTo.text}</Text>
+                                        </View>
+                                    )}
+                                    {editingMessage?.id === message.id ? (
+                                        <View>
+                                            <TextInput
+                                                value={editedText}
+                                                onChangeText={setEditedText}
+                                                style={styles.editInput}
+                                                autoFocus
+                                            />
+                                            <View style={styles.editButtons}>
+                                                <TouchableOpacity onPress={handleUpdateMessage} style={styles.saveButton}>
+                                                    <Text style={styles.buttonText}>Save</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={handleCancelEdit} style={styles.cancelButton}>
+                                                    <Text style={styles.buttonText}>Cancel</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    ) : (
+                                        <Text style={styles.messageText}>{message.text}</Text>
+                                    )}
+                                    {message.editedAt && <Text style={styles.editedText}>(edited)</Text>}
+                                    {message.reactions && message.reactions.length > 0 && (
+                                        <View style={styles.reactionsContainer}>
+                                            {groupReactions(message.reactions).map((reactionGroup, index) => {
+                                                const reactionKey = `${message.id}-${reactionGroup.emoji}`;
+                                                const animatedValue = reactionAnimations[reactionKey] || new Animated.Value(1);
+                                                if (!reactionAnimations[reactionKey]) {
+                                                    reactionAnimations[reactionKey] = animatedValue;
+                                                }
+
+                                                return (
+                                                    <TouchableOpacity
+                                                        key={`${reactionGroup.emoji}-${index}`}
+                                                        onPress={() => handleReactionPress(message, reactionGroup.emoji)}
+                                                        activeOpacity={0.7}
+                                                    >
+                                                        <Animated.View
+                                                            style={[
+                                                                styles.reactionBubble,
+                                                                reactionGroup.hasCurrentUser && styles.userReactionBubble,
+                                                                { transform: [{ scale: animatedValue }] }
+                                                            ]}
+                                                        >
+                                                            <Text style={styles.reactionEmoji}>
+                                                                {reactionGroup.emoji}
+                                                            </Text>
+                                                            {reactionGroup.count > 1 && (
+                                                                <Text style={[
+                                                                    styles.reactionCount,
+                                                                    reactionGroup.hasCurrentUser && styles.userReactionCount
+                                                                ]}>
+                                                                    {reactionGroup.count}
+                                                                </Text>
+                                                            )}
+                                                        </Animated.View>
+                                                    </TouchableOpacity>
+                                                );
+                                            })}
+                                        </View>
+                                    )}
+                                </Animated.View>
+                            </TouchableOpacity>
+                        </View>
+                    </Swipeable>
                 );
-            }
-
-            const isCurrentUser = message.user.userId === user.uid;
-            const showSenderInfo = message.user.userId !== lastSender;
-            lastSender = message.user.userId;
-
-            const renderLeftActions = (progress, dragX) => {
-                const scale = dragX.interpolate({
-                    inputRange: [0, 80],
-                    outputRange: [0, 1],
-                    extrapolate: 'clamp',
-                });
-                return (
-                    <View style={styles.replyAction}>
-                        <Animated.Text style={[styles.actionText, { transform: [{ scale }], fontSize: 18 }]}>
-                            ↩️
-                        </Animated.Text>
-                    </View>
-                );
-            };
-
-            return (
-                <Swipeable
-                    key={message.id}
-                    ref={(ref) => {
-                        if (ref && message.id) {
-                            swipeableRefs.current[message.id] = ref;
-                        }
-                    }}
-                    renderLeftActions={renderLeftActions}
-                    onSwipeableLeftOpen={() => {
-                        onReply(message);
-                        if (swipeableRefs.current[message.id]) {
-                            swipeableRefs.current[message.id].close();
-                        }
-                    }}
-                >
-                    <View style={[styles.messageContainer, isCurrentUser ? styles.currentUserMessageContainer : styles.otherUserMessageContainer]}>
-                        {!isCurrentUser && showSenderInfo && (
-                            <View style={styles.senderInfoContainer}>
-                                {message.user.imageurl && <Image source={{ uri: message.user.imageurl }} style={styles.avatar} />}
-                                <Text style={styles.senderName}>{message.user.userName}</Text>
-                            </View>
-                        )}
-                        <TouchableOpacity onLongPress={() => handleLongPress(message)} delayLongPress={200}>
-                            <View style={[styles.messageBubble, isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble]}>
-                                {message.replyingTo && (
-                                    <View style={styles.replyContainer}>
-                                        <Text style={styles.replyUser}>{message.replyingTo.userName}</Text>
-                                        <Text style={styles.replyText} numberOfLines={1}>{message.replyingTo.text}</Text>
-                                    </View>
-                                )}
-                                <Text style={styles.messageText}>{message.text}</Text>
-                                {message.reactions && message.reactions.length > 0 && (
-                                    <View style={styles.reactionsContainer}>
-                                        {message.reactions.map((reaction, index) => (
-                                            <Text key={index} style={styles.reactionText}>
-                                                {reaction.emoji}
-                                            </Text>
-                                        ))}
-                                    </View>
-                                )}
-                            </View>
-                        </TouchableOpacity>
-                    </View>
-                </Swipeable>
-            );
-        });
+            });
     };
 
     return (
-        <>
+        <View style={styles.chatFeedWrapper}>
             <ScrollView
                 style={styles.container}
                 ref={scrollViewRef}
@@ -250,36 +681,146 @@ const ChatFeed = ({ circleId, onReply }) => {
                 {renderMessages()}
             </ScrollView>
             {showEmojis && selectedMessage && (
-                <View style={styles.emojiPickerContainer} {...panResponder.panHandlers}>
-                    <Animated.View style={[styles.emojiPicker, { transform: [{ scale }] }]}>
-                        {EMOJI_OPTIONS.map((emoji) => (
-                            <TouchableOpacity key={emoji} onPress={() => handleSelectEmoji(emoji)}>
-                                <Text style={styles.emoji}>{emoji}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </Animated.View>
-                </View>
+                <TouchableOpacity
+                    style={styles.emojiPickerContainer}
+                    activeOpacity={1}
+                    onPress={() => {
+                        Animated.timing(scale, {
+                            toValue: 0,
+                            duration: 200,
+                            useNativeDriver: true,
+                        }).start(() => {
+                            setShowEmojis(false);
+                            setSelectedMessage(null);
+                        });
+                    }}
+                >
+                    <TouchableOpacity
+                        activeOpacity={1}
+                        onPress={(e) => e.stopPropagation()}
+                    >
+                        <Animated.View style={[styles.emojiPickerWithOptions, { transform: [{ scale }] }]}>
+                            <View style={styles.emojiPicker}>
+                                {EMOJI_OPTIONS.map((emoji, index) => (
+                                    <TouchableOpacity
+                                        key={emoji}
+                                        onPress={() => handleSelectEmoji(emoji)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <Animated.Text
+                                            style={[
+                                                styles.emoji,
+                                                { transform: [{ scale: emojiScales[emoji] }] }
+                                            ]}
+                                        >
+                                            {emoji}
+                                        </Animated.Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        </Animated.View>
+                    </TouchableOpacity>
+
+                    {/* Particle Effects */}
+                    {reactionParticles.map((particle) => (
+                        <Animated.View
+                            key={particle.id}
+                            style={[
+                                styles.reactionParticle,
+                                {
+                                    left: particle.x,
+                                    top: particle.y,
+                                    opacity: particle.opacity,
+                                    transform: [
+                                        { scale: particle.scale },
+                                        { translateY: particle.translateY }
+                                    ]
+                                }
+                            ]}
+                        >
+                            <Text style={styles.particleEmoji}>{particle.emoji}</Text>
+                        </Animated.View>
+                    ))}
+                </TouchableOpacity>
             )}
-            {showOptions && selectedMessage && (
-                <View style={styles.optionsContainer} {...panResponder.panHandlers}>
-                    <Animated.View style={[styles.optionsMenu, { transform: [{ scale: optionsScale }] }]}>
-                        <TouchableOpacity style={styles.optionButton} onPress={handleEditMessage}>
-                            <Ionicons name="create-outline" size={24} color={COLORS.primary} />
-                            <Text style={styles.optionText}>Edit</Text>
+            {showOptions && selectedMessage && (() => {
+                const now = new Date();
+                const messageTime = selectedMessage.createdAt.toDate();
+                const diffInMinutes = (now - messageTime) / (1000 * 60);
+                const isEditable = diffInMinutes <= 3;
+                const isCurrentUser = selectedMessage.user.userId === user.uid;
+
+                return (
+                    <TouchableOpacity
+                        style={styles.optionsOverlay}
+                        activeOpacity={1}
+                        onPress={hideOptionsMenu}
+                    >
+                        <TouchableOpacity
+                            activeOpacity={1}
+                            onPress={(e) => e.stopPropagation()}
+                        >
+                            <Animated.View
+                                style={[
+                                    styles.optionsMenu,
+                                    {
+                                        position: 'absolute',
+                                        left: optionsPosition.x,
+                                        top: optionsPosition.y,
+                                        transform: [
+                                            { translateX: optionsSlideX },
+                                            { scale: optionsScale }
+                                        ],
+                                        opacity: optionsOpacity,
+                                    }
+                                ]}
+                            >
+                                <View style={styles.optionsArrow} />
+                                <TouchableOpacity
+                                    style={[
+                                        styles.optionButton,
+                                        !isEditable && styles.disabledOptionButton,
+                                        { backgroundColor: isEditable ? COLORS.primary + '15' : 'transparent' }
+                                    ]}
+                                    onPress={handleEditMessage}
+                                    disabled={!isEditable}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="create-outline" size={18} color={isEditable ? COLORS.primary : '#666'} />
+                                    <Text style={[styles.optionText, { color: isEditable ? COLORS.primary : '#666' }]}>Edit</Text>
+                                </TouchableOpacity>
+                                <View style={styles.optionSeparator} />
+                                <TouchableOpacity
+                                    style={[styles.optionButton, { backgroundColor: '#FFA50015' }]}
+                                    onPress={handleDeleteForMe}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="eye-off-outline" size={18} color="#FFA500" />
+                                    <Text style={[styles.optionText, { color: '#FFA500' }]}>Delete for Me</Text>
+                                </TouchableOpacity>
+                                <View style={styles.optionSeparator} />
+                                <TouchableOpacity
+                                    style={[styles.optionButton, { backgroundColor: '#FF444415' }]}
+                                    onPress={handleDeleteMessage}
+                                    activeOpacity={0.7}
+                                >
+                                    <Ionicons name="trash-outline" size={18} color="#FF4444" />
+                                    <Text style={[styles.optionText, { color: '#FF4444' }]}>Delete for Everyone</Text>
+                                </TouchableOpacity>
+                            </Animated.View>
                         </TouchableOpacity>
-                        <View style={styles.optionSeparator} />
-                        <TouchableOpacity style={styles.optionButton} onPress={handleDeleteMessage}>
-                            <Ionicons name="trash-outline" size={24} color="#FF4444" />
-                            <Text style={[styles.optionText, { color: '#FF4444' || '#FF4444' }]}>Delete</Text>
-                        </TouchableOpacity>
-                    </Animated.View>
-                </View>
-            )}
-        </>
+                    </TouchableOpacity>
+                );
+            })()}
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
+    chatFeedWrapper: {
+        flex: 1,
+        position: 'relative',
+    },
     emojiPickerContainer: {
         position: 'absolute',
         top: 0,
@@ -288,18 +829,40 @@ const styles = StyleSheet.create({
         right: 0,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(2px)',
+    },
+    emojiPickerWithOptions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.dark,
+        borderRadius: 30,
+        padding: 15,
+        ...SHADOWS.glassCard,
+        borderWidth: 1,
+        borderColor: COLORS.primary + '30',
+        justifyContent: 'center',
     },
     emojiPicker: {
         flexDirection: 'row',
-        backgroundColor: 'white',
-        borderRadius: 20,
+        alignItems: 'center',
+    },
+    optionsIconButton: {
+        marginLeft: 15,
         padding: 10,
-        elevation: 10,
+        borderRadius: 20,
+        backgroundColor: COLORS.darker,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: COLORS.primary + '20',
     },
     emoji: {
-        fontSize: 30,
-        marginHorizontal: 5,
+        fontSize: 32,
+        marginHorizontal: 8,
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 2,
     },
     replyContainer: {
         backgroundColor: 'rgba(0,0,0,0.1)',
@@ -334,15 +897,60 @@ const styles = StyleSheet.create({
     },
     reactionsContainer: {
         flexDirection: 'row',
-        marginTop: 5,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 10,
-        padding: 5,
+        flexWrap: 'wrap',
+        marginTop: 8,
         alignSelf: 'flex-start',
+        gap: 6,
     },
-    reactionText: {
-        marginRight: 5,
+    reactionBubble: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: COLORS.darker,
+        borderRadius: 16,
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderWidth: 1,
+        borderColor: COLORS.text + '20',
+        minHeight: 28,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    userReactionBubble: {
+        backgroundColor: COLORS.primary + '20',
+        borderColor: COLORS.primary + '60',
+        shadowColor: COLORS.primary,
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    reactionEmoji: {
         fontSize: 16,
+        marginRight: 4,
+    },
+    reactionCount: {
+        fontSize: 12,
+        color: COLORS.text,
+        fontFamily: FONTS.body,
+        fontWeight: '600',
+        minWidth: 12,
+        textAlign: 'center',
+    },
+    userReactionCount: {
+        color: COLORS.primary,
+    },
+    reactionParticle: {
+        position: 'absolute',
+        zIndex: 1000,
+        pointerEvents: 'none',
+    },
+    particleEmoji: {
+        fontSize: 24,
+        textShadowColor: COLORS.primary,
+        textShadowOffset: { width: 0, height: 0 },
+        textShadowRadius: 8,
     },
     messageContainer: {
         marginVertical: 5,
@@ -376,6 +984,7 @@ const styles = StyleSheet.create({
     messageBubble: {
         padding: 15,
         borderRadius: RADII.rounded,
+        ...SHADOWS.card,
     },
     currentUserBubble: {
         backgroundColor: COLORS.accent,
@@ -397,46 +1006,113 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         fontFamily: FONTS.body,
     },
-    optionsContainer: {
+    optionsOverlay: {
         position: 'absolute',
         top: 0,
         bottom: 0,
         left: 0,
         right: 0,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.2)',
+        zIndex: 1000,
+        elevation: 20,
+        backdropFilter: 'blur(1px)',
     },
     optionsMenu: {
-        backgroundColor: 'white',
-        borderRadius: 12,
-        padding: 8,
-        elevation: 10,
+        backgroundColor: COLORS.dark,
+        borderRadius: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 4,
+        elevation: 15,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 2,
+            height: 4,
         },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        minWidth: 120,
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        minWidth: 100,
+        borderWidth: 1,
+        borderColor: COLORS.primary + '20',
+    },
+    optionsArrow: {
+        position: 'absolute',
+        bottom: -6,
+        left: '50%',
+        marginLeft: -6,
+        width: 0,
+        height: 0,
+        borderTopWidth: 6,
+        borderLeftWidth: 6,
+        borderRightWidth: 6,
+        borderTopColor: COLORS.dark,
+        borderLeftColor: 'transparent',
+        borderRightColor: 'transparent',
+    },
+    optionsArrowLeft: {
+        // Arrow pointing down - same for both sides since menu is above
+    },
+    optionsArrowRight: {
+        // Arrow pointing down - same for both sides since menu is above
     },
     optionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
+        paddingVertical: 10,
+        paddingHorizontal: 12,
+        borderRadius: 8,
+        marginHorizontal: 4,
+    },
+    disabledOptionButton: {
+        opacity: 0.5,
     },
     optionText: {
-        marginLeft: 12,
-        fontSize: 16,
+        marginLeft: 8,
+        fontSize: 14,
         fontFamily: FONTS.body,
-        color: COLORS.text,
+        color: COLORS.light,
+        fontWeight: '500',
+    },
+    disabledOptionText: {
+        color: '#ccc',
     },
     optionSeparator: {
         height: 1,
-        backgroundColor: '#E0E0E0',
+        backgroundColor: COLORS.text + '30',
         marginHorizontal: 8,
+        marginVertical: 4,
+    },
+    editInput: {
+        backgroundColor: '#fff',
+        borderRadius: 5,
+        padding: 10,
+        color: '#000',
+        marginBottom: 10,
+    },
+    editButtons: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+
+    },
+    saveButton: {
+        backgroundColor: COLORS.primary,
+        padding: 8,
+        borderRadius: 5,
+        marginLeft: 10,
+    },
+    cancelButton: {
+        backgroundColor: '#ccc',
+        padding: 8,
+        borderRadius: 5,
+    },
+    buttonText: {
+        color: '#fff',
+    },
+    editedText: {
+        color: '#aaa',
+        fontSize: 10,
+        fontStyle: 'italic',
+        alignSelf: 'flex-start',
+        marginTop: 2,
     },
 });
 
