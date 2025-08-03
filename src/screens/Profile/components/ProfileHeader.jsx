@@ -3,8 +3,10 @@ import { View, TouchableOpacity, StyleSheet, Animated, useWindowDimensions, Plat
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII, SHADOWS } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, buttonScale }) => {
+    const { colors } = useTheme()
     const { width, height } = useWindowDimensions();
     const insets = useSafeAreaInsets();
     const isLandscape = width > height;
@@ -50,11 +52,11 @@ const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, bu
                     style={styles.iconButton}
                     activeOpacity={0.7}
                 >
-                    <View style={styles.glassmorphicIcon}>
+                    <View style={[styles.glassmorphicIcon, { backgroundColor: colors.background }]}>
                         <Ionicons
                             name="arrow-back"
                             size={isLandscape ? 20 : 24}
-                            color={COLORS.light}
+                            color={colors.text}
                         />
                     </View>
                 </TouchableOpacity>
@@ -71,11 +73,11 @@ const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, bu
                                 style={styles.iconButton}
                                 activeOpacity={0.7}
                             >
-                                <View style={styles.glassmorphicIcon}>
+                                <View style={[styles.glassmorphicIcon, { backgroundColor: colors.background }]}>
                                     <Ionicons
                                         name="settings-outline"
                                         size={isLandscape ? 20 : 24}
-                                        color={COLORS.light}
+                                        color={colors.text}
                                     />
                                 </View>
                             </TouchableOpacity>
@@ -90,12 +92,13 @@ const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, bu
                             >
                                 <View style={[
                                     styles.glassmorphicIcon,
-                                    isEditing && styles.saveButtonActive
+                                    isEditing && styles.saveButtonActive,
+                                    { backgroundColor: colors.background }
                                 ]}>
                                     <Ionicons
                                         name={isEditing ? "checkmark-circle-outline" : "create-outline"}
                                         size={isLandscape ? 20 : 24}
-                                        color={isEditing ? COLORS.accent : COLORS.light}
+                                        color={isEditing ? colors.accent : colors.text}
                                     />
                                 </View>
                             </TouchableOpacity>
@@ -107,11 +110,11 @@ const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, bu
                                 style={styles.iconButton}
                                 activeOpacity={0.7}
                             >
-                                <View style={styles.glassmorphicIcon}>
+                                <View style={[styles.glassmorphicIcon, { backgroundColor: colors.background }]}>
                                     <Ionicons
                                         name="share-outline"
                                         size={isLandscape ? 20 : 24}
-                                        color={COLORS.light}
+                                        color={colors.text}
                                     />
                                 </View>
                             </TouchableOpacity>

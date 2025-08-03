@@ -9,25 +9,27 @@ import { COLORS } from '../constants/constants'
 import Explore from '../screens/Explore'
 import { FONTS } from '../constants/constants'
 import CircleStack from './CircleStack'
+import { useTheme } from '../context/ThemeContext'
 
 const Tab = createBottomTabNavigator();
 
 const DynamicBottomTab = () => {
+    const { colors } = useTheme()
     return (
         <Tab.Navigator screenOptions={{
-            tabBarActiveTintColor: COLORS.primary,
-            tabBarInactiveTintColor: COLORS.text,
+            tabBarActiveTintColor: colors.primary,
+            tabBarInactiveTintColor: colors.text,
             tabBarStyle: {
-                backgroundColor: COLORS.dark,
-                borderColor: COLORS.primary,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
             },
             headerStyle: {
                 height: 80,
-                backgroundColor: COLORS.dark,
-                borderColor: COLORS.primary,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
                 borderBottomWidth: 1,
             },
-            headerTintColor: COLORS.primary,
+            headerTintColor: colors.text,
             headerTitleStyle: {
                 fontFamily: FONTS.bold,
             }

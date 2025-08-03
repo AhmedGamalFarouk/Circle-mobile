@@ -1,6 +1,6 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, View, TouchableOpacity, Alert, RefreshControl } from 'react-native'
 import React from 'react'
-import { COLORS, RADII, SHADOWS } from '../../constants/constants'
+import { RADII } from '../../constants/constants'
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query, orderBy, where } from 'firebase/firestore'
 import { db } from '../../firebase/config'
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons'
 import useAuth from '../../hooks/useAuth'
 import CircleCard from './components/CircleCard'
 import EmptyState from './components/EmptyState'
+import { useTheme } from '../../context/ThemeContext'
 
 
 
@@ -17,7 +18,7 @@ const Circles = ({ navigation }) => {
     const [refreshing, setRefreshing] = useState(false)
     const [error, setError] = useState(null)
     const { user } = useAuth()
-
+    const { colors } = useTheme()
     const fetchCircles = async () => {
         try {
             setError(null)
@@ -65,30 +66,30 @@ const Circles = ({ navigation }) => {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
+            <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                <ActivityIndicator size="large" color={colors.primary} />
                 <Text style={styles.loadingText}>Loading circles...</Text>
             </View>
         )
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            <View style={[styles.header, { backgroundColor: colors.background, borderColor: colors.border }]}>
                 <View style={styles.leftContainer}>
                     {/* Empty space for consistency with other headers */}
                 </View>
                 <View style={styles.centerContainer}>
-                    <Text style={styles.headerTitle}>Circles</Text>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Circles</Text>
                 </View>
                 <TouchableOpacity style={styles.rightContainer} onPress={handleCreateCircle}>
-                    <Ionicons name="add" size={24} color={COLORS.light} />
+                    <Ionicons name="add" size={24} color={colors.text} />
                 </TouchableOpacity>
             </View>
 
             {error ? (
-                <View style={styles.errorContainer}>
-                    <Ionicons name="alert-circle-outline" size={60} color={COLORS.error} />
+                <View style={[styles.errorContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                    <Ionicons name="alert-circle-outline" size={60} color={colors.text} />
                     <Text style={styles.errorText}>{error}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={fetchCircles}>
                         <Text style={styles.retryButtonText}>Retry</Text>
@@ -108,8 +109,8 @@ const Circles = ({ navigation }) => {
                         <RefreshControl
                             refreshing={refreshing}
                             onRefresh={onRefresh}
-                            colors={[COLORS.primary]}
-                            tintColor={COLORS.primary}
+                            colors={[colors.primary]}
+                            tintColor={colors.primary}
                         />
                     }
                     showsVerticalScrollIndicator={false}
@@ -125,16 +126,14 @@ export default Circles
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.dark,
+        paddingTop: 20,
     },
     loadingContainer: {
         flex: 1,
-        backgroundColor: COLORS.dark,
         alignItems: 'center',
         justifyContent: 'center',
     },
     loadingText: {
-        color: COLORS.light,
         marginTop: 10,
         fontSize: 16,
     },
@@ -145,19 +144,20 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 10,
         marginTop: 20,
-        backgroundColor: COLORS.dark,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
+        
     },
     leftContainer: {
         width: 44, // Same width as icon container for balance
     },
     centerContainer: {
+        
         flex: 1,
         alignItems: 'center',
+        fontSize: 22,
+        fontWeight: 'bold',
     },
     headerTitle: {
-        color: COLORS.light,
         fontSize: 18,
         fontWeight: 'bold',
     },
@@ -179,20 +179,17 @@ const styles = StyleSheet.create({
         paddingHorizontal: 40,
     },
     errorText: {
-        color: COLORS.error,
         fontSize: 16,
         textAlign: 'center',
         marginTop: 15,
         marginBottom: 20,
     },
     retryButton: {
-        backgroundColor: COLORS.primary,
         paddingHorizontal: 25,
         paddingVertical: 12,
         borderRadius: RADII.rounded,
     },
     retryButtonText: {
-        color: COLORS.light,
         fontSize: 16,
         fontWeight: '600',
     },

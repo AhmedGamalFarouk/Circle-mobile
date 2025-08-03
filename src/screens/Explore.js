@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native'
 import MapView, { Marker, Callout } from 'react-native-maps';
 import useCurrentLocation from '../hooks/useCurrentLocation';
 import { COLORS } from '../constants/constants';
+import { useTheme } from '../context/ThemeContext';
 
 const circles = [
   {
@@ -47,27 +48,27 @@ const CircleCallout = React.memo(({ circle, onJoin }) => (
 
 const Explore = () => {
   const { location, error } = useCurrentLocation();
-
+  const { colors } = useTheme()
   if (error) {
     return (
-      <View style={styles.loading}>
-        <Text style={styles.loadingText}>Error: {error.message || 'Failed to get location.'}</Text>
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
+        <Text style={[styles.loadingText, { color: colors.text }]}>Error: {error.message || 'Failed to get location.'}</Text>
       </View>
     );
   }
 
   if (!location) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={[styles.loading, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
       </View>
     );
   }
 
   return (
     <MapView
-      style={styles.map}
+      style={[styles.map, { backgroundColor: colors.background }]}
       initialRegion={{
         latitude: location.coords.latitude || 30.06263,
         longitude: location.coords.longitude || 31.25,
@@ -85,7 +86,7 @@ const Explore = () => {
           image={require('../../assets/circle.gif')}
           accessibilityLabel={`Marker for ${circle.name}`}
         >
-          <Callout style={styles.calloutContainer} tooltip={false}>
+          <Callout style={[styles.calloutContainer, { backgroundColor: colors.background }]} tooltip={false}>
             <CircleCallout circle={circle} onJoin={() => { /* handle join */ }} />
           </Callout>
         </Marker>
@@ -108,7 +109,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.darker,
   },
   loadingText: {
     fontSize: 20,

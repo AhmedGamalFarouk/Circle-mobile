@@ -2,18 +2,19 @@ import { StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, RADII } from "../../../constants/constants";
 import { Text, TouchableOpacity } from "react-native";
+import { useTheme } from "../../../context/ThemeContext";
 
 const EmptyState = ({ onRefresh }) => {
-
+    const { colors } = useTheme()
     return (
         <View style={styles.emptyState}>
-            <Ionicons name="people-circle-outline" size={80} color={COLORS.text} />
+            <Ionicons name="people-circle-outline" size={80} color={colors.text} />
             <Text style={styles.emptyTitle}>No Circles Found</Text>
             <Text style={styles.emptySubtitle}>
                 Create your first circle or join existing ones to get started!
             </Text>
             <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-                <Ionicons name="refresh" size={20} color={COLORS.light} />
+                <Ionicons name="refresh" size={20} color={colors.text} />
                 <Text style={styles.refreshButtonText}>Refresh</Text>
             </TouchableOpacity>
         </View>
