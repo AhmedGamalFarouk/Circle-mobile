@@ -1,16 +1,51 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { COLORS, RADII } from '../../constants/constants';
+import { COLORS, RADII, SHADOWS } from '../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db, storage } from '../../firebase/config';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import useAuth from '../../hooks/useAuth';
+import { useTheme } from '../../context/ThemeContext';
 
 const CreationForm = ({ navigation }) => {
     const { user } = useAuth();
+    const { colors } = useTheme()
+
+    // Semantic color variables for better organization
+    const colorVars = {
+        // Background colors
+        background: colors.background,
+        surface: colors.surface,
+        card: colors.card,
+
+        // Text colors
+        textPrimary: colors.text,
+        textSecondary: colors.textSecondary,
+        textMuted: colors.textSecondary,
+
+        // Border colors
+        border: colors.border,
+        borderActive: colors.primary,
+
+        // Interactive colors
+        primary: colors.primary,
+        secondary: colors.secondary,
+        accent: colors.accent,
+
+        // State colors
+        disabled: colors.textSecondary,
+        error: '#ef4444',
+        success: '#10b981',
+        warning: '#f59e0b',
+
+        // Overlay colors
+        overlay: colors.glass,
+        shadow: colors.shadow,
+    };
+
     const [circleName, setCircleName] = useState('');
     const [description, setDescription] = useState('');
     const [photoUrl, setPhotoUrl] = useState(null);
@@ -93,96 +128,135 @@ const CreationForm = ({ navigation }) => {
     const isCreateDisabled = circleName.trim() === '';
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <ScrollView style={styles.container}>
-                <View style={styles.header}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: colorVars.background }]}>
+            <ScrollView style={styles.container} contentContainerStyle={{ backgroundColor: colorVars.background }}>
+                <View style={[styles.header, { backgroundColor: colorVars.background }]}>
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+                        <Ionicons name="arrow-back" size={24} color={colorVars.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={styles.title}>Create a New Circle</Text>
+                    <Text style={[styles.title, { color: colorVars.textPrimary }]}>Create a New Circle</Text>
                     <TouchableOpacity onPress={handleCreate} disabled={isCreateDisabled} style={styles.createButtonHeader}>
-                        <Text style={[styles.createButtonTextHeader, isCreateDisabled && styles.disabledButtonText]}>Create</Text>
+                        <Text style={[styles.createButtonTextHeader, { color: colorVars.primary }, isCreateDisabled && { color: colorVars.disabled }]}>Create</Text>
                     </TouchableOpacity>
                 </View>
 
-                <TouchableOpacity style={styles.avatarUploader} onPress={pickImage}>
+                <TouchableOpacity style={[styles.avatarUploader, { backgroundColor: colorVars.background }]} onPress={pickImage}>
                     {photoUrl ? (
-                        <Image source={{ uri: photoUrl }} style={styles.avatar} />
+                        <Image source={{ uri: photoUrl }} style={[styles.avatar, { borderColor: colorVars.borderActive }]} />
                     ) : (
-                        <View style={styles.avatarPlaceholder}>
-                            <Ionicons name="camera" size={40} color={COLORS.text} />
-                            <Text style={styles.addPhotoText}>Add Photo</Text>
+                        <View style={[styles.avatarPlaceholder, { borderColor: colorVars.borderActive, backgroundColor: colorVars.surface }]}>
+                            <Ionicons name="camera" size={40} color={colorVars.textSecondary} />
+                            <Text style={[styles.addPhotoText, { color: colorVars.textSecondary }]}>Add Photo</Text>
                         </View>
                     )}
                 </TouchableOpacity>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>CIRCLE NAME</Text>
+                <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>CIRCLE NAME</Text>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, {
+                            backgroundColor: colorVars.surface,
+                            borderColor: colorVars.border,
+                            color: colorVars.textPrimary
+                        }]}
                         placeholder="The Weekend Crew"
-                        placeholderTextColor={COLORS.text}
+                        placeholderTextColor={colorVars.textMuted}
                         value={circleName}
                         onChangeText={setCircleName}
                     />
                 </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>DESCRIPTION (OPTIONAL)</Text>
+                <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>DESCRIPTION (OPTIONAL)</Text>
                     <TextInput
-                        style={[styles.input, styles.descriptionInput]}
+                        style={[styles.input, styles.descriptionInput, {
+                            backgroundColor: colorVars.surface,
+                            borderColor: colorVars.border,
+                            color: colorVars.textPrimary
+                        }]}
                         placeholder={"What's this circle for?\n e.g., Planning our weekly hangouts."}
-                        placeholderTextColor={COLORS.text}
+                        placeholderTextColor={colorVars.textMuted}
                         value={description}
                         onChangeText={setDescription}
                         multiline
                     />
                 </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>PRIVACY</Text>
-                    <View style={styles.toggleContainer}>
+                <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>PRIVACY</Text>
+                    <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
                         <TouchableOpacity
-                            style={[styles.toggleButton, circlePrivacy === 'public' && styles.toggleButtonActive]}
+                            style={[
+                                styles.toggleButton,
+                                { backgroundColor: colorVars.surface },
+                                circlePrivacy === 'public' && { backgroundColor: colorVars.primary }
+                            ]}
                             onPress={() => setCirclePrivacy('public')}
                         >
-                            <Text style={[styles.toggleButtonText, circlePrivacy === 'public' && styles.toggleButtonTextActive]}>Public</Text>
+                            <Text style={[
+                                styles.toggleButtonText,
+                                { color: circlePrivacy === 'public' ? colorVars.background : colorVars.textPrimary }
+                            ]}>Public</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.toggleButton, circlePrivacy === 'private' && styles.toggleButtonActive]}
+                            style={[
+                                styles.toggleButton,
+                                { backgroundColor: colorVars.surface },
+                                circlePrivacy === 'private' && { backgroundColor: colorVars.primary }
+                            ]}
                             onPress={() => setCirclePrivacy('private')}
                         >
-                            <Text style={[styles.toggleButtonText, circlePrivacy === 'private' && styles.toggleButtonTextActive]}>Private</Text>
+                            <Text style={[
+                                styles.toggleButtonText,
+                                { color: circlePrivacy === 'private' ? colorVars.background : colorVars.textPrimary }
+                            ]}>Private</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>TYPE</Text>
-                    <View style={styles.toggleContainer}>
+                <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>TYPE</Text>
+                    <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
                         <TouchableOpacity
-                            style={[styles.toggleButton, circleType === 'permanent' && styles.toggleButtonActive]}
+                            style={[
+                                styles.toggleButton,
+                                { backgroundColor: colorVars.surface },
+                                circleType === 'permanent' && { backgroundColor: colorVars.primary }
+                            ]}
                             onPress={() => setCircleType('permanent')}
                         >
-                            <Text style={[styles.toggleButtonText, circleType === 'permanent' && styles.toggleButtonTextActive]}>Permanent</Text>
+                            <Text style={[
+                                styles.toggleButtonText,
+                                { color: circleType === 'permanent' ? colorVars.background : colorVars.textPrimary }
+                            ]}>Permanent</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.toggleButton, circleType === 'flash' && styles.toggleButtonActive]}
+                            style={[
+                                styles.toggleButton,
+                                { backgroundColor: colorVars.surface },
+                                circleType === 'flash' && { backgroundColor: colorVars.primary }
+                            ]}
                             onPress={() => setCircleType('flash')}
                         >
-                            <Text style={[styles.toggleButtonText, circleType === 'flash' && styles.toggleButtonTextActive]}>flash</Text>
+                            <Text style={[
+                                styles.toggleButtonText,
+                                { color: circleType === 'flash' ? colorVars.background : colorVars.textPrimary }
+                            ]}>flash</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {circleType === 'flash' && (
-                    <View style={styles.inputContainer}>
-                        <Text style={styles.label}>EXPIRES AT</Text>
+                    <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
+                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>EXPIRES AT</Text>
                         <TouchableOpacity
-                            style={styles.input}
+                            style={[styles.input, {
+                                backgroundColor: colorVars.surface,
+                                borderColor: colorVars.border
+                            }]}
                             onPress={() => setShowDatePicker(true)}
                         >
-                            <Text style={{ color: expiresAt ? COLORS.light : COLORS.text }}>
+                            <Text style={{ color: expiresAt ? colorVars.textPrimary : colorVars.textMuted }}>
                                 {expiresAt ? expiresAt.toLocaleDateString() : 'Select expiry date'}
                             </Text>
                         </TouchableOpacity>
@@ -205,36 +279,51 @@ const CreationForm = ({ navigation }) => {
                     </View>
                 )}
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.label}>INTERESTS</Text>
-                    <View style={styles.interestInputContainer}>
+                <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>INTERESTS</Text>
+                    <View style={[styles.interestInputContainer, {
+                        backgroundColor: colorVars.surface,
+                        borderColor: colorVars.border
+                    }]}>
                         <TextInput
-                            style={styles.input}
+                            style={[styles.input, {
+                                backgroundColor: colorVars.surface,
+                                color: colorVars.textPrimary
+                            }]}
                             placeholder="Add an interest"
-                            placeholderTextColor={COLORS.text}
+                            placeholderTextColor={colorVars.textMuted}
                             value={interestInput}
                             onChangeText={setInterestInput}
                         />
-                        <TouchableOpacity onPress={addInterest} style={styles.addButton}>
-                            <Text style={styles.addButtonText}>Add</Text>
+                        <TouchableOpacity onPress={addInterest} style={[styles.addButton, { backgroundColor: colorVars.accent }]}>
+                            <Text style={[styles.addButtonText, { color: colorVars.background }]}>Add</Text>
                         </TouchableOpacity>
                     </View>
-                    <View style={styles.interestsContainer}>
+                    <View style={[styles.interestsContainer, { backgroundColor: colorVars.background }]}>
                         {interests.map((interest, index) => (
-                            <View key={index} style={styles.interestTag}>
-                                <Text style={styles.interestTagText}>{interest}</Text>
+                            <View key={index} style={[styles.interestTag, {
+                                backgroundColor: colorVars.surface,
+                                borderColor: colorVars.border
+                            }]}>
+                                <Text style={[styles.interestTagText, { color: colorVars.textPrimary }]}>{interest}</Text>
                                 <TouchableOpacity onPress={() => setInterests(interests.filter((_, i) => i !== index))} style={styles.removeInterestButton}>
-                                    <Ionicons name="close-circle" size={16} color={COLORS.text} />
+                                    <Ionicons name="close-circle" size={16} color={colorVars.textSecondary} />
                                 </TouchableOpacity>
                             </View>
                         ))}
                     </View>
                 </View>
 
-                <TouchableOpacity style={[styles.fullWidthButton, isCreateDisabled && styles.disabledFullWidthButton]} onPress={handleCreate} disabled={isCreateDisabled}>
-                    <Text style={styles.fullWidthButtonText}>Create Circle</Text>
+                <TouchableOpacity
+                    style={[
+                        styles.fullWidthButton,
+                        { backgroundColor: isCreateDisabled ? colorVars.disabled : colorVars.primary }
+                    ]}
+                    onPress={handleCreate}
+                    disabled={isCreateDisabled}
+                >
+                    <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>Create Circle</Text>
                 </TouchableOpacity>
-
 
             </ScrollView>
         </SafeAreaView>
@@ -243,12 +332,11 @@ const CreationForm = ({ navigation }) => {
 
 const styles = StyleSheet.create({
     safeArea: {
+        paddingTop: 10,
         flex: 1,
-        backgroundColor: COLORS.darker,
     },
     container: {
         flex: 1,
-        backgroundColor: COLORS.darker,
         paddingHorizontal: 20,
         paddingTop: 20,
     },
@@ -262,20 +350,17 @@ const styles = StyleSheet.create({
         padding: 5,
     },
     title: {
-        color: COLORS.light,
-        fontSize: 20,
+        fontSize: 17,
         fontWeight: 'bold',
     },
     createButtonHeader: {
         padding: 5,
     },
     createButtonTextHeader: {
-        color: COLORS.primary,
         fontWeight: 'bold',
         fontSize: 16,
     },
     disabledButtonText: {
-        color: COLORS.text,
     },
     avatarUploader: {
         alignItems: 'center',
@@ -285,15 +370,12 @@ const styles = StyleSheet.create({
         width: 120,
         height: 120,
         borderRadius: RADII.circle,
-        backgroundColor: COLORS.dark,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: COLORS.primary,
         //...SHADOWS.softPrimary,
     },
     addPhotoText: {
-        color: COLORS.text,
         marginTop: 5,
         fontSize: 14,
     },
@@ -302,26 +384,21 @@ const styles = StyleSheet.create({
         height: 120,
         borderRadius: RADII.circle,
         borderWidth: 2,
-        borderColor: COLORS.primary,
     },
     inputContainer: {
         marginBottom: 25,
     },
     label: {
         marginBottom: 10,
-        color: COLORS.text,
         fontSize: 14,
         fontWeight: 'bold',
     },
     input: {
-        backgroundColor: COLORS.dark,
-        color: COLORS.light,
         paddingVertical: 12,
         paddingHorizontal: 15,
         borderRadius: RADII.rounded,
         fontSize: 16,
         borderWidth: 1,
-        borderColor: COLORS.dark,
     },
     descriptionInput: {
         height: 100,
@@ -330,42 +407,33 @@ const styles = StyleSheet.create({
     },
     toggleContainer: {
         flexDirection: 'row',
-        backgroundColor: COLORS.dark,
         borderRadius: RADII.rounded,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: COLORS.dark,
     },
     toggleButton: {
         flex: 1,
         paddingVertical: 12,
         alignItems: 'center',
-        borderRadius: RADII.rounded,
         margin: 2,
     },
     toggleButtonActive: {
-        backgroundColor: COLORS.primary,
         //...SHADOWS.btnPrimary,
     },
     toggleButtonText: {
-        color: COLORS.text,
         fontSize: 16,
         fontWeight: 'bold',
     },
     toggleButtonTextActive: {
-        color: COLORS.light,
     },
     interestInputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.dark,
         borderRadius: RADII.rounded,
         borderWidth: 1,
-        borderColor: COLORS.dark,
         paddingRight: 5,
     },
     addButton: {
-        backgroundColor: COLORS.accent,
         paddingVertical: 10,
         paddingHorizontal: 15,
         borderRadius: RADII.rounded,
@@ -373,7 +441,6 @@ const styles = StyleSheet.create({
         //...SHADOWS.btnSecondaryHover,
     },
     addButtonText: {
-        color: COLORS.light,
         fontWeight: 'bold',
         fontSize: 16,
     },
@@ -384,7 +451,6 @@ const styles = StyleSheet.create({
     },
     interestTag: {
         flexDirection: 'row',
-        backgroundColor: COLORS.dark,
         borderRadius: RADII.pill,
         paddingVertical: 8,
         paddingHorizontal: 12,
@@ -392,10 +458,8 @@ const styles = StyleSheet.create({
         marginBottom: 8,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: COLORS.primary,
     },
     interestTagText: {
-        color: COLORS.light,
         fontSize: 14,
         marginRight: 5,
     },
@@ -403,7 +467,6 @@ const styles = StyleSheet.create({
         padding: 2,
     },
     fullWidthButton: {
-        backgroundColor: COLORS.primary,
         padding: 18,
         borderRadius: RADII.rounded,
         alignItems: 'center',
@@ -412,11 +475,9 @@ const styles = StyleSheet.create({
         // ...SHADOWS.btnPrimary,
     },
     disabledFullWidthButton: {
-        backgroundColor: COLORS.dark,
         // ...SHADOWS.card,
     },
     fullWidthButtonText: {
-        color: COLORS.light,
         fontWeight: 'bold',
         fontSize: 18,
     },
