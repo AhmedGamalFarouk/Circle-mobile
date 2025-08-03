@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { COLORS, FONTS, RADII } from '../../../constants/constants';
+import { FONTS, RADII } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const ToggleOption = ({ title, description, value, onToggle }) => {
+    const { colors } = useTheme();
     const animatedValue = React.useRef(new Animated.Value(value ? 1 : 0)).current;
 
     React.useEffect(() => {
@@ -15,7 +17,7 @@ const ToggleOption = ({ title, description, value, onToggle }) => {
 
     const toggleBackgroundColor = animatedValue.interpolate({
         inputRange: [0, 1],
-        outputRange: [COLORS.darker, COLORS.primary],
+        outputRange: [colors.border, colors.primary],
     });
 
     const toggleTranslateX = animatedValue.interpolate({
@@ -26,15 +28,18 @@ const ToggleOption = ({ title, description, value, onToggle }) => {
     return (
         <View style={styles.container}>
             <View style={styles.textContainer}>
-                <Text style={styles.title}>{title}</Text>
-                {description && <Text style={styles.description}>{description}</Text>}
+                <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+                {description && <Text style={[styles.description, { color: colors.textSecondary }]}>{description}</Text>}
             </View>
             <TouchableOpacity onPress={() => onToggle(!value)} style={styles.toggleContainer}>
                 <Animated.View style={[styles.toggleBackground, { backgroundColor: toggleBackgroundColor }]}>
                     <Animated.View
                         style={[
                             styles.toggleCircle,
-                            { transform: [{ translateX: toggleTranslateX }] }
+                            {
+                                transform: [{ translateX: toggleTranslateX }],
+                                backgroundColor: colors.surface
+                            }
                         ]}
                     />
                 </Animated.View>
@@ -55,14 +60,12 @@ const styles = StyleSheet.create({
         marginRight: 15,
     },
     title: {
-        color: COLORS.light,
         fontSize: 16,
         fontWeight: '500',
         fontFamily: FONTS.body,
         marginBottom: 2,
     },
     description: {
-        color: COLORS.text,
         fontSize: 14,
         fontFamily: FONTS.body,
         lineHeight: 18,
@@ -80,7 +83,6 @@ const styles = StyleSheet.create({
         width: 20,
         height: 20,
         borderRadius: 10,
-        backgroundColor: COLORS.light,
     },
 });
 

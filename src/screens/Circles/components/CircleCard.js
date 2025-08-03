@@ -3,30 +3,32 @@ import React from 'react'
 import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, RADII, SHADOWS } from '../../../constants/constants'
+import { useTheme } from '../../../context/ThemeContext'
 
 
 const CircleCard = ({ circle, onPress }) => {
+    const { colors } = useTheme()
     return (
-        <TouchableOpacity style={styles.circleCard} onPress={() => onPress(circle)}>
+        <TouchableOpacity style={[styles.circleCard, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => onPress(circle)}>
             <View style={styles.cardHeader}>
                 <Image
                     source={circle.photoUrl ? { uri: circle.photoUrl } : require('../../../../assets/circle.gif')}
                     style={styles.circleImage}
                 />
                 <View style={styles.circleInfo}>
-                    <Text style={styles.circleName} numberOfLines={1}>
+                    <Text style={[styles.circleName, { color: colors.text }]} numberOfLines={1}>
                         {circle.circleName || 'Unnamed Circle'}
                     </Text>
-                    <Text style={styles.circleDescription} numberOfLines={2}>
+                    <Text style={[styles.circleDescription, { color: colors.text }]} numberOfLines={2}>
                         {circle.description || 'No description available'}
                     </Text>
                     <View style={styles.circleMeta}>
                         <View style={styles.metaItem}>
-                            <Ionicons name="people" size={14} color={COLORS.text} />
-                            <Text style={styles.metaText}>Public</Text>
+                            <Ionicons name="people" size={14} style={{ color: colors.text }} />
+                            <Text style={[styles.metaText, { color: colors.text }]}>Public</Text>
                         </View>
                         <View style={styles.metaItem}>
-                            <Ionicons name="time" size={14} color={COLORS.text} />
+                            <Ionicons name="time" size={14} style={{ color: colors.text }} />
                             <Text style={styles.metaText}>
                                 {circle.circleType === 'flash' ? 'Flash' : 'Permanent'}
                             </Text>
@@ -39,14 +41,14 @@ const CircleCard = ({ circle, onPress }) => {
                 <View style={styles.interestsContainer}>
                     {circle.interests.slice(0, 3).map((interest, index) => (
                         <View key={index} style={styles.interestTag}>
-                            <Text style={styles.interestText}>
+                            <Text style={[styles.interestText, { color: colors.text }]}>
                                 {typeof interest === 'string' ? interest : interest.label || interest.value || 'Interest'}
                             </Text>
                         </View>
                     ))}
                     {circle.interests.length > 3 && (
                         <View style={styles.interestTag}>
-                            <Text style={styles.interestText}>+{circle.interests.length - 3}</Text>
+                            <Text style={[styles.interestText, { color: colors.text }]}>+{circle.interests.length - 3}</Text>
                         </View>
                     )}
                 </View>
@@ -59,7 +61,6 @@ export default CircleCard
 
 const styles = StyleSheet.create({
     circleCard: {
-        backgroundColor: COLORS.darker,
         borderRadius: RADII.rounded,
         padding: 15,
         marginBottom: 15,

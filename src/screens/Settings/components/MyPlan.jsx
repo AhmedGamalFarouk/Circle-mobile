@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, RADII } from '../../../constants/constants';
+import { RADII } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const plans = [
     {
@@ -30,6 +31,7 @@ const plans = [
 ];
 
 const MyPlan = () => {
+    const { colors } = useTheme();
     const [selectedPlan, setSelectedPlan] = useState('Free');
 
     const handlePlanSelect = (planName) => {
@@ -40,41 +42,53 @@ const MyPlan = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>My Plan</Text>
-            <Text style={styles.subtitle}>Choose the plan that fits your needs</Text>
+            <Text style={[styles.title, { color: colors.text }]}>My Plan</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Choose the plan that fits your needs</Text>
             {plans.map((plan, index) => (
                 <TouchableOpacity
                     key={index}
                     style={[
                         styles.planContainer,
-                        selectedPlan === plan.name && styles.selectedPlan
+                        {
+                            backgroundColor: colors.glass,
+                            borderColor: colors.border
+                        },
+                        selectedPlan === plan.name && [
+                            styles.selectedPlan,
+                            {
+                                borderColor: colors.primary,
+                                backgroundColor: colors.primary + '10'
+                            }
+                        ]
                     ]}
                     onPress={() => handlePlanSelect(plan.name)}
                 >
                     <View style={styles.planHeader}>
                         <Text style={[
                             styles.planName,
-                            selectedPlan === plan.name && styles.selectedPlanName
+                            { color: colors.text },
+                            selectedPlan === plan.name && [styles.selectedPlanName, { color: colors.primary }]
                         ]}>
                             {plan.name}
                         </Text>
                         {selectedPlan === plan.name && (
-                            <View style={styles.selectedBadge}>
-                                <Text style={styles.selectedBadgeText}>Current</Text>
+                            <View style={[styles.selectedBadge, { backgroundColor: colors.primary }]}>
+                                <Text style={[styles.selectedBadgeText, { color: colors.surface }]}>Current</Text>
                             </View>
                         )}
                     </View>
 
                     <View style={styles.featuresContainer}>
-                        <Text style={styles.featureText}>• {plan.connections} connections</Text>
-                        <Text style={styles.featureText}>• Join {plan.circles} circles</Text>
-                        <Text style={styles.featureText}>• Create {plan.createCircle} circle{plan.createCircle !== 1 ? 's' : ''}</Text>
-                        <Text style={styles.featureText}>• Up to {plan.members} members per circle</Text>
+                        <Text style={[styles.featureText, { color: colors.textSecondary }]}>• {plan.connections} connections</Text>
+                        <Text style={[styles.featureText, { color: colors.textSecondary }]}>• Join {plan.circles} circles</Text>
+                        <Text style={[styles.featureText, { color: colors.textSecondary }]}>• Create {plan.createCircle} circle{plan.createCircle !== 1 ? 's' : ''}</Text>
+                        <Text style={[styles.featureText, { color: colors.textSecondary }]}>• Up to {plan.members} members per circle</Text>
                     </View>
 
                     <Text style={[
                         styles.price,
-                        selectedPlan === plan.name && styles.selectedPrice
+                        { color: colors.accent },
+                        selectedPlan === plan.name && [styles.selectedPrice, { color: colors.primary }]
                     ]}>
                         {plan.price}
                     </Text>
@@ -92,28 +106,22 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: COLORS.light,
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 14,
-        color: COLORS.text,
         marginBottom: 20,
         opacity: 0.8,
     },
     planContainer: {
-        backgroundColor: COLORS.glass,
         borderWidth: 1,
-        borderColor: COLORS.text + '30',
         borderRadius: RADII.rounded,
         padding: 20,
         marginBottom: 15,
         // ...SHADOWS.card,
     },
     selectedPlan: {
-        borderColor: COLORS.primary,
         borderWidth: 2,
-        backgroundColor: COLORS.primary + '10',
     },
     planHeader: {
         flexDirection: 'row',
@@ -124,19 +132,16 @@ const styles = StyleSheet.create({
     planName: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: COLORS.light,
     },
     selectedPlanName: {
-        color: COLORS.primary,
+        // color will be set dynamically
     },
     selectedBadge: {
-        backgroundColor: COLORS.primary,
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: RADII.pill,
     },
     selectedBadgeText: {
-        color: COLORS.light,
         fontSize: 12,
         fontWeight: '600',
     },
@@ -145,18 +150,16 @@ const styles = StyleSheet.create({
     },
     featureText: {
         fontSize: 14,
-        color: COLORS.text,
         marginBottom: 6,
         lineHeight: 20,
     },
     price: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.accent,
         textAlign: 'right',
     },
     selectedPrice: {
-        color: COLORS.primary,
+        // color will be set dynamically
     },
 });
 

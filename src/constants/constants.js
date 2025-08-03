@@ -9,6 +9,36 @@ export const COLORS = {
   glass: "rgba(22, 23, 30, 0.7)",
 };
 
+// Theme color schemes
+export const THEMES = {
+  dark: {
+    primary: "#ff6b8b",
+    secondary: "#6a5acd",
+    accent: "#00c9b1",
+    background: "#12131a",
+    surface: "#1a1b23",
+    card: "#1e1f2a",
+    text: "#ffffff",
+    textSecondary: "#c5c6c7",
+    border: "#2a2b35",
+    glass: "rgba(22, 23, 30, 0.7)",
+    shadow: "#000000",
+  },
+  light: {
+    primary: "#ff6b8b",
+    secondary: "#6a5acd",
+    accent: "#00c9b1",
+    background: "#f8f9fc",
+    surface: "#ffffff",
+    card: "#ffffff",
+    text: "#1a1b23",
+    textSecondary: "#6b7280",
+    border: "#e5e7eb",
+    glass: "rgba(255, 255, 255, 0.7)",
+    shadow: "#000000",
+  },
+};
+
 export const FONTS = {
   body: "Poppins",
   heading: "Quicksand",

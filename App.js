@@ -2,6 +2,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from './src/context/ThemeContext';
 import { COLORS } from './src/constants/constants';
 import LandingScreen from './src/screens/LandingScreen';
 import SignInScreen from './src/screens/Auth Screens/Sign in/SignInScreen';
@@ -19,11 +20,12 @@ const Stack = createNativeStackNavigator();
 import CreationForm from './src/screens/Circle Creation/CreationForm';
 import InviteAndShare from './src/screens/Circle Creation/InviteAndShare';
 
-
 import useAuth from './src/hooks/useAuth';
+import { ThemeProvider } from './src/context/ThemeContext';
 
-export default function App() {
+const AppContent = () => {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
 
   if (loading) {
     return (
@@ -49,9 +51,17 @@ export default function App() {
             <Stack.Screen name="InviteAndShare" component={InviteAndShare} options={{ presentation: 'modal' }} />
             <Stack.Screen name="Circle" component={CircleScreen} />
           </Stack.Navigator>
-          <StatusBar style="auto" />
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
         </NavigationContainer>
       </GestureHandlerRootView>
     </SafeAreaProvider>
+  );
+};
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

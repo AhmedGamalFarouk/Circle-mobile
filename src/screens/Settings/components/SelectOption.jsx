@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADII } from '../../../constants/constants';
+import { FONTS, RADII } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const SelectOption = ({ title, options, selectedValue, onSelect }) => {
+    const { colors } = useTheme();
     const [isModalVisible, setIsModalVisible] = useState(false);
 
     const handleSelect = (value) => {
@@ -15,18 +17,20 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
         <TouchableOpacity
             style={[
                 styles.optionItem,
-                item === selectedValue && styles.selectedOption
+                { borderBottomColor: colors.border },
+                item === selectedValue && [styles.selectedOption, { backgroundColor: colors.glass }]
             ]}
             onPress={() => handleSelect(item)}
         >
             <Text style={[
                 styles.optionText,
-                item === selectedValue && styles.selectedOptionText
+                { color: colors.text },
+                item === selectedValue && [styles.selectedOptionText, { color: colors.primary }]
             ]}>
                 {item}
             </Text>
             {item === selectedValue && (
-                <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                <Ionicons name="checkmark" size={20} color={colors.primary} />
             )}
         </TouchableOpacity>
     );
@@ -38,10 +42,10 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
                 onPress={() => setIsModalVisible(true)}
             >
                 <View style={styles.textContainer}>
-                    <Text style={styles.title}>{title}</Text>
-                    <Text style={styles.selectedValue}>{selectedValue}</Text>
+                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+                    <Text style={[styles.selectedValue, { color: colors.textSecondary }]}>{selectedValue}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.text} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
 
             <Modal
@@ -51,14 +55,14 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
                 onRequestClose={() => setIsModalVisible(false)}
             >
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>{title}</Text>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                        <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+                            <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
                             <TouchableOpacity
                                 onPress={() => setIsModalVisible(false)}
                                 style={styles.closeButton}
                             >
-                                <Ionicons name="close" size={24} color={COLORS.light} />
+                                <Ionicons name="close" size={24} color={colors.text} />
                             </TouchableOpacity>
                         </View>
                         <FlatList
@@ -85,14 +89,12 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     title: {
-        color: COLORS.light,
         fontSize: 16,
         fontWeight: '500',
         fontFamily: FONTS.body,
         marginBottom: 2,
     },
     selectedValue: {
-        color: COLORS.text,
         fontSize: 14,
         fontFamily: FONTS.body,
     },
@@ -103,7 +105,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: COLORS.dark,
         borderRadius: RADII.rounded,
         width: '80%',
         maxHeight: '60%',
@@ -115,10 +116,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
     },
     modalTitle: {
-        color: COLORS.light,
         fontSize: 18,
         fontWeight: '600',
         fontFamily: FONTS.heading,
@@ -136,18 +135,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 15,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
     },
     selectedOption: {
-        backgroundColor: COLORS.glass,
+        // backgroundColor will be set dynamically
     },
     optionText: {
-        color: COLORS.light,
         fontSize: 16,
         fontFamily: FONTS.body,
     },
     selectedOptionText: {
-        color: COLORS.primary,
         fontWeight: '500',
     },
 });

@@ -30,6 +30,7 @@ import LoadingSkeleton from './components/LoadingSkeleton';
 import { auth, db } from '../../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
 import useUserProfile from '../../hooks/useUserProfile';
+import { useTheme } from '../../context/ThemeContext';
 
 const ProfileScreen = React.memo(({ route, navigation }) => {
     const { userId } = route.params || {};
@@ -54,7 +55,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const buttonScale = useRef(new Animated.Value(1)).current;
     const coverImageOpacity = useRef(new Animated.Value(1)).current;
     const shimmerAnimation = useRef(new Animated.Value(0)).current;
-
+    const { colors } = useTheme()
     // Enhanced interaction handlers with haptic feedback and animations
     const handleFollow = useCallback(() => {
         // Haptic feedback
@@ -281,7 +282,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     }
 
     return (
-        <View style={[styles.container, { paddingTop: insets.top }]}>
+        <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
             <ScrollView
                 style={styles.scrollView}
                 onScroll={Animated.event(
@@ -301,7 +302,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         disabled={!isEditing}
                         activeOpacity={isEditing ? 0.8 : 1}
                     >
-                        <Animated.View style={[styles.coverImageWrapper, { opacity: headerOpacity }]}>
+                        <Animated.View style={[styles.coverImageWrapper, { opacity: headerOpacity }, { backgroundColor: colors.background }]}>
                             <Image
                                 source={isEditing ? editingCoverImage : (profile?.coverImage ? { uri: profile.coverImage } : require('../../../assets/Avatar.jpg'))}
                                 style={[styles.coverImage, isEditing && styles.coverImageEditing]}
@@ -423,7 +424,6 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 const getStyles = (height, width, insets, isLandscape) => StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.darker,
     },
     scrollView: {
         flex: 1,
