@@ -85,7 +85,7 @@ const CircleHeader = ({ name, imageUrl, circleId }) => {
         visible={showCircleSettings}
         onClose={() => setShowCircleSettings(false)}
         circleId={circleId}
-        circleData={circleData}
+        circleData={name}
       />
     </View>
   );

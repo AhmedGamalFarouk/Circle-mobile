@@ -12,7 +12,9 @@ import {
     ScrollView,
     Vibration,
     Dimensions,
-    Platform
+    Platform,
+    Modal,
+    ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,6 +31,7 @@ import JoinedCircles from './components/JoinedCircles';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import { auth, db } from '../../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import useUserProfile from '../../hooks/useUserProfile';
 
 const ProfileScreen = React.memo(({ route, navigation }) => {
@@ -48,6 +51,10 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const [editingProfileImage, setEditingProfileImage] = useState(null);
     const [editingCoverImage, setEditingCoverImage] = useState(null);
     const [imageLoading, setImageLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false); // New state for upload indicator
+    const [showImageOptions, setShowImageOptions] = useState(false);
+    const [currentImageForOptions, setCurrentImageForOptions] = useState(null);
+    const [currentImageType, setCurrentImageType] = useState(null);
 
     // Animation values
     const scrollY = useRef(new Animated.Value(0)).current;
@@ -121,11 +128,41 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         }
 
         try {
+            setIsUploading(true); // Start uploading indicator
+            const functions = getFunctions();
+            const uploadProfileImage = httpsCallable(functions, 'uploadProfileImage');
+
+            if (editingProfileImage && editingProfileImage.uri !== (profile?.profileImage || 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png')) {
+                const response = await fetch(editingProfileImage.uri);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                await new Promise((resolve) => {
+                    reader.onloadend = async () => {
+                        const base64data = reader.result.split(',')[1];
+                        await uploadProfileImage({ image: base64data, type: 'avatar' });
+                        resolve();
+                    };
+                });
+            }
+
+            if (editingCoverImage && editingCoverImage.uri !== (profile?.coverImage || 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png')) {
+                const response = await fetch(editingCoverImage.uri);
+                const blob = await response.blob();
+                const reader = new FileReader();
+                reader.readAsDataURL(blob);
+                await new Promise((resolve) => {
+                    reader.onloadend = async () => {
+                        const base64data = reader.result.split(',')[1];
+                        await uploadProfileImage({ image: base64data, type: 'cover' });
+                        resolve();
+                    };
+                });
+            }
+
             await setDoc(doc(db, 'users', currentUser.uid), {
                 username: editingUserName,
                 bio: editingUserBio,
-                profileImage: editingProfileImage?.uri || profile?.profileImage || '',
-                coverImage: editingCoverImage?.uri || profile?.coverImage || '',
             }, { merge: true });
 
             Alert.alert("Success", "Profile updated successfully!");
@@ -133,8 +170,10 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         } catch (error) {
             console.error('Error saving profile:', error);
             Alert.alert("Error", "Failed to save profile.");
+        } finally {
+            setIsUploading(false); // Stop uploading indicator
         }
-    }, [currentUser, editingUserName, editingUserBio, editingProfileImage, editingCoverImage, profile]);
+    }, [currentUser, editingUserName, editingUserBio, editingProfileImage, editingCoverImage, profile, navigation]);
 
     const handleEdit = useCallback(() => {
         // Haptic feedback for edit mode
@@ -147,14 +186,22 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         setIsEditing(true);
         setEditingUserName(profile?.username || '');
         setEditingUserBio(profile?.bio || '');
-        setEditingProfileImage(profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/Avatar.jpg'));
-        setEditingCoverImage(profile?.coverImage ? { uri: profile.coverImage } : require('../../../assets/Avatar.jpg'));
+        setEditingProfileImage(profile?.profileImage ? { uri: profile.profileImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png' });
+        setEditingCoverImage(profile?.coverImage ? { uri: profile.coverImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png' });
     }, [profile]);
 
 
-    const handleChangeCoverImage = useCallback(async () => {
+    const handleImagePress = useCallback((imageUri, imageType) => {
+        if (isEditing) {
+            setCurrentImageForOptions(imageUri);
+            setCurrentImageType(imageType);
+            setShowImageOptions(true);
+        }
+    }, [isEditing]);
+
+    const pickImage = useCallback(async (aspectRatio, imageType) => {
+        setShowImageOptions(false);
         try {
-            // Haptic feedback
             if (Platform.OS === 'ios') {
                 Vibration.vibrate(10);
             } else {
@@ -169,18 +216,20 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             }
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'],
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
                 allowsEditing: true,
-                aspect: [16, 9], // Better aspect ratio for cover images
-                quality: 0.8, // Optimized quality for performance
-                compress: 0.7,
+                aspect: aspectRatio,
+                quality: 0.8,
+                base64: true, // Request base64 for direct upload
             });
 
             if (!result.canceled) {
                 setImageLoading(true);
-                setEditingCoverImage({ uri: result.assets[0].uri });
-
-                // Simulate progressive loading
+                if (imageType === 'profile') {
+                    setEditingProfileImage({ uri: result.assets[0].uri, base64: result.assets[0].base64 });
+                } else if (imageType === 'cover') {
+                    setEditingCoverImage({ uri: result.assets[0].uri, base64: result.assets[0].base64 });
+                }
                 setTimeout(() => setImageLoading(false), 500);
             }
         } catch (error) {
@@ -189,42 +238,29 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         }
     }, []);
 
-    const handleChangeProfileImage = useCallback(async () => {
+    const handleDeleteImage = useCallback(async () => {
+        setShowImageOptions(false);
+        if (!currentUser || !currentImageType) {
+            Alert.alert("Error", "No user logged in or image type not specified.");
+            return;
+        }
+
         try {
-            // Haptic feedback
-            if (Platform.OS === 'ios') {
-                Vibration.vibrate(10);
-            } else {
-                Vibration.vibrate(30);
+            const functions = getFunctions();
+            const deleteProfileImage = httpsCallable(functions, 'deleteProfileImage');
+            await deleteProfileImage({ type: currentImageType });
+
+            if (currentImageType === 'avatar') {
+                setEditingProfileImage({ uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png' });
+            } else if (currentImageType === 'cover') {
+                setEditingCoverImage({ uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png' });
             }
-
-            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-            if (permissionResult.granted === false) {
-                Alert.alert('Permission Required', 'Permission to access gallery is required!');
-                return;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ['images'],
-                allowsEditing: true,
-                aspect: [1, 1],
-                quality: 0.8, // Optimized quality
-                compress: 0.7,
-            });
-
-            if (!result.canceled) {
-                setImageLoading(true);
-                setEditingProfileImage({ uri: result.assets[0].uri });
-
-                // Simulate progressive loading
-                setTimeout(() => setImageLoading(false), 500);
-            }
+            Alert.alert("Success", `${currentImageType} image deleted successfully!`);
         } catch (error) {
-            console.error('Error picking image:', error);
-            Alert.alert('Error', 'Failed to pick image');
+            console.error('Error deleting image:', error);
+            Alert.alert("Error", `Failed to delete ${currentImageType} image.`);
         }
-    }, []);
+    }, [currentUser, currentImageType]);
 
     // Responsive calculations
     const isLandscape = screenWidth > screenHeight;
@@ -297,13 +333,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     { transform: [{ translateY: coverImageTranslateY }] }
                 ]}>
                     <TouchableOpacity
-                        onPress={isEditing ? handleChangeCoverImage : null}
+                        onPress={() => handleImagePress(isEditing ? editingCoverImage?.uri : profile?.coverImage, 'cover')}
                         disabled={!isEditing}
                         activeOpacity={isEditing ? 0.8 : 1}
                     >
                         <Animated.View style={[styles.coverImageWrapper, { opacity: headerOpacity }]}>
                             <Image
-                                source={isEditing ? editingCoverImage : (profile?.coverImage ? { uri: profile.coverImage } : require('../../../assets/Avatar.jpg'))}
+                                source={isEditing && editingCoverImage ? editingCoverImage : (profile?.coverImage ? { uri: profile.coverImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png' })}
                                 style={[styles.coverImage, isEditing && styles.coverImageEditing]}
                                 onLoadStart={() => setImageLoading(true)}
                                 onLoadEnd={() => setImageLoading(false)}
@@ -325,7 +361,11 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                                 { transform: [{ scale: buttonScale }] }
                             ]}>
                                 <View style={styles.glassmorphicButton}>
-                                    <Text style={styles.editIcon}>📷 Change Cover</Text>
+                                    {isUploading ? (
+                                        <ActivityIndicator size="small" color={COLORS.light} />
+                                    ) : (
+                                        <Text style={styles.editIcon}>📷 Change Cover</Text>
+                                    )}
                                 </View>
                             </Animated.View>
                         )}
@@ -350,13 +390,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         { transform: [{ scale: buttonScale }] }
                     ]}>
                         <TouchableOpacity
-                            onPress={isEditing ? handleChangeProfileImage : null}
+                            onPress={() => handleImagePress(isEditing ? editingProfileImage?.uri : profile?.profileImage, 'avatar')}
                             disabled={!isEditing}
                             activeOpacity={isEditing ? 0.8 : 1}
                         >
                             <View style={styles.profileImageWrapper}>
                                 <Image
-                                    source={isEditing ? editingProfileImage : (profile?.profileImage ? { uri: profile.profileImage } : require('../../../assets/Avatar.jpg'))}
+                                    source={isEditing && editingProfileImage ? editingProfileImage : (profile?.profileImage ? { uri: profile.profileImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png' })}
                                     style={[styles.profileImage, isEditing && styles.profileImageEditing]}
                                     onLoadStart={() => setImageLoading(true)}
                                     onLoadEnd={() => setImageLoading(false)}
@@ -375,7 +415,11 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                                 {isEditing && (
                                     <View style={styles.editIconContainer}>
                                         <View style={styles.glassmorphicEditIcon}>
-                                            <Text style={styles.editIcon}>📷</Text>
+                                            {isUploading ? (
+                                                <ActivityIndicator size="small" color={COLORS.light} />
+                                            ) : (
+                                                <Text style={styles.editIcon}>📷</Text>
+                                            )}
                                         </View>
                                     </View>
                                 )}
@@ -416,8 +460,117 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     <JoinedCircles shimmerAnimation={shimmerAnimation} loading={loading} />
                 </DraggableCard>
             </ScrollView>
+            <ImageOptionsModal
+                visible={showImageOptions}
+                onClose={() => setShowImageOptions(false)}
+                onChooseNew={() => {
+                    if (currentImageType === 'avatar') {
+                        pickImage([1, 1], 'avatar');
+                    } else if (currentImageType === 'cover') {
+                        pickImage([16, 9], 'cover');
+                    }
+                }}
+                onDelete={handleDeleteImage}
+                imageType={currentImageType}
+            />
         </View>
     );
+});
+
+const ImageOptionsModal = ({ visible, onClose, onChooseNew, onDelete, imageType }) => {
+    return (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={visible}
+            onRequestClose={onClose}
+        >
+            <View style={modalStyles.centeredView}>
+                <View style={modalStyles.modalView}>
+                    <Text style={modalStyles.modalTitle}>Choose Action for {imageType === 'avatar' ? 'Profile' : 'Cover'} Image</Text>
+                    <TouchableOpacity
+                        style={modalStyles.button}
+                        onPress={onChooseNew}
+                    >
+                        <Text style={modalStyles.textStyle}>Choose New Image</Text>
+                    </TouchableOpacity>
+                    {imageType === 'avatar' && (
+                        <TouchableOpacity
+                            style={[modalStyles.button, modalStyles.buttonDelete]}
+                            onPress={onDelete}
+                        >
+                            <Text style={modalStyles.textStyle}>Delete Profile Image</Text>
+                        </TouchableOpacity>
+                    )}
+                    {imageType === 'cover' && (
+                        <TouchableOpacity
+                            style={[modalStyles.button, modalStyles.buttonDelete]}
+                            onPress={onDelete}
+                        >
+                            <Text style={modalStyles.textStyle}>Delete Cover Image</Text>
+                        </TouchableOpacity>
+                    )}
+                    <TouchableOpacity
+                        style={[modalStyles.button, modalStyles.buttonClose]}
+                        onPress={onClose}
+                    >
+                        <Text style={modalStyles.textStyle}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </Modal>
+    );
+};
+
+const modalStyles = StyleSheet.create({
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: 'rgba(0,0,0,0.6)',
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: COLORS.dark,
+        borderRadius: RADII.large,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+        width: '80%',
+    },
+    modalTitle: {
+        marginBottom: 15,
+        textAlign: "center",
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: COLORS.light,
+    },
+    button: {
+        borderRadius: RADII.rounded,
+        padding: 15,
+        elevation: 2,
+        width: '100%',
+        marginBottom: 10,
+        backgroundColor: COLORS.primary,
+    },
+    buttonDelete: {
+        backgroundColor: COLORS.error,
+    },
+    buttonClose: {
+        backgroundColor: COLORS.secondary,
+    },
+    textStyle: {
+        color: "white",
+        fontWeight: "bold",
+        textAlign: "center"
+    },
 });
 
 const getStyles = (height, width, insets, isLandscape) => StyleSheet.create({

@@ -2,6 +2,13 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+    cloud_name: 'dwh8jhaot',
+    api_key: '861252578513848',
+    api_secret: 'CV8rI-ZMEMqmMoDV4koumd4GDIs'
+});
+
 exports.deleteExpiredFlashCircles = functions.pubsub.schedule('every 24 hours').onRun(async (context) => {
     const now = admin.firestore.Timestamp.now();
     const circlesRef = admin.firestore().collection('circles');
@@ -118,4 +125,78 @@ exports.processExpiredPolls = functions.pubsub.schedule('every 1 minutes').onRun
     await Promise.all(updatePromises);
     console.log('Expired polls processed successfully.');
     return null;
+});
+
+exports.uploadProfileImage = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Only authenticated users can upload images.');
+    }
+
+    const userId = context.auth.uid;
+    const imageBase64 = data.image; // Base64 encoded image string
+    const imageType = data.type; // 'avatar' or 'cover'
+
+    if (!imageBase64 || !imageType) {
+        throw new functions.https.HttpsError('invalid-argument', 'Image data and type are required.');
+    }
+
+    if (imageType !== 'avatar' && imageType !== 'cover') {
+        throw new functions.https.HttpsError('invalid-argument', 'Invalid image type. Must be "avatar" or "cover".');
+    }
+
+    try {
+        const uploadResult = await cloudinary.uploader.upload(`data:image/jpeg;base64,${imageBase64}`, {
+            folder: `users/${userId}/profile`,
+            public_id: imageType,
+            overwrite: true
+        });
+
+        const imageUrl = uploadResult.secure_url;
+
+        // Update Firestore user profile
+        const userRef = admin.firestore().collection('users').doc(userId);
+        await userRef.set({
+            [imageType === 'avatar' ? 'avatarUrl' : 'coverUrl']: imageUrl
+        }, { merge: true });
+
+        return { success: true, imageUrl: imageUrl };
+
+    } catch (error) {
+        console.error("Error uploading image or updating Firestore:", error);
+        throw new functions.https.HttpsError('internal', 'Failed to upload image or update profile.', error.message);
+    }
+});
+
+exports.deleteProfileImage = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Only authenticated users can delete images.');
+    }
+
+    const userId = context.auth.uid;
+    const imageType = data.type; // 'avatar' or 'cover'
+
+    if (!imageType) {
+        throw new functions.https.HttpsError('invalid-argument', 'Image type is required.');
+    }
+
+    if (imageType !== 'avatar' && imageType !== 'cover') {
+        throw new functions.https.HttpsError('invalid-argument', 'Invalid image type. Must be "avatar" or "cover".');
+    }
+
+    try {
+        const publicId = `users/${userId}/profile/${imageType}`;
+        await cloudinary.uploader.destroy(publicId);
+
+        // Update Firestore user profile to remove the image URL
+        const userRef = admin.firestore().collection('users').doc(userId);
+        await userRef.update({
+            [imageType === 'avatar' ? 'avatarUrl' : 'coverUrl']: admin.firestore.FieldValue.delete()
+        });
+
+        return { success: true };
+
+    } catch (error) {
+        console.error("Error deleting image or updating Firestore:", error);
+        throw new functions.https.HttpsError('internal', 'Failed to delete image or update profile.', error.message);
+    }
 });
