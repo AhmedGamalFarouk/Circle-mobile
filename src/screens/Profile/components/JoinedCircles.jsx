@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { COLORS } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const JoinedCircles = ({ circles = [], shimmerAnimation, loading }) => {
     const navigation = useNavigation();
+    const { colors } = useTheme();
+    const styles = getStyles(colors);
     // Mock data for demonstration - you can replace this with actual circle data
     const mockCircles = [
         { id: 1, name: 'Tech Enthusiasts', image: 'https://picsum.photos/70?random=20', memberCount: 245 },
@@ -54,10 +56,10 @@ const JoinedCircles = ({ circles = [], shimmerAnimation, loading }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
 
     title: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 10,
@@ -81,7 +83,7 @@ const styles = StyleSheet.create({
         borderRadius: 22.5,
         marginBottom: 6,
         borderWidth: 2,
-        borderColor: COLORS.primary,
+        borderColor: colors.primary,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     circleName: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: 10,
         fontWeight: '600',
         textAlign: 'center',
@@ -100,7 +102,7 @@ const styles = StyleSheet.create({
         lineHeight: 12,
     },
     memberCount: {
-        color: COLORS.text,
+        color: colors.text,
         fontSize: 9,
         textAlign: 'center',
         opacity: 0.8,

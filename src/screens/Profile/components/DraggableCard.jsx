@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Animated, StyleSheet, useWindowDimensions } from 'react-native';
-import { COLORS, RADII, SHADOWS } from '../../../constants/constants';
+import { RADII, SHADOWS } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const DraggableCard = ({ children, pan, panResponder, screenHeight }) => {
+    const { colors } = useTheme();
     const { width: screenWidth, height } = useWindowDimensions();
     const isLandscape = screenWidth > height;
-    const styles = getStyles(screenHeight || height, screenWidth, isLandscape);
+    const styles = getStyles(screenHeight || height, screenWidth, isLandscape, colors);
 
     // Enhanced card shadow based on drag position
     const cardElevation = pan.y.interpolate({
@@ -48,10 +50,10 @@ const DraggableCard = ({ children, pan, panResponder, screenHeight }) => {
     );
 };
 
-const getStyles = (height, width, isLandscape) => StyleSheet.create({
+const getStyles = (height, width, isLandscape, colors) => StyleSheet.create({
     profileCard: {
         flex: 1,
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.background,
         borderTopLeftRadius: RADII.largeRounded,
         borderTopRightRadius: RADII.largeRounded,
         marginTop: -RADII.largeRounded,
@@ -62,7 +64,7 @@ const getStyles = (height, width, isLandscape) => StyleSheet.create({
         ...SHADOWS.glassCard,
         // Enhanced glassmorphism
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderColor: colors.border,
         borderBottomWidth: 0,
     },
     glassmorphicBackground: {
@@ -71,7 +73,7 @@ const getStyles = (height, width, isLandscape) => StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(18, 19, 26, 0.85)',
+        backgroundColor: colors.glassmorphic,
         backdropFilter: 'blur(20px)', // Note: Limited support in React Native
     },
     draggableHandle: {
@@ -88,7 +90,7 @@ const getStyles = (height, width, isLandscape) => StyleSheet.create({
     dragIndicator: {
         width: isLandscape ? 35 : 40,
         height: isLandscape ? 4 : 5,
-        backgroundColor: COLORS.text,
+        backgroundColor: colors.text,
         borderRadius: RADII.rounded,
         opacity: 0.6,
         marginBottom: 4,
@@ -96,7 +98,7 @@ const getStyles = (height, width, isLandscape) => StyleSheet.create({
     dragHint: {
         width: isLandscape ? 20 : 25,
         height: 2,
-        backgroundColor: COLORS.primary,
+        backgroundColor: colors.primary,
         borderRadius: 1,
         opacity: 0.4,
     },

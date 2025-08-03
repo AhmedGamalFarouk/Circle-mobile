@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, useWindowDimensions, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, RADII, SHADOWS, FONTS } from '../../../constants/constants';
+import { RADII, SHADOWS, FONTS } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const ProfileActions = ({ isFollowed, onFollow, buttonScale }) => {
+    const { colors } = useTheme();
     const { width, height } = useWindowDimensions();
     const isLandscape = width > height;
-    const styles = getStyles(width, isLandscape);
+    const styles = getStyles(width, isLandscape, colors);
 
     return (
         <View style={styles.buttonsContainer}>
@@ -23,7 +25,7 @@ const ProfileActions = ({ isFollowed, onFollow, buttonScale }) => {
                     <MaterialIcons
                         name={isFollowed ? "person-remove" : "person-add"}
                         size={isLandscape ? 18 : 20}
-                        color={COLORS.light}
+                        color={colors.text}
                         style={styles.buttonIcon}
                     />
                     <Text style={[styles.buttonText, isLandscape && styles.buttonTextLandscape]}>
@@ -41,7 +43,7 @@ const ProfileActions = ({ isFollowed, onFollow, buttonScale }) => {
                     <MaterialIcons
                         name="message"
                         size={isLandscape ? 18 : 20}
-                        color={COLORS.primary}
+                        color={colors.primary}
                         style={styles.buttonIcon}
                     />
                     <Text style={[styles.messageButtonText, isLandscape && styles.buttonTextLandscape]}>
@@ -59,7 +61,7 @@ const ProfileActions = ({ isFollowed, onFollow, buttonScale }) => {
                     <MaterialIcons
                         name="more-horiz"
                         size={isLandscape ? 20 : 24}
-                        color={COLORS.text}
+                        color={colors.text}
                     />
                 </TouchableOpacity>
             </Animated.View>
@@ -67,7 +69,7 @@ const ProfileActions = ({ isFollowed, onFollow, buttonScale }) => {
     );
 };
 
-const getStyles = (width, isLandscape) => StyleSheet.create({
+const getStyles = (width, isLandscape, colors) => StyleSheet.create({
     buttonsContainer: {
         flexDirection: 'row',
         width: width * 0.9,
@@ -88,13 +90,13 @@ const getStyles = (width, isLandscape) => StyleSheet.create({
         borderWidth: 2,
     },
     unfollowedButton: {
-        backgroundColor: COLORS.primary,
-        borderColor: COLORS.primary,
+        backgroundColor: colors.primary,
+        borderColor: colors.primary,
         ...SHADOWS.btnPrimary,
     },
     followedButton: {
-        backgroundColor: COLORS.secondary,
-        borderColor: COLORS.secondary,
+        backgroundColor: colors.secondary,
+        borderColor: colors.secondary,
         ...SHADOWS.btnSecondaryHover,
     },
     messageButton: {
@@ -117,16 +119,16 @@ const getStyles = (width, isLandscape) => StyleSheet.create({
         height: isLandscape ? 44 : 48,
     },
     glassmorphicButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: colors.glassmorphic,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: colors.border,
         ...SHADOWS.card,
     },
     buttonIcon: {
         marginRight: 6,
     },
     buttonText: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: isLandscape ? 14 : 16,
         fontFamily: FONTS.body,
         fontWeight: '600',
@@ -136,7 +138,7 @@ const getStyles = (width, isLandscape) => StyleSheet.create({
         fontSize: 14,
     },
     messageButtonText: {
-        color: COLORS.primary,
+        color: colors.primary,
         fontSize: isLandscape ? 14 : 16,
         fontFamily: FONTS.body,
         fontWeight: '600',

@@ -266,7 +266,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     // Responsive calculations
     const isLandscape = screenWidth > screenHeight;
     const coverHeight = isLandscape ? screenHeight * 0.5 : screenHeight * 0.65;
-    const styles = useMemo(() => getStyles(screenHeight, screenWidth, insets, isLandscape), [screenHeight, screenWidth, insets, isLandscape]);
+    const styles = useMemo(() => getStyles(screenHeight, screenWidth, insets, isLandscape, colors), [screenHeight, screenWidth, insets, isLandscape, colors]);
 
     const pan = useRef(new Animated.ValueXY()).current;
     const initialMarginTop = -screenHeight * 0.08;
@@ -479,6 +479,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 });
 
 const ImageOptionsModal = ({ visible, onClose, onChooseNew, onDelete, imageType }) => {
+    const { colors } = useTheme();
+    const modalStyles = getModalStyles(colors);
     return (
         <Modal
             animationType="slide"
@@ -487,10 +489,10 @@ const ImageOptionsModal = ({ visible, onClose, onChooseNew, onDelete, imageType 
             onRequestClose={onClose}
         >
             <View style={modalStyles.centeredView}>
-                <View style={modalStyles.modalView}>
+                <View style={[modalStyles.modalView, { backgroundColor: colors.surface }]}>
                     <Text style={modalStyles.modalTitle}>Choose Action for {imageType === 'avatar' ? 'Profile' : 'Cover'} Image</Text>
                     <TouchableOpacity
-                        style={modalStyles.button}
+                        style={[modalStyles.button, { backgroundColor: colors.primary }]}
                         onPress={onChooseNew}
                     >
                         <Text style={modalStyles.textStyle}>Choose New Image</Text>
@@ -512,7 +514,7 @@ const ImageOptionsModal = ({ visible, onClose, onChooseNew, onDelete, imageType 
                         </TouchableOpacity>
                     )}
                     <TouchableOpacity
-                        style={[modalStyles.button, modalStyles.buttonClose]}
+                        style={[modalStyles.button, modalStyles.buttonClose, { backgroundColor: colors.secondary }]}
                         onPress={onClose}
                     >
                         <Text style={modalStyles.textStyle}>Cancel</Text>
@@ -523,7 +525,7 @@ const ImageOptionsModal = ({ visible, onClose, onChooseNew, onDelete, imageType 
     );
 };
 
-const modalStyles = StyleSheet.create({
+const getModalStyles = (colors) => StyleSheet.create({
     centeredView: {
         flex: 1,
         justifyContent: "center",
@@ -532,7 +534,6 @@ const modalStyles = StyleSheet.create({
     },
     modalView: {
         margin: 20,
-        backgroundColor: COLORS.dark,
         borderRadius: RADII.large,
         padding: 35,
         alignItems: "center",
@@ -551,7 +552,7 @@ const modalStyles = StyleSheet.create({
         textAlign: "center",
         fontSize: 18,
         fontWeight: 'bold',
-        color: COLORS.light,
+        color: colors.text,
     },
     button: {
         borderRadius: RADII.rounded,
@@ -559,22 +560,20 @@ const modalStyles = StyleSheet.create({
         elevation: 2,
         width: '100%',
         marginBottom: 10,
-        backgroundColor: COLORS.primary,
     },
     buttonDelete: {
-        backgroundColor: COLORS.error,
+        backgroundColor: '#dc3545', // A common error color, consider adding to theme
     },
     buttonClose: {
-        backgroundColor: COLORS.secondary,
     },
     textStyle: {
-        color: "white",
+        color: colors.text,
         fontWeight: "bold",
         textAlign: "center"
     },
 });
 
-const getStyles = (height, width, insets, isLandscape) => StyleSheet.create({
+const getStyles = (height, width, insets, isLandscape, colors) => StyleSheet.create({
     container: {
         flex: 1,
     },
@@ -688,7 +687,7 @@ const getStyles = (height, width, insets, isLandscape) => StyleSheet.create({
         ...SHADOWS.btnPrimary,
     },
     editIcon: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: isLandscape ? 14 : 16,
         fontWeight: '600',
         textAlign: 'center',

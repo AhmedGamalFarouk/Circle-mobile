@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { COLORS } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const MySquad = ({ friends = [], shimmerAnimation, loading }) => {
+    const { colors } = useTheme();
+    const styles = getStyles(colors);
     // Mock data for demonstration - you can replace this with actual friend data
     const mockFriends = [
         { id: 1, name: 'Sarah', avatar: 'https://picsum.photos/60?random=10' },
@@ -43,9 +45,9 @@ const MySquad = ({ friends = [], shimmerAnimation, loading }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
     title: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 12,
@@ -68,7 +70,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 5,
         borderWidth: 2,
-        borderColor: COLORS.primary,
+        borderColor: colors.primary,
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -79,7 +81,7 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     friendName: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: 10,
         fontWeight: '600',
         textAlign: 'center',

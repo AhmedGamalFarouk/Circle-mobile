@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { COLORS, FONTS, RADII, SHADOWS } from '../../../constants/constants';
+import { FONTS, RADII, SHADOWS } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const ProfileStats = ({
     connections,
@@ -12,6 +13,8 @@ const ProfileStats = ({
     onConnectionsPress,
     onCirclesPress
 }) => {
+    const { colors } = useTheme();
+    const styles = getStyles(colors);
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const isLandscape = screenWidth > screenHeight;
     const dynamicStyles = getResponsiveStyles(isLandscape);
@@ -99,7 +102,7 @@ const ProfileStats = ({
                     <MaterialIcons
                         name="location-on"
                         size={isLandscape ? 16 : 18}
-                        color={COLORS.primary}
+                        color={colors.primary}
                     />
                 </View>
                 <Text style={[styles.locationText, dynamicStyles.locationText]}>
@@ -143,7 +146,7 @@ const getResponsiveStyles = (isLandscape) => ({
     },
 });
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
     container: {
         width: '100%',
         paddingHorizontal: 20,
@@ -172,7 +175,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 8,
     },
     statNumber: {
-        color: COLORS.light,
+        color: colors.text,
         fontFamily: FONTS.heading,
         fontWeight: '700',
         marginBottom: 4,
@@ -181,7 +184,7 @@ const styles = StyleSheet.create({
         textShadowRadius: 2,
     },
     statLabel: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontFamily: FONTS.body,
         fontWeight: '500',
         textTransform: 'uppercase',
@@ -195,7 +198,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         width: 30,
         height: 2,
-        backgroundColor: COLORS.primary,
+        backgroundColor: colors.primary,
         borderRadius: 1,
     },
     statDivider: {
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
         padding: 2,
     },
     locationText: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontFamily: FONTS.body,
         fontWeight: '500',
         opacity: 0.9,
@@ -228,18 +231,18 @@ const styles = StyleSheet.create({
 
     // Skeleton styles
     statNumberSkeleton: {
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.surface,
         borderRadius: RADII.small,
         marginBottom: 5,
         overflow: 'hidden',
     },
     statLabelSkeleton: {
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.surface,
         borderRadius: RADII.small,
         overflow: 'hidden',
     },
     locationSkeleton: {
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.surface,
         borderRadius: RADII.pill,
         overflow: 'hidden',
     },

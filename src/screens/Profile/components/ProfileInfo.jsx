@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, Animated, useWindowDimensions } from 'react-native';
-import { COLORS, FONTS, RADII } from '../../../constants/constants';
+import { FONTS, RADII } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
 
 const ProfileInfo = ({
     userName,
@@ -11,6 +12,8 @@ const ProfileInfo = ({
     shimmerAnimation,
     loading
 }) => {
+    const { colors } = useTheme();
+    const styles = getStyles(colors);
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const isLandscape = screenWidth > screenHeight;
     const dynamicStyles = getResponsiveStyles(isLandscape);
@@ -53,8 +56,8 @@ const ProfileInfo = ({
                     onChangeText={onUserNameChange}
                     autoFocus
                     placeholder="Enter your name"
-                    placeholderTextColor={COLORS.text}
-                    selectionColor={COLORS.primary}
+                    placeholderTextColor={colors.textSecondary}
+                    selectionColor={colors.primary}
                 />
             ) : (
                 <Text style={[styles.userName, dynamicStyles.userName]} numberOfLines={1}>
@@ -71,8 +74,8 @@ const ProfileInfo = ({
                     multiline
                     numberOfLines={3}
                     placeholder="Tell us about yourself..."
-                    placeholderTextColor={COLORS.text}
-                    selectionColor={COLORS.primary}
+                    placeholderTextColor={colors.textSecondary}
+                    selectionColor={colors.primary}
                     textAlignVertical="top"
                 />
             ) : (
@@ -115,7 +118,7 @@ const getResponsiveStyles = (isLandscape) => ({
 
 });
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
     profileInfo: {
         alignItems: 'center',
         marginBottom: 20,
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     userName: {
-        color: COLORS.light,
+        color: colors.text,
         fontFamily: FONTS.heading,
         fontWeight: '700',
         marginBottom: 8,
@@ -134,12 +137,12 @@ const styles = StyleSheet.create({
         textShadowRadius: 2,
     },
     userNameInput: {
-        color: COLORS.light,
+        color: colors.text,
         fontFamily: FONTS.heading,
         fontWeight: '700',
         marginBottom: 8,
         borderBottomWidth: 2,
-        borderBottomColor: COLORS.primary,
+        borderBottomColor: colors.primary,
         width: '90%',
         textAlign: 'center',
         paddingVertical: 8,
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
         borderRadius: RADII.small,
     },
     userBio: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontFamily: FONTS.body,
         textAlign: 'center',
         lineHeight: 22,
@@ -157,11 +160,11 @@ const styles = StyleSheet.create({
         opacity: 0.9,
     },
     userBioInput: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontFamily: FONTS.body,
         textAlign: 'center',
         borderWidth: 1,
-        borderColor: COLORS.primary,
+        borderColor: colors.primary,
         borderRadius: RADII.rounded,
         width: '90%',
         paddingVertical: 12,
@@ -172,13 +175,13 @@ const styles = StyleSheet.create({
 
     // Skeleton styles
     userNameSkeleton: {
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.surface,
         borderRadius: RADII.small,
         marginBottom: 10,
         overflow: 'hidden',
     },
     userBioSkeleton: {
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.surface,
         borderRadius: RADII.small,
         overflow: 'hidden',
     },
