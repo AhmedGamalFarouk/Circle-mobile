@@ -338,8 +338,8 @@ const ChatFeed = ({ circleId, onReply }) => {
         const messageTime = selectedMessage.createdAt.toDate();
         const diffInMinutes = (now - messageTime) / (1000 * 60);
 
-        if (diffInMinutes > 3) {
-            Alert.alert("Can't Edit", "You can only edit messages for 3 minutes after sending.");
+        if (diffInMinutes > 15) {
+            Alert.alert("Can't Edit", "You can only edit messages for 15 minutes after sending.");
             hideOptionsMenu();
             return;
         }
@@ -747,7 +747,7 @@ const ChatFeed = ({ circleId, onReply }) => {
                 const now = new Date();
                 const messageTime = selectedMessage.createdAt.toDate();
                 const diffInMinutes = (now - messageTime) / (1000 * 60);
-                const isEditable = diffInMinutes <= 3;
+                const isEditable = diffInMinutes <= 15;
                 const isCurrentUser = selectedMessage.user.userId === user.uid;
 
                 return (
