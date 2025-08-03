@@ -8,7 +8,7 @@ import EventConfirmedState from './components/EventConfirmedState';
 
 const { width } = Dimensions.get('window');
 
-const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollData, onFinishVoting, onVote, eventData, onRsvp, onStartNewPoll, onDismiss }) => {
+const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollData, onFinishVoting, onVote, onAddOption, eventData, onRsvp, onStartNewPoll, onDismiss }) => {
     console.log('[ContextualPin] Current poll state:', currentStage);
     console.log('[ContextualPin] Activity poll data:', activityPollData ? 'Present' : 'Missing');
     console.log('[ContextualPin] Place poll data:', placePollData ? 'Present' : 'Missing');
@@ -21,10 +21,10 @@ const ContextualPin = ({ currentStage, onStartPoll, activityPollData, placePollD
                 return <DefaultState onStartPoll={onStartPoll} />;
             case 'Planning the Activity':
                 console.log('[ContextualPin] Rendering ActivePollState for Activity');
-                return <ActivePollState pollData={activityPollData} onFinishVoting={onFinishVoting} onVote={onVote} />;
+                return <ActivePollState pollData={activityPollData} onFinishVoting={onFinishVoting} onVote={onVote} onAddOption={(option) => onAddOption(option, 'activity')} />;
             case 'Planning the Place':
                 console.log('[ContextualPin] Rendering ActivePollState for Place');
-                return <ActivePollState pollData={placePollData} onFinishVoting={onFinishVoting} onVote={onVote} />;
+                return <ActivePollState pollData={placePollData} onFinishVoting={onFinishVoting} onVote={onVote} onAddOption={(option) => onAddOption(option, 'place')} />;
             case 'Event Confirmed':
                 console.log('[ContextualPin] Rendering EventConfirmedState');
                 return <EventConfirmedState eventData={eventData} onRsvp={onRsvp} onStartNewPoll={onStartNewPoll} />;

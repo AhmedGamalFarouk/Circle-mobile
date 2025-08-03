@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform, LayoutAnimation, Pressable, Text } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform, LayoutAnimation, Pressable, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import ContextualPin from './components/ContextualPin/ContextualPin';
 import ChatFeed from './components/ChatFeed';
 import ChatInputBar from './components/ChatInputBar';
+import CircleHeader from './components/CircleHeader';
 import { COLORS } from '../../constants/constants';
 import PollCreation from './components/PollCreation';
 import useAuth from '../../hooks/useAuth';
@@ -87,11 +88,18 @@ const CircleScreen = () => {
         setPollModalVisible(false);
 
         try {
+            // Convert deadline to Firestore Timestamp
+            const pollDataWithTimestamp = {
+                ...pollData,
+                deadline: Timestamp.fromDate(pollData.deadline),
+                createdAt: Timestamp.fromDate(pollData.createdAt)
+            };
+
             if (pollType === 'activity') {
                 const pollRef = collection(db, 'circles', circleId, 'polls');
                 await addDoc(pollRef, {
                     stage: PLANNING_STAGES.PLANNING_ACTIVITY,
-                    activityPoll: { ...pollData, votes: {} },
+                    activityPoll: { ...pollDataWithTimestamp, votes: {} },
                     createdAt: serverTimestamp(),
                 });
 
@@ -108,7 +116,7 @@ const CircleScreen = () => {
                 const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
                 await updateDoc(pollRef, {
                     stage: PLANNING_STAGES.PLANNING_PLACE,
-                    placePoll: { ...pollData, votes: {} },
+                    placePoll: { ...pollDataWithTimestamp, votes: {} },
                 });
 
                 // Add system message to chat about place poll start
@@ -145,6 +153,58 @@ const CircleScreen = () => {
             }
         } catch (error) {
             console.error('Error casting vote:', error);
+        }
+    };
+
+    const handleAddOption = async (optionText, pollType) => {
+        if (!poll?.id || !userProfile) return;
+
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+
+        try {
+            if (pollType === 'activity' && currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
+                // Check if deadline has passed
+                const deadline = poll.activityPoll.deadline.toDate();
+                if (new Date() > deadline) {
+                    console.warn('Cannot add option: Activity poll deadline has passed');
+                    return;
+                }
+
+                const newOptions = [...poll.activityPoll.options, { text: optionText }];
+                await updateDoc(pollRef, { 'activityPoll.options': newOptions });
+
+                // Add system message to chat about new option
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `➕ ${userProfile?.username || 'Someone'} added a new activity option: "${optionText}"`,
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log(`Activity option added: ${optionText} by ${userProfile?.username || 'Unknown user'}`);
+            } else if (pollType === 'place' && currentStage === PLANNING_STAGES.PLANNING_PLACE) {
+                // Check if deadline has passed
+                const deadline = poll.placePoll.deadline.toDate();
+                if (new Date() > deadline) {
+                    console.warn('Cannot add option: Place poll deadline has passed');
+                    return;
+                }
+
+                const newOptions = [...poll.placePoll.options, { text: optionText }];
+                await updateDoc(pollRef, { 'placePoll.options': newOptions });
+
+                // Add system message to chat about new option
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `➕ ${userProfile?.username || 'Someone'} added a new place option: "${optionText}"`,
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log(`Place option added: ${optionText} by ${userProfile?.username || 'Unknown user'}`);
+            }
+        } catch (error) {
+            console.error('Error adding option:', error);
         }
     };
 
@@ -329,39 +389,49 @@ const CircleScreen = () => {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "padding"} // Change Android behavior to "padding"
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 90} // Add a small offset for Android
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
         >
-            {isPinVisible ? (
-                <ContextualPin
-                    currentStage={currentStage}
-                    onStartPoll={handleStartPoll}
-                    activityPollData={poll?.activityPoll}
-                    placePollData={poll?.placePoll}
-                    onFinishVoting={handleFinishVoting}
-                    onVote={handleVote}
-                    eventData={{
-                        winningActivity: poll?.winningActivity,
-                        winningPlace: poll?.winningPlace,
-                        rsvps: poll?.rsvps || {},
-                        currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
-                    }}
-                    onRsvp={handleRsvp}
-                    onStartNewPoll={handleStartNewPoll}
-                    onDismiss={handleDismiss}
-                />
-            ) : (
-                getShowPlanButtonText() && (
-                    <View style={styles.showPlanButtonContainer}>
-                        <Pressable style={styles.showPlanButton} onPress={handleShow}>
-                            <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
-                        </Pressable>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <View style={styles.innerContainer}>
+                    <CircleHeader
+                        name={circle?.circleName || circle?.name}
+                        imageUrl={circle?.photoUrl || circle?.imageUrl}
+                        circleId={circleId}
+                    />
+                    {isPinVisible ? (
+                        <ContextualPin
+                            currentStage={currentStage}
+                            onStartPoll={handleStartPoll}
+                            activityPollData={poll?.activityPoll}
+                            placePollData={poll?.placePoll}
+                            onFinishVoting={handleFinishVoting}
+                            onVote={handleVote}
+                            onAddOption={handleAddOption}
+                            eventData={{
+                                winningActivity: poll?.winningActivity,
+                                winningPlace: poll?.winningPlace,
+                                rsvps: poll?.rsvps || {},
+                                currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
+                            }}
+                            onRsvp={handleRsvp}
+                            onStartNewPoll={handleStartNewPoll}
+                            onDismiss={handleDismiss}
+                        />
+                    ) : (
+                        getShowPlanButtonText() && (
+                            <View style={styles.showPlanButtonContainer}>
+                                <Pressable style={styles.showPlanButton} onPress={handleShow}>
+                                    <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
+                                </Pressable>
+                            </View>
+                        )
+                    )}
+                    <View style={styles.chatFeedContainer}>
+                        <ChatFeed circleId={circleId} onReply={handleReply} />
                     </View>
-                )
-            )}
-            <View style={styles.chatFeedContainer}>
-                <ChatFeed circleId={circleId} onReply={handleReply} />
-            </View>
+                </View>
+            </TouchableWithoutFeedback>
             <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} />
             <Modal
                 animationType="slide"
@@ -383,12 +453,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.darker,
     },
+    innerContainer: {
+        flex: 1,
+    },
     chatFeedContainer: {
         flex: 1,
     },
     showPlanButtonContainer: {
         position: 'absolute',
-        top: 15,
+        top: 85,
         right: 15,
         zIndex: 1,
     },

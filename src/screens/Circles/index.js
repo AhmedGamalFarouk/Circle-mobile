@@ -11,7 +11,7 @@ import EmptyState from './components/EmptyState'
 
 
 
-const circle2 = ({ navigation }) => {
+const Circles = ({ navigation }) => {
     const [circles, setCircles] = useState([])
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
@@ -75,8 +75,13 @@ const circle2 = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Circles</Text>
-                <TouchableOpacity style={styles.createButton} onPress={handleCreateCircle}>
+                <View style={styles.leftContainer}>
+                    {/* Empty space for consistency with other headers */}
+                </View>
+                <View style={styles.centerContainer}>
+                    <Text style={styles.headerTitle}>Circles</Text>
+                </View>
+                <TouchableOpacity style={styles.rightContainer} onPress={handleCreateCircle}>
                     <Ionicons name="add" size={24} color={COLORS.light} />
                 </TouchableOpacity>
             </View>
@@ -115,7 +120,7 @@ const circle2 = ({ navigation }) => {
     )
 }
 
-export default circle2
+export default Circles
 
 const styles = StyleSheet.create({
     container: {
@@ -138,20 +143,28 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 15,
+        paddingVertical: 10,
+        marginTop: 20,
+        backgroundColor: COLORS.dark,
         borderBottomWidth: 1,
         borderBottomColor: COLORS.glass,
     },
+    leftContainer: {
+        width: 44, // Same width as icon container for balance
+    },
+    centerContainer: {
+        flex: 1,
+        alignItems: 'center',
+    },
     headerTitle: {
         color: COLORS.light,
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
     },
-    createButton: {
-        backgroundColor: COLORS.primary,
+    rightContainer: {
         padding: 10,
-        borderRadius: RADII.circle,
-        ...SHADOWS.medium,
+        width: 44,
+        alignItems: 'center',
     },
     list: {
         flex: 1,
