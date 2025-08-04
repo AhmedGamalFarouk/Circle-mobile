@@ -10,10 +10,15 @@ import Explore from '../screens/Explore'
 import { FONTS } from '../constants/constants'
 import CircleStack from './CircleStack'
 import { useTheme } from '../context/ThemeContext'
+import { useLocalization } from '../hooks/useLocalization'
+import { useLanguage } from '../context/LanguageContext'
 
 const Tab = createBottomTabNavigator();
 
 const DynamicBottomTab = () => {
+    const { t } = useLocalization()
+    const { currentLanguage } = useLanguage()
+    const isArabic = currentLanguage === 'ar'
     const { colors } = useTheme()
     return (
         <Tab.Navigator screenOptions={{
@@ -30,32 +35,33 @@ const DynamicBottomTab = () => {
                 borderBottomWidth: 1,
             },
             headerTintColor: colors.text,
+            headerTitleAlign:'center',
             headerTitleStyle: {
                 fontFamily: FONTS.bold,
             }
         }}>
-            <Tab.Screen name="Home" component={HomeScreen} options={{
+            <Tab.Screen name={isArabic ? "الرئيسية" : "Home"} component={HomeScreen} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="home" color={color} size={size} />
                 ),
             }} />
-            <Tab.Screen name="Profile" component={ProfileScreen} options={{
+            <Tab.Screen name={isArabic ? "الملف الشخصي" : "Profile"} component={ProfileScreen} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="person" color={color} size={size} />
                 ),
             }} />
-            <Tab.Screen name="Explore" component={Explore} options={{
+            <Tab.Screen name={isArabic ? "استكشاف" : "Explore"} component={Explore} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="search" color={color} size={size} />
                 ),
             }} />
-            <Tab.Screen name="Circles" component={CircleStack} options={{
+            <Tab.Screen name={isArabic ? "الدوائر" : "Circles"} component={CircleStack} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="people" color={color} size={size} />
                 ),
                 headerShown: false,
             }} />
-            <Tab.Screen name="Settings" component={SettingsScreen} options={{
+            <Tab.Screen name={isArabic ? "الإعدادات" : "Settings"} component={SettingsScreen} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="settings" color={color} size={size} />
                 ),

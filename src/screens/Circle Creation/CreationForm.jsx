@@ -9,8 +9,10 @@ import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/fi
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import useAuth from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
+import { useLocalization } from '../../hooks/useLocalization';
 
 const CreationForm = ({ navigation }) => {
+    const { t } = useLocalization()
     const { user } = useAuth();
     const { colors } = useTheme()
 
@@ -134,9 +136,9 @@ const CreationForm = ({ navigation }) => {
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color={colorVars.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={[styles.title, { color: colorVars.textPrimary }]}>Create a New Circle</Text>
+                    <Text style={[styles.title, { color: colorVars.textPrimary }]}>{t('circleCreation.createCircle')}</Text>
                     <TouchableOpacity onPress={handleCreate} disabled={isCreateDisabled} style={styles.createButtonHeader}>
-                        <Text style={[styles.createButtonTextHeader, { color: colorVars.primary }, isCreateDisabled && { color: colorVars.disabled }]}>Create</Text>
+                        <Text style={[styles.createButtonTextHeader, { color: colorVars.primary }, isCreateDisabled && { color: colorVars.disabled }]}>{t('circleCreation.create')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -146,13 +148,13 @@ const CreationForm = ({ navigation }) => {
                     ) : (
                         <View style={[styles.avatarPlaceholder, { borderColor: colorVars.borderActive, backgroundColor: colorVars.surface }]}>
                             <Ionicons name="camera" size={40} color={colorVars.textSecondary} />
-                            <Text style={[styles.addPhotoText, { color: colorVars.textSecondary }]}>Add Photo</Text>
+                            <Text style={[styles.addPhotoText, { color: colorVars.textSecondary }]}>{t('circleCreation.addPhoto')}</Text>
                         </View>
                     )}
                 </TouchableOpacity>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>CIRCLE NAME</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.circleName')}</Text>
                     <TextInput
                         style={[styles.input, {
                             backgroundColor: colorVars.surface,
@@ -167,14 +169,14 @@ const CreationForm = ({ navigation }) => {
                 </View>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>DESCRIPTION (OPTIONAL)</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.description')}</Text>
                     <TextInput
                         style={[styles.input, styles.descriptionInput, {
                             backgroundColor: colorVars.surface,
                             borderColor: colorVars.border,
                             color: colorVars.textPrimary
                         }]}
-                        placeholder={"What's this circle for?\n e.g., Planning our weekly hangouts."}
+                        placeholder={t('circleCreation.descriptionPlaceholder')}
                         placeholderTextColor={colorVars.textMuted}
                         value={description}
                         onChangeText={setDescription}
@@ -183,7 +185,7 @@ const CreationForm = ({ navigation }) => {
                 </View>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>PRIVACY</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.privacy')}</Text>
                     <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
                         <TouchableOpacity
                             style={[
@@ -196,7 +198,7 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circlePrivacy === 'public' ? colorVars.background : colorVars.textPrimary }
-                            ]}>Public</Text>
+                            ]}>{t('circleCreation.public')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -209,13 +211,13 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circlePrivacy === 'private' ? colorVars.background : colorVars.textPrimary }
-                            ]}>Private</Text>
+                            ]}>{t('circleCreation.private')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>TYPE</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.type')}</Text>
                     <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
                         <TouchableOpacity
                             style={[
@@ -228,7 +230,7 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circleType === 'permanent' ? colorVars.background : colorVars.textPrimary }
-                            ]}>Permanent</Text>
+                            ]}>{t('circleCreation.permanent')}</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -241,14 +243,14 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circleType === 'flash' ? colorVars.background : colorVars.textPrimary }
-                            ]}>flash</Text>
+                            ]}>{t('circleCreation.flash')}</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {circleType === 'flash' && (
                     <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>EXPIRES AT</Text>
+                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.expiresAt')}</Text>
                         <TouchableOpacity
                             style={[styles.input, {
                                 backgroundColor: colorVars.surface,
@@ -257,7 +259,7 @@ const CreationForm = ({ navigation }) => {
                             onPress={() => setShowDatePicker(true)}
                         >
                             <Text style={{ color: expiresAt ? colorVars.textPrimary : colorVars.textMuted }}>
-                                {expiresAt ? expiresAt.toLocaleDateString() : 'Select expiry date'}
+                                {expiresAt ? expiresAt.toLocaleDateString() : t('circleCreation.selectExpiryDate')}
                             </Text>
                         </TouchableOpacity>
                         {showDatePicker && (
@@ -280,7 +282,7 @@ const CreationForm = ({ navigation }) => {
                 )}
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>INTERESTS</Text>
+                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.interests')}</Text>
                     <View style={[styles.interestInputContainer, {
                         backgroundColor: colorVars.surface,
                         borderColor: colorVars.border
@@ -290,13 +292,13 @@ const CreationForm = ({ navigation }) => {
                                 backgroundColor: colorVars.surface,
                                 color: colorVars.textPrimary
                             }]}
-                            placeholder="Add an interest"
+                            placeholder={t('circleCreation.addInterest')}
                             placeholderTextColor={colorVars.textMuted}
                             value={interestInput}
                             onChangeText={setInterestInput}
                         />
                         <TouchableOpacity onPress={addInterest} style={[styles.addButton, { backgroundColor: colorVars.accent }]}>
-                            <Text style={[styles.addButtonText, { color: colorVars.background }]}>Add</Text>
+                            <Text style={[styles.addButtonText, { color: colorVars.background }]}>{t('circleCreation.add')}</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={[styles.interestsContainer, { backgroundColor: colorVars.background }]}>
@@ -322,7 +324,7 @@ const CreationForm = ({ navigation }) => {
                     onPress={handleCreate}
                     disabled={isCreateDisabled}
                 >
-                    <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>Create Circle</Text>
+                    <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>{t('circleCreation.createCircle')}</Text>
                 </TouchableOpacity>
 
             </ScrollView>
