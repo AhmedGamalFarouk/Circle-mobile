@@ -22,8 +22,13 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
 
             if (diff <= 0) {
                 setRemainingTime('Poll ended');
-                setIsExpired(true);
-                // Optionally, trigger a refresh or state change to reflect poll closure
+                if (!isExpired) {
+                    setIsExpired(true);
+                    // Automatically trigger poll closure when deadline is reached
+                    setTimeout(() => {
+                        onFinishVoting();
+                    }, 1000); // Small delay to show "Poll ended" message
+                }
                 return;
             } else {
                 setIsExpired(false);
@@ -47,7 +52,7 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
         const timer = setInterval(calculateRemainingTime, 1000); // Update every second
 
         return () => clearInterval(timer); // Cleanup on unmount
-    }, [pollData]);
+    }, [pollData, isExpired, onFinishVoting]);
 
     if (!pollData) {
         return null;

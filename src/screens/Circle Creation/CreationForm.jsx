@@ -4,9 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { COLORS, RADII, SHADOWS } from '../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { db, storage } from '../../firebase/config';
+import { db } from '../../firebase/config';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { uploadCircleImageToCloudinary } from '../../utils/cloudinaryUpload';
 import useAuth from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -86,16 +86,15 @@ const CreationForm = ({ navigation }) => {
 
             let uploadedPhotoUrl = null;
             if (photoUrl) {
-                const response = await fetch(photoUrl);
-                const blob = await response.blob();
-                const storageRef = ref(storage, `circle_images/${circleRef.id}`);
-                await uploadBytes(storageRef, blob);
-                uploadedPhotoUrl = await getDownloadURL(storageRef);
+                console.log('Uploading circle image to Cloudinary...');
+                const result = await uploadCircleImageToCloudinary(photoUrl, circleRef.id);
+                uploadedPhotoUrl = result.imageUrl;
 
                 // Update the Firestore document with the actual photo URL
                 await updateDoc(doc(db, 'circles', circleRef.id), {
                     photoUrl: uploadedPhotoUrl,
                 });
+                console.log('Circle image uploaded successfully:', uploadedPhotoUrl);
             }
 
             console.log("Circle created successfully with ID:", circleRef.id);

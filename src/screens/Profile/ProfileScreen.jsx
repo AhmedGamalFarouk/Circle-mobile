@@ -31,15 +31,26 @@ import JoinedCircles from './components/JoinedCircles';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import { auth, db } from '../../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../utils/cloudinaryUpload';
 import useUserProfile from '../../hooks/useUserProfile';
 import { useTheme } from '../../context/ThemeContext';
+
+//TODO: add Placeholder image URLs
+const PLACEHOLDER_AVATAR_URL = 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png';
+const PLACEHOLDER_COVER_URL = 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png';
 
 const ProfileScreen = React.memo(({ route, navigation }) => {
     const { userId } = route.params || {};
     const currentUser = auth.currentUser;
     const profileId = userId || currentUser?.uid;
-    const { profile, connectionsCount, circlesCount, loading } = useUserProfile(profileId);
+    const { profile: initialProfile, connectionsCount, circlesCount, loading } = useUserProfile(profileId);
+    const [profile, setProfile] = useState(initialProfile);
+
+    useEffect(() => {
+        if (initialProfile) {
+            setProfile(initialProfile);
+        }
+    }, [initialProfile]);
     const isOwnProfile = !userId || userId === currentUser?.uid;
     const insets = useSafeAreaInsets();
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -130,41 +141,48 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
         try {
             setIsUploading(true); // Start uploading indicator
-            const functions = getFunctions();
-            const uploadProfileImage = httpsCallable(functions, 'uploadProfileImage');
 
-            if (editingProfileImage && editingProfileImage.uri !== (profile?.profileImage || 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png')) {
-                const response = await fetch(editingProfileImage.uri);
-                const blob = await response.blob();
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                await new Promise((resolve) => {
-                    reader.onloadend = async () => {
-                        const base64data = reader.result.split(',')[1];
-                        await uploadProfileImage({ image: base64data, type: 'avatar' });
-                        resolve();
-                    };
-                });
-            }
-
-            if (editingCoverImage && editingCoverImage.uri !== (profile?.coverImage || 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png')) {
-                const response = await fetch(editingCoverImage.uri);
-                const blob = await response.blob();
-                const reader = new FileReader();
-                reader.readAsDataURL(blob);
-                await new Promise((resolve) => {
-                    reader.onloadend = async () => {
-                        const base64data = reader.result.split(',')[1];
-                        await uploadProfileImage({ image: base64data, type: 'cover' });
-                        resolve();
-                    };
-                });
-            }
-
-            await setDoc(doc(db, 'users', currentUser.uid), {
+            const updatedData = {
                 username: editingUserName,
                 bio: editingUserBio,
-            }, { merge: true });
+            };
+
+            // Upload profile image if changed
+            if (editingProfileImage && editingProfileImage.base64 && editingProfileImage.uri !== (profile?.avatarUrl || PLACEHOLDER_AVATAR_URL)) {
+                try {
+                    console.log('Uploading profile image to Cloudinary...');
+                    const result = await uploadImageToCloudinary(currentUser.uid, editingProfileImage.base64, 'avatar');
+                    console.log('Profile image uploaded successfully:', result.imageUrl);
+                    updatedData.avatarUrl = result.imageUrl; // Add to updatedData
+                    setEditingProfileImage({ uri: result.imageUrl });
+                    setProfile(prevProfile => ({ ...prevProfile, avatarUrl: result.imageUrl }));
+                } catch (error) {
+                    console.error('Error uploading profile image:', error);
+                    Alert.alert("Error", `Failed to upload profile image: ${error.message || 'Unknown error'}`);
+                    return; // Don't continue if image upload fails
+                }
+            }
+
+            // Upload cover image if changed
+            if (editingCoverImage && editingCoverImage.base64 && editingCoverImage.uri !== (profile?.coverUrl || PLACEHOLDER_COVER_URL)) {
+                try {
+                    console.log('Uploading cover image to Cloudinary...');
+                    const result = await uploadImageToCloudinary(currentUser.uid, editingCoverImage.base64, 'cover');
+                    console.log('Cover image uploaded successfully:', result.imageUrl);
+                    updatedData.coverUrl = result.imageUrl; // Add to updatedData
+                    setEditingCoverImage({ uri: result.imageUrl });
+                    setProfile(prevProfile => ({ ...prevProfile, coverUrl: result.imageUrl }));
+                } catch (error) {
+                    console.error('Error uploading cover image:', error);
+                    Alert.alert("Error", `Failed to upload cover image: ${error.message || 'Unknown error'}`);
+                    return; // Don't continue if image upload fails
+                }
+            }
+
+            // Only write to Firestore if there are changes
+            if (Object.keys(updatedData).length > 2 || updatedData.username !== profile?.username || updatedData.bio !== profile?.bio) {
+                await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true });
+            }
 
             Alert.alert("Success", "Profile updated successfully!");
             setIsEditing(false);
@@ -187,8 +205,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         setIsEditing(true);
         setEditingUserName(profile?.username || '');
         setEditingUserBio(profile?.bio || '');
-        setEditingProfileImage(profile?.profileImage ? { uri: profile.profileImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png' });
-        setEditingCoverImage(profile?.coverImage ? { uri: profile.coverImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png' });
+        setEditingProfileImage(profile?.avatarUrl ? { uri: profile.avatarUrl } : { uri: PLACEHOLDER_AVATAR_URL });
+        setEditingCoverImage(profile?.coverUrl ? { uri: profile.coverUrl } : { uri: PLACEHOLDER_COVER_URL });
     }, [profile]);
 
 
@@ -226,7 +244,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
             if (!result.canceled) {
                 setImageLoading(true);
-                if (imageType === 'profile') {
+                if (imageType === 'avatar') {
                     setEditingProfileImage({ uri: result.assets[0].uri, base64: result.assets[0].base64 });
                 } else if (imageType === 'cover') {
                     setEditingCoverImage({ uri: result.assets[0].uri, base64: result.assets[0].base64 });
@@ -247,19 +265,25 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         }
 
         try {
-            const functions = getFunctions();
-            const deleteProfileImage = httpsCallable(functions, 'deleteProfileImage');
-            await deleteProfileImage({ type: currentImageType });
+            await deleteImageFromCloudinary(currentUser.uid, currentImageType);
 
+            let updatedData = {};
             if (currentImageType === 'avatar') {
-                setEditingProfileImage({ uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png' });
+                updatedData = { avatarUrl: PLACEHOLDER_AVATAR_URL };
+                setEditingProfileImage({ uri: PLACEHOLDER_AVATAR_URL });
+                setProfile(prev => ({ ...prev, avatarUrl: PLACEHOLDER_AVATAR_URL }));
             } else if (currentImageType === 'cover') {
-                setEditingCoverImage({ uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png' });
+                updatedData = { coverUrl: PLACEHOLDER_COVER_URL };
+                setEditingCoverImage({ uri: PLACEHOLDER_COVER_URL });
+                setProfile(prev => ({ ...prev, coverUrl: PLACEHOLDER_COVER_URL }));
             }
+
+            await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true });
+
             Alert.alert("Success", `${currentImageType} image deleted successfully!`);
         } catch (error) {
             console.error('Error deleting image:', error);
-            Alert.alert("Error", `Failed to delete ${currentImageType} image.`);
+            Alert.alert("Error", `Failed to delete ${currentImageType} image: ${error.message || 'Unknown error'}`);
         }
     }, [currentUser, currentImageType]);
 
@@ -334,13 +358,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     { transform: [{ translateY: coverImageTranslateY }] }
                 ]}>
                     <TouchableOpacity
-                        onPress={() => handleImagePress(isEditing ? editingCoverImage?.uri : profile?.coverImage, 'cover')}
+                        onPress={() => handleImagePress(isEditing ? editingCoverImage?.uri : profile?.coverUrl, 'cover')}
                         disabled={!isEditing}
                         activeOpacity={isEditing ? 0.8 : 1}
                     >
                         <Animated.View style={[styles.coverImageWrapper, { opacity: headerOpacity }, { backgroundColor: colors.background }]}>
                             <Image
-                                source={isEditing && editingCoverImage ? editingCoverImage : (profile?.coverImage ? { uri: profile.coverImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_cover.png' })}
+                                source={isEditing && editingCoverImage ? editingCoverImage : (profile?.coverUrl ? { uri: profile.coverUrl } : { uri: PLACEHOLDER_COVER_URL })}
                                 style={[styles.coverImage, isEditing && styles.coverImageEditing]}
                                 onLoadStart={() => setImageLoading(true)}
                                 onLoadEnd={() => setImageLoading(false)}
@@ -391,13 +415,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         { transform: [{ scale: buttonScale }] }
                     ]}>
                         <TouchableOpacity
-                            onPress={() => handleImagePress(isEditing ? editingProfileImage?.uri : profile?.profileImage, 'avatar')}
+                            onPress={() => handleImagePress(isEditing ? editingProfileImage?.uri : profile?.avatarUrl, 'avatar')}
                             disabled={!isEditing}
                             activeOpacity={isEditing ? 0.8 : 1}
                         >
                             <View style={styles.profileImageWrapper}>
                                 <Image
-                                    source={isEditing && editingProfileImage ? editingProfileImage : (profile?.profileImage ? { uri: profile.profileImage } : { uri: 'https://res.cloudinary.com/dwh8jhaot/image/upload/v1708542612/users/placeholder_avatar.png' })}
+                                    source={isEditing && editingProfileImage ? editingProfileImage : (profile?.avatarUrl ? { uri: profile.avatarUrl } : { uri: PLACEHOLDER_AVATAR_URL })}
                                     style={[styles.profileImage, isEditing && styles.profileImageEditing]}
                                     onLoadStart={() => setImageLoading(true)}
                                     onLoadEnd={() => setImageLoading(false)}

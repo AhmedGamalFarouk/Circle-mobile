@@ -42,7 +42,7 @@ exports.processExpiredPolls = functions.pubsub.schedule('every 1 minutes').onRun
 
         for (const pollDoc of pollsSnapshot.docs) {
             const pollData = pollDoc.data();
-            
+
             // Check if poll has active activity or place polls with expired deadlines
             const processActivePoll = async (pollType, pollKey) => {
                 const poll = pollData[pollKey];
@@ -52,12 +52,12 @@ exports.processExpiredPolls = functions.pubsub.schedule('every 1 minutes').onRun
                 const deadline = poll.deadline.toDate();
                 if (deadline <= now) {
                     const options = poll.options;
-                    
+
                     if (!options || options.length === 0) {
                         console.log(`Poll ${pollDoc.id} ${pollType} has no options, skipping.`);
-                        updatePromises.push(pollDoc.ref.update({ 
-                            [`${pollKey}.status`]: 'closed', 
-                            [`${pollKey}.winningOption`]: null 
+                        updatePromises.push(pollDoc.ref.update({
+                            [`${pollKey}.status`]: 'closed',
+                            [`${pollKey}.winningOption`]: null
                         }));
                         return;
                     }
@@ -99,19 +99,19 @@ exports.processExpiredPolls = functions.pubsub.schedule('every 1 minutes').onRun
                     }
 
                     console.log(`Poll ${pollDoc.id} ${pollType} expired. Winning option: ${winningOptionText}`);
-                    
+
                     const updateData = {
                         [`${pollKey}.status`]: 'closed',
                         [`${pollKey}.winningOption`]: winningOptionText
                     };
-                    
+
                     // If this is an activity poll, also set the winning activity
                     if (pollType === 'activity') {
                         updateData.winningActivity = winningOptionText;
                     } else if (pollType === 'place') {
                         updateData.winningPlace = winningOptionText;
                     }
-                    
+
                     updatePromises.push(pollDoc.ref.update(updateData));
                 }
             };

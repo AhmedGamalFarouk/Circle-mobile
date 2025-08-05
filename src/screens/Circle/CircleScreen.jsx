@@ -15,7 +15,9 @@ import useUserProfile from '../../hooks/useUserProfile';
 const PLANNING_STAGES = {
     IDLE: 'Idle',
     PLANNING_ACTIVITY: 'Planning the Activity',
+    ACTIVITY_POLL_CLOSED: 'Activity Poll Closed',
     PLANNING_PLACE: 'Planning the Place',
+    PLACE_POLL_CLOSED: 'Place Poll Closed',
     EVENT_CONFIRMED: 'Event Confirmed',
 };
 
@@ -222,7 +224,7 @@ const CircleScreen = () => {
                 }
 
                 await updateDoc(pollRef, {
-                    stage: PLANNING_STAGES.PLANNING_PLACE,
+                    stage: PLANNING_STAGES.ACTIVITY_POLL_CLOSED,
                     winningActivity: winningOption,
                 });
 
@@ -230,12 +232,10 @@ const CircleScreen = () => {
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
                     type: 'system',
-                    text: `📊 Activity poll closed! "${winningOption}" won. Now let's decide where to go!`,
+                    text: `📊 Activity poll closed! "${winningOption}" won.`,
                     createdAt: serverTimestamp(),
                 });
 
-                setPollType('place');
-                setPollModalVisible(true);
                 console.log(`Activity poll finished. Winner: ${winningOption}`);
 
             } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
@@ -246,20 +246,19 @@ const CircleScreen = () => {
                 }
 
                 await updateDoc(pollRef, {
-                    stage: PLANNING_STAGES.EVENT_CONFIRMED,
+                    stage: PLANNING_STAGES.PLACE_POLL_CLOSED,
                     winningPlace: winningOption,
-                    rsvps: {}, // Initialize empty RSVP object
                 });
 
-                // Add system message to chat about event confirmation
+                // Add system message to chat about place selection
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
                     type: 'system',
-                    text: `🎉 Event confirmed! ${winningOption} for ${poll.winningActivity}. Please RSVP above!`,
+                    text: `📍 Place poll closed! "${winningOption}" won.`,
                     createdAt: serverTimestamp(),
                 });
 
-                console.log(`Place poll finished. Winner: ${winningOption}. Event confirmed!`);
+                console.log(`Place poll finished. Winner: ${winningOption}`);
             }
         } catch (error) {
             console.error('Error finishing voting:', error);
@@ -343,6 +342,38 @@ const CircleScreen = () => {
         setPinVisible(true);
     };
 
+    const handlePollNextStep = async () => {
+        if (!poll?.id) return;
+
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+
+        try {
+            if (currentStage === PLANNING_STAGES.ACTIVITY_POLL_CLOSED) {
+                // Move to place polling
+                setPollType('place');
+                setPollModalVisible(true);
+            } else if (currentStage === PLANNING_STAGES.PLACE_POLL_CLOSED) {
+                // Finalize event and enable RSVPs
+                await updateDoc(pollRef, {
+                    stage: PLANNING_STAGES.EVENT_CONFIRMED,
+                    rsvps: {}, // Initialize empty RSVP object
+                });
+
+                // Add system message about event confirmation
+                const chatRef = collection(db, 'circles', circleId, 'chat');
+                await addDoc(chatRef, {
+                    type: 'system',
+                    text: `🎉 Event confirmed! ${poll.winningPlace} for ${poll.winningActivity}. Please RSVP above!`,
+                    createdAt: serverTimestamp(),
+                });
+
+                console.log('Event confirmed and RSVPs enabled');
+            }
+        } catch (error) {
+            console.error('Error proceeding to next step:', error);
+        }
+    };
+
     const handleStartNewPoll = async () => {
         try {
             // Archive the current poll and start fresh
@@ -376,6 +407,9 @@ const CircleScreen = () => {
     const getShowPlanButtonText = () => {
         if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY || currentStage === PLANNING_STAGES.PLANNING_PLACE) {
             return "View Poll";
+        }
+        if (currentStage === PLANNING_STAGES.ACTIVITY_POLL_CLOSED || currentStage === PLANNING_STAGES.PLACE_POLL_CLOSED) {
+            return "View Results";
         }
         if (currentStage === PLANNING_STAGES.EVENT_CONFIRMED) {
             return "View Event Details";
@@ -416,6 +450,7 @@ const CircleScreen = () => {
                             }}
                             onRsvp={handleRsvp}
                             onStartNewPoll={handleStartNewPoll}
+                            onPollNextStep={handlePollNextStep}
                             onDismiss={handleDismiss}
                         />
                     ) : (

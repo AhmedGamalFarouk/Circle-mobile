@@ -5,31 +5,35 @@ import { db } from '../firebase/config';
 const useUserProfile = (userId) => {
     const [profile, setProfile] = useState(null);
     const [connectionsCount, setConnectionsCount] = useState(0);
-    const [circlesCount, setCirclesCount] = useState(0); // Correctly declare circlesCount state
+    const [circlesCount, setCirclesCount] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!userId) return;
+        if (!userId) {
+            setLoading(false);
+            return;
+        }
 
+        setLoading(true);
         const docRef = doc(db, 'users', userId);
         const unsubscribe = onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();
                 setProfile(data);
-                // Get the length of the connections array or default to 0
                 setConnectionsCount(data.connections?.length || 0);
-                // Get the length of the joinedCircles array or default to 0
-                setCirclesCount(data.joinedCircles?.length || 0); // Correctly update circlesCount
+                setCirclesCount(data.joinedCircles?.length || 0);
             } else {
                 setProfile(null);
                 setConnectionsCount(0);
-                setCirclesCount(0); // Reset circlesCount on no doc
+                setCirclesCount(0);
             }
+            setLoading(false);
         });
 
         return () => unsubscribe();
     }, [userId]);
 
-    return { profile, connectionsCount, circlesCount };
+    return { profile, connectionsCount, circlesCount, loading };
 };
 
 export default useUserProfile;
