@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
+import { useLocalization } from '../../hooks/useLocalization';
 import BottomNavBar from '../../components/BottomNavBar';
 import SettingsHeader from './components/SettingsHeader';
 import SettingsSection from './components/SettingsSection';
@@ -10,15 +11,28 @@ import MyPlan from './components/MyPlan';
 
 const SettingsScreen = ({ navigation }) => {
     const { theme, toggleTheme, colors } = useTheme();
+    const { t, currentLanguage, switchLanguage, getLanguageOptions } = useLocalization();
     const [isPrivateProfile, setIsPrivateProfile] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState('English');
 
-    const languageOptions = ['English', 'Arabic'];
-    const themeOptions = ['Dark', 'Light'];
+    const languageOptions = getLanguageOptions();
+    const themeOptions = [
+        { value: 'light', label: t('settings.light') },
+        { value: 'dark', label: t('settings.dark') },
+        { value: 'system', label: t('settings.system') }
+    ];
 
     const handleThemeChange = (newTheme) => {
         const themeKey = newTheme.toLowerCase();
         toggleTheme(themeKey);
+    };
+
+    const handleLanguageChange = (languageCode) => {
+        switchLanguage(languageCode);
+    };
+
+    const getCurrentThemeLabel = () => {
+        const currentTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
+        return t(`settings.${currentTheme.toLowerCase()}`);
     };
 
     return (
@@ -26,29 +40,29 @@ const SettingsScreen = ({ navigation }) => {
             {/* <SettingsHeader navigation={navigation} /> */}
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                <SettingsSection title="Privacy">
+                <SettingsSection title={t('settings.privacy')}>
                     <ToggleOption
-                        title="Private Profile"
-                        description="Only approved followers can see your profile"
+                        title={t('settings.privateProfile')}
+                        description={t('settings.privateProfileDescription')}
                         value={isPrivateProfile}
                         onToggle={setIsPrivateProfile}
                     />
                 </SettingsSection>
 
-                <SettingsSection title="Language">
+                <SettingsSection title={t('settings.language')}>
                     <SelectOption
-                        title="App Language"
+                        title={t('settings.appLanguage')}
                         options={languageOptions}
-                        selectedValue={selectedLanguage}
-                        onSelect={setSelectedLanguage}
+                        selectedValue={currentLanguage}
+                        onSelect={handleLanguageChange}
                     />
                 </SettingsSection>
 
-                <SettingsSection title="Appearance">
+                <SettingsSection title={t('settings.appearance')}>
                     <SelectOption
-                        title="Theme"
+                        title={t('settings.theme')}
                         options={themeOptions}
-                        selectedValue={theme.charAt(0).toUpperCase() + theme.slice(1)}
+                        selectedValue={getCurrentThemeLabel()}
                         onSelect={handleThemeChange}
                     />
                 </SettingsSection>

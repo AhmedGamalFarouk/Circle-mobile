@@ -13,27 +13,58 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
         setIsModalVisible(false);
     };
 
-    const renderOption = ({ item }) => (
-        <TouchableOpacity
-            style={[
-                styles.optionItem,
-                { borderBottomColor: colors.border },
-                item === selectedValue && [styles.selectedOption, { backgroundColor: colors.glass }]
-            ]}
-            onPress={() => handleSelect(item)}
-        >
-            <Text style={[
-                styles.optionText,
-                { color: colors.text },
-                item === selectedValue && [styles.selectedOptionText, { color: colors.primary }]
-            ]}>
-                {item}
-            </Text>
-            {item === selectedValue && (
-                <Ionicons name="checkmark" size={20} color={colors.primary} />
-            )}
-        </TouchableOpacity>
-    );
+    // Helper function to get display value
+    const getDisplayValue = (value) => {
+        if (typeof options[0] === 'object' && options[0].hasOwnProperty('label')) {
+            const option = options.find(opt => opt.value === value);
+            return option ? option.label : value;
+        }
+        return value;
+    };
+
+    // Helper function to get option value
+    const getOptionValue = (item) => {
+        if (typeof item === 'object' && item.hasOwnProperty('value')) {
+            return item.value;
+        }
+        return item;
+    };
+
+    // Helper function to get option label
+    const getOptionLabel = (item) => {
+        if (typeof item === 'object' && item.hasOwnProperty('label')) {
+            return item.label;
+        }
+        return item;
+    };
+
+    const renderOption = ({ item }) => {
+        const optionValue = getOptionValue(item);
+        const optionLabel = getOptionLabel(item);
+        const isSelected = optionValue === selectedValue;
+
+        return (
+            <TouchableOpacity
+                style={[
+                    styles.optionItem,
+                    { borderBottomColor: colors.border },
+                    isSelected && [styles.selectedOption, { backgroundColor: colors.glass }]
+                ]}
+                onPress={() => handleSelect(optionValue)}
+            >
+                <Text style={[
+                    styles.optionText,
+                    { color: colors.text },
+                    isSelected && [styles.selectedOptionText, { color: colors.primary }]
+                ]}>
+                    {optionLabel}
+                </Text>
+                {isSelected && (
+                    <Ionicons name="checkmark" size={20} color={colors.primary} />
+                )}
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <>
@@ -43,7 +74,9 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
             >
                 <View style={styles.textContainer}>
                     <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                    <Text style={[styles.selectedValue, { color: colors.textSecondary }]}>{selectedValue}</Text>
+                    <Text style={[styles.selectedValue, { color: colors.textSecondary }]}>
+                        {getDisplayValue(selectedValue)}
+                    </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -68,7 +101,7 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
                         <FlatList
                             data={options}
                             renderItem={renderOption}
-                            keyExtractor={(item) => item}
+                            keyExtractor={(item) => getOptionValue(item)}
                             style={styles.optionsList}
                         />
                     </View>

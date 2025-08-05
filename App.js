@@ -16,6 +16,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DynamicNativeStack from './src/navigation/DynamicNativeStack';
 import DynamicBottomTab from './src/navigation/DynamicBottomTab';
 
+// Import localization
+import './src/localization/i18n';
+import { LanguageProvider } from './src/context/LanguageContext';
+
 const Stack = createNativeStackNavigator();
 import CreationForm from './src/screens/Circle Creation/CreationForm';
 import InviteAndShare from './src/screens/Circle Creation/InviteAndShare';
@@ -61,7 +65,9 @@ const AppContent = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

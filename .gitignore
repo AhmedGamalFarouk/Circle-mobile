@@ -41,3 +41,6 @@ yarn-error.*
 
 # Firebase configuration
 src/firebase/config.js
+
+# readme
+readme.md
