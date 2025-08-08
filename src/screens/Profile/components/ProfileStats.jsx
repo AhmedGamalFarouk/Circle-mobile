@@ -11,7 +11,7 @@ const ProfileStats = ({
     shimmerAnimation,
     loading,
     onConnectionsPress,
-    onCirclesPress
+    onCirclesPress,
 }) => {
     const { colors } = useTheme();
     const styles = getStyles(colors);
@@ -94,6 +94,7 @@ const ProfileStats = ({
                     </Text>
                     <View style={styles.statIndicator} />
                 </TouchableOpacity>
+
             </View>
 
             {/* Enhanced Location Container */}

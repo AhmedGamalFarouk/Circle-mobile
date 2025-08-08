@@ -35,7 +35,7 @@ const DynamicBottomTab = () => {
                 borderBottomWidth: 1,
             },
             headerTintColor: colors.text,
-            headerTitleAlign:'center',
+            headerTitleAlign: 'center',
             headerTitleStyle: {
                 fontFamily: FONTS.bold,
             }

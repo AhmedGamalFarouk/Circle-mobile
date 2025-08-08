@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import Constants from "expo-constants";
 import { auth } from '../../../firebase/config';
+import { COLORS } from '../../../constants/constants';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
 import {
@@ -137,10 +138,11 @@ const SignInScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: COLORS.darker }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
+        style={{ backgroundColor: COLORS.darker }}
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

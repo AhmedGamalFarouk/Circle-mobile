@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../context/ThemeContext';
 
-const MySquad = ({ friends = [], shimmerAnimation, loading }) => {
+const MySquad = ({ friends = [], shimmerAnimation, loading, isOwnProfile, userId }) => {
+    const navigation = useNavigation();
     const { colors } = useTheme();
     const styles = getStyles(colors);
     // Mock data for demonstration - you can replace this with actual friend data
@@ -18,12 +20,13 @@ const MySquad = ({ friends = [], shimmerAnimation, loading }) => {
 
     const handleFriendPress = (friend) => {
         console.log('Pressed friend:', friend.name);
-        // Navigate to friend's profile or show friend details
+        // Navigate to friend's profile
+        navigation.navigate('Profile', { userId: friend.id });
     };
 
     return (
         <View >
-            <Text style={styles.title}>My Squad</Text>
+            <Text style={styles.title}>{isOwnProfile ? 'My Squad' : 'Squad'}</Text>
             <View style={styles.friendsRow}>
                 {displayFriends.map((friend) => (
                     <TouchableOpacity

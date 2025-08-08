@@ -43,15 +43,38 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const { userId } = route.params || {};
     const currentUser = auth.currentUser;
     const profileId = userId || currentUser?.uid;
-    const { profile: initialProfile, connectionsCount, circlesCount, loading } = useUserProfile(profileId);
+    const isOwnProfile = !userId || userId === currentUser?.uid;
+    const { profile: initialProfile, connectionsCount, circlesCount, eventsCount, loading } = useUserProfile(profileId, isOwnProfile);
     const [profile, setProfile] = useState(initialProfile);
 
+    // Reset profile state when route params change
     useEffect(() => {
-        if (initialProfile) {
-            setProfile(initialProfile);
-        }
-    }, [initialProfile]);
-    const isOwnProfile = !userId || userId === currentUser?.uid;
+        setProfile(initialProfile);
+    }, [initialProfile, userId]);
+
+    // Reset editing state when switching between profiles
+    useEffect(() => {
+        setIsEditing(false);
+        setEditingUserName('');
+        setEditingUserBio('');
+        setEditingProfileImage(null);
+        setEditingCoverImage(null);
+    }, [userId]);
+
+    // Handle tab press to reset to own profile
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('tabPress', (e) => {
+            // If we're currently viewing another user's profile, reset to own profile
+            if (userId && userId !== currentUser?.uid) {
+                // Prevent default tab press behavior
+                e.preventDefault();
+                // Navigate to Profile without userId
+                navigation.navigate('Profile');
+            }
+        });
+
+        return unsubscribe;
+    }, [navigation, userId, currentUser?.uid]);
     const insets = useSafeAreaInsets();
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
@@ -148,14 +171,14 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             };
 
             // Upload profile image if changed
-            if (editingProfileImage && editingProfileImage.base64 && editingProfileImage.uri !== (profile?.avatarUrl || PLACEHOLDER_AVATAR_URL)) {
+            if (editingProfileImage && editingProfileImage.base64 && editingProfileImage.uri !== (profile?.avatarPhoto || PLACEHOLDER_AVATAR_URL)) {
                 try {
                     console.log('Uploading profile image to Cloudinary...');
                     const result = await uploadImageToCloudinary(currentUser.uid, editingProfileImage.base64, 'avatar');
                     console.log('Profile image uploaded successfully:', result.imageUrl);
-                    updatedData.avatarUrl = result.imageUrl; // Add to updatedData
+                    updatedData.avatarPhoto = result.imageUrl; // Add to updatedData
                     setEditingProfileImage({ uri: result.imageUrl });
-                    setProfile(prevProfile => ({ ...prevProfile, avatarUrl: result.imageUrl }));
+                    setProfile(prevProfile => ({ ...prevProfile, avatarPhoto: result.imageUrl }));
                 } catch (error) {
                     console.error('Error uploading profile image:', error);
                     Alert.alert("Error", `Failed to upload profile image: ${error.message || 'Unknown error'}`);
@@ -164,14 +187,14 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             }
 
             // Upload cover image if changed
-            if (editingCoverImage && editingCoverImage.base64 && editingCoverImage.uri !== (profile?.coverUrl || PLACEHOLDER_COVER_URL)) {
+            if (editingCoverImage && editingCoverImage.base64 && editingCoverImage.uri !== (profile?.coverPhoto || PLACEHOLDER_COVER_URL)) {
                 try {
                     console.log('Uploading cover image to Cloudinary...');
                     const result = await uploadImageToCloudinary(currentUser.uid, editingCoverImage.base64, 'cover');
                     console.log('Cover image uploaded successfully:', result.imageUrl);
-                    updatedData.coverUrl = result.imageUrl; // Add to updatedData
+                    updatedData.coverPhoto = result.imageUrl; // Add to updatedData
                     setEditingCoverImage({ uri: result.imageUrl });
-                    setProfile(prevProfile => ({ ...prevProfile, coverUrl: result.imageUrl }));
+                    setProfile(prevProfile => ({ ...prevProfile, coverPhoto: result.imageUrl }));
                 } catch (error) {
                     console.error('Error uploading cover image:', error);
                     Alert.alert("Error", `Failed to upload cover image: ${error.message || 'Unknown error'}`);
@@ -180,7 +203,10 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             }
 
             // Only write to Firestore if there are changes
-            if (Object.keys(updatedData).length > 2 || updatedData.username !== profile?.username || updatedData.bio !== profile?.bio) {
+            if (Object.keys(updatedData).length > 3 ||
+                updatedData.username !== profile?.username ||
+                updatedData.bio !== profile?.bio ||
+                false) {
                 await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true });
             }
 
@@ -205,8 +231,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         setIsEditing(true);
         setEditingUserName(profile?.username || '');
         setEditingUserBio(profile?.bio || '');
-        setEditingProfileImage(profile?.avatarUrl ? { uri: profile.avatarUrl } : { uri: PLACEHOLDER_AVATAR_URL });
-        setEditingCoverImage(profile?.coverUrl ? { uri: profile.coverUrl } : { uri: PLACEHOLDER_COVER_URL });
+        setEditingProfileImage(profile?.avatarPhoto ? { uri: profile.avatarPhoto } : { uri: PLACEHOLDER_AVATAR_URL });
+        setEditingCoverImage(profile?.coverPhoto ? { uri: profile.coverPhoto } : { uri: PLACEHOLDER_COVER_URL });
     }, [profile]);
 
 
@@ -269,13 +295,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
             let updatedData = {};
             if (currentImageType === 'avatar') {
-                updatedData = { avatarUrl: PLACEHOLDER_AVATAR_URL };
+                updatedData = { avatarPhoto: PLACEHOLDER_AVATAR_URL };
                 setEditingProfileImage({ uri: PLACEHOLDER_AVATAR_URL });
-                setProfile(prev => ({ ...prev, avatarUrl: PLACEHOLDER_AVATAR_URL }));
+                setProfile(prev => ({ ...prev, avatarPhoto: PLACEHOLDER_AVATAR_URL }));
             } else if (currentImageType === 'cover') {
-                updatedData = { coverUrl: PLACEHOLDER_COVER_URL };
+                updatedData = { coverPhoto: PLACEHOLDER_COVER_URL };
                 setEditingCoverImage({ uri: PLACEHOLDER_COVER_URL });
-                setProfile(prev => ({ ...prev, coverUrl: PLACEHOLDER_COVER_URL }));
+                setProfile(prev => ({ ...prev, coverPhoto: PLACEHOLDER_COVER_URL }));
             }
 
             await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true });
@@ -358,13 +384,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     { transform: [{ translateY: coverImageTranslateY }] }
                 ]}>
                     <TouchableOpacity
-                        onPress={() => handleImagePress(isEditing ? editingCoverImage?.uri : profile?.coverUrl, 'cover')}
+                        onPress={() => handleImagePress(isEditing ? editingCoverImage?.uri : profile?.coverPhoto, 'cover')}
                         disabled={!isEditing}
                         activeOpacity={isEditing ? 0.8 : 1}
                     >
                         <Animated.View style={[styles.coverImageWrapper, { opacity: headerOpacity }, { backgroundColor: colors.background }]}>
                             <Image
-                                source={isEditing && editingCoverImage ? editingCoverImage : (profile?.coverUrl ? { uri: profile.coverUrl } : { uri: PLACEHOLDER_COVER_URL })}
+                                source={isEditing && editingCoverImage ? editingCoverImage : (profile?.coverPhoto ? { uri: profile.coverPhoto } : { uri: PLACEHOLDER_COVER_URL })}
                                 style={[styles.coverImage, isEditing && styles.coverImageEditing]}
                                 onLoadStart={() => setImageLoading(true)}
                                 onLoadEnd={() => setImageLoading(false)}
@@ -405,6 +431,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     onSave={handleSave}
                     onEdit={handleEdit}
                     buttonScale={buttonScale}
+                    showBackButton={!isOwnProfile}
                 />
 
                 {/* Enhanced Draggable Card */}
@@ -415,13 +442,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         { transform: [{ scale: buttonScale }] }
                     ]}>
                         <TouchableOpacity
-                            onPress={() => handleImagePress(isEditing ? editingProfileImage?.uri : profile?.avatarUrl, 'avatar')}
+                            onPress={() => handleImagePress(isEditing ? editingProfileImage?.uri : profile?.avatarPhoto, 'avatar')}
                             disabled={!isEditing}
                             activeOpacity={isEditing ? 0.8 : 1}
                         >
                             <View style={styles.profileImageWrapper}>
                                 <Image
-                                    source={isEditing && editingProfileImage ? editingProfileImage : (profile?.avatarUrl ? { uri: profile.avatarUrl } : { uri: PLACEHOLDER_AVATAR_URL })}
+                                    source={isEditing && editingProfileImage ? editingProfileImage : (profile?.avatarPhoto ? { uri: profile.avatarPhoto } : { uri: PLACEHOLDER_AVATAR_URL })}
                                     style={[styles.profileImage, isEditing && styles.profileImageEditing]}
                                     onLoadStart={() => setImageLoading(true)}
                                     onLoadEnd={() => setImageLoading(false)}
@@ -467,9 +494,11 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     <ProfileStats
                         connections={connectionsCount}
                         circles={circlesCount}
+                        events={eventsCount}
                         shimmerAnimation={shimmerAnimation}
                         loading={loading}
                     />
+
 
                     {/* Enhanced Profile Actions */}
                     {!isOwnProfile && (
@@ -481,8 +510,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     )}
 
                     {/* Enhanced Sections */}
-                    <MySquad shimmerAnimation={shimmerAnimation} loading={loading} />
-                    <JoinedCircles shimmerAnimation={shimmerAnimation} loading={loading} />
+                    <MySquad shimmerAnimation={shimmerAnimation} loading={loading} isOwnProfile={isOwnProfile} userId={profileId} />
+                    <JoinedCircles shimmerAnimation={shimmerAnimation} loading={loading} isOwnProfile={isOwnProfile} userId={profileId} />
                 </DraggableCard>
             </ScrollView>
             <ImageOptionsModal
@@ -586,7 +615,7 @@ const getModalStyles = (colors) => StyleSheet.create({
         marginBottom: 10,
     },
     buttonDelete: {
-        backgroundColor: '#dc3545', // A common error color, consider adding to theme
+        backgroundColor: '#dc3545',
     },
     buttonClose: {
     },

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { signOut } from 'firebase/auth';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
-import BottomNavBar from '../../components/BottomNavBar';
-import SettingsHeader from './components/SettingsHeader';
+import { auth } from '../../firebase/config';
 import SettingsSection from './components/SettingsSection';
 import ToggleOption from './components/ToggleOption';
 import SelectOption from './components/SelectOption';
+import ActionButton from './components/ActionButton';
 import MyPlan from './components/MyPlan';
 
 const SettingsScreen = ({ navigation }) => {
@@ -33,6 +34,19 @@ const SettingsScreen = ({ navigation }) => {
     const getCurrentThemeLabel = () => {
         const currentTheme = theme.charAt(0).toUpperCase() + theme.slice(1);
         return t(`settings.${currentTheme.toLowerCase()}`);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'Landing' }],
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+            Alert.alert('Error', 'Failed to logout. Please try again.');
+        }
     };
 
     return (
@@ -68,6 +82,17 @@ const SettingsScreen = ({ navigation }) => {
                 </SettingsSection>
 
                 <MyPlan />
+
+                <SettingsSection title={t('settings.account')}>
+                    <ActionButton
+                        title={t('settings.logout')}
+                        description={t('settings.logoutDescription')}
+                        icon="log-out-outline"
+                        variant="danger"
+                        confirmMessage={t('settings.areYouSureLogout')}
+                        onPress={handleLogout}
+                    />
+                </SettingsSection>
             </ScrollView>
 
 

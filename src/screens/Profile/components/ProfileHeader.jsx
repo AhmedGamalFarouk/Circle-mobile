@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, RADII, SHADOWS } from '../../../constants/constants';
 import { useTheme } from '../../../context/ThemeContext';
 
-const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, buttonScale }) => {
+const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, buttonScale, showBackButton = false }) => {
     const { colors } = useTheme()
     const { width, height } = useWindowDimensions();
     const insets = useSafeAreaInsets();
@@ -45,22 +45,27 @@ const ProfileHeader = ({ navigation, isOwnProfile, isEditing, onSave, onEdit, bu
 
     return (
         <View style={styles.headerIcons}>
-            {/* Enhanced Back Button */}
-            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                <TouchableOpacity
-                    onPress={handleBackPress}
-                    style={styles.iconButton}
-                    activeOpacity={0.7}
-                >
-                    <View style={[styles.glassmorphicIcon, { backgroundColor: colors.background }]}>
-                        <Ionicons
-                            name="arrow-back"
-                            size={isLandscape ? 20 : 24}
-                            color={colors.text}
-                        />
-                    </View>
-                </TouchableOpacity>
-            </Animated.View>
+            {/* Enhanced Back Button - only show when viewing another user's profile */}
+            {showBackButton && (
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                    <TouchableOpacity
+                        onPress={handleBackPress}
+                        style={styles.iconButton}
+                        activeOpacity={0.7}
+                    >
+                        <View style={[styles.glassmorphicIcon, { backgroundColor: colors.background }]}>
+                            <Ionicons
+                                name="arrow-back"
+                                size={isLandscape ? 20 : 24}
+                                color={colors.text}
+                            />
+                        </View>
+                    </TouchableOpacity>
+                </Animated.View>
+            )}
+
+            {/* Spacer when no back button */}
+            {!showBackButton && <View />}
 
             {/* Enhanced Right Icons */}
             <View style={styles.rightIcons}>

@@ -5,6 +5,7 @@ import CircleScreen from '../screens/Circle/CircleScreen';
 import CreationForm from '../screens/Circle Creation/CreationForm';
 import InviteAndShare from '../screens/Circle Creation/InviteAndShare';
 import Circles from '../screens/Circles';
+import CircleDetailsScreen from '../screens/Circle/CircleDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ const CircleStack = () => {
             />
             <Stack.Screen name="CreateCircle" component={CreationForm} />
             <Stack.Screen name="InviteAndShare" component={InviteAndShare} />
+            <Stack.Screen name="CircleDetails" component={CircleDetailsScreen} options={{ headerShown: false }} />
         </Stack.Navigator>
     );
 };

@@ -52,7 +52,6 @@ const DraggableCard = ({ children, pan, panResponder, screenHeight }) => {
 
 const getStyles = (height, width, isLandscape, colors) => StyleSheet.create({
     profileCard: {
-        flex: 1,
         backgroundColor: colors.background,
         borderTopLeftRadius: RADII.largeRounded,
         borderTopRightRadius: RADII.largeRounded,
@@ -103,7 +102,6 @@ const getStyles = (height, width, isLandscape, colors) => StyleSheet.create({
         opacity: 0.4,
     },
     container: {
-        flex: 1,
         width: '100%',
         marginTop: isLandscape ? 35 : 40,
         paddingBottom: isLandscape ? 30 : 40,

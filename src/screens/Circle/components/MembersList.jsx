@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { COLORS, FONTS, RADII } from '../../../constants/constants';
+import { useTheme } from '../../../context/ThemeContext';
+import { RADII } from '../../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 
-const MembersList = ({ visible, onClose, circleId }) => {
+const MembersList = ({ visible, onClose, circleId, navigation }) => {
+    const { colors } = useTheme();
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const styles = getStyles(colors);
 
     useEffect(() => {
         if (visible && circleId) {
@@ -47,16 +50,27 @@ const MembersList = ({ visible, onClose, circleId }) => {
     };
 
     const renderMember = ({ item }) => (
-        <View style={styles.memberItem}>
+        <TouchableOpacity
+            style={styles.memberItem}
+            onPress={() => {
+                onClose();
+                if (navigation) {
+                    navigation.navigate('Profile', { userId: item.id });
+                }
+            }}
+            activeOpacity={0.7}
+        >
             <Image
                 source={{ uri: item.profilePicture || 'https://via.placeholder.com/50' }}
                 style={styles.memberAvatar}
             />
             <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{item.username || 'Unknown User'}</Text>
-                <Text style={styles.memberEmail}>{item.email}</Text>
+                {item.email && (
+                    <Text style={styles.memberEmail}>{item.email}</Text>
+                )}
             </View>
-        </View>
+        </TouchableOpacity>
     );
 
     return (
@@ -71,13 +85,13 @@ const MembersList = ({ visible, onClose, circleId }) => {
                     <View style={styles.header}>
                         <Text style={styles.title}>Circle Members</Text>
                         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                            <Ionicons name="close" size={24} color={COLORS.light} />
+                            <Ionicons name="close" size={24} color={colors.text} />
                         </TouchableOpacity>
                     </View>
 
                     {loading ? (
                         <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={COLORS.primary} />
+                            <ActivityIndicator size="large" color={colors.primary} />
                             <Text style={styles.loadingText}>Loading members...</Text>
                         </View>
                     ) : (
@@ -106,7 +120,7 @@ const MembersList = ({ visible, onClose, circleId }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -114,12 +128,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalContent: {
-        backgroundColor: COLORS.dark,
+        backgroundColor: colors.card,
         borderRadius: RADII.medium,
         width: '90%',
         maxHeight: '80%',
         borderWidth: 1,
-        borderColor: COLORS.glass,
+        borderColor: colors.border,
     },
     header: {
         flexDirection: 'row',
@@ -127,12 +141,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 20,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
+        borderBottomColor: colors.border,
     },
     title: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: 20,
-        fontFamily: FONTS.heading,
         fontWeight: 'bold',
     },
     closeButton: {
@@ -145,9 +158,8 @@ const styles = StyleSheet.create({
         padding: 40,
     },
     loadingText: {
-        color: COLORS.light,
+        color: colors.text,
         marginTop: 10,
-        fontFamily: FONTS.body,
     },
     membersList: {
         flex: 1,
@@ -158,28 +170,26 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
+        borderBottomColor: colors.border,
     },
     memberAvatar: {
         width: 50,
         height: 50,
         borderRadius: RADII.circle,
-        backgroundColor: COLORS.secondary,
+        backgroundColor: colors.surface,
     },
     memberInfo: {
         marginLeft: 15,
         flex: 1,
     },
     memberName: {
-        color: COLORS.light,
+        color: colors.text,
         fontSize: 16,
-        fontFamily: FONTS.body,
         fontWeight: '600',
     },
     memberEmail: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontSize: 14,
-        fontFamily: FONTS.body,
         marginTop: 2,
     },
     emptyContainer: {
@@ -189,21 +199,19 @@ const styles = StyleSheet.create({
         padding: 40,
     },
     emptyText: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontSize: 16,
-        fontFamily: FONTS.body,
         textAlign: 'center',
     },
     footer: {
         padding: 20,
         borderTopWidth: 1,
-        borderTopColor: COLORS.glass,
+        borderTopColor: colors.border,
         alignItems: 'center',
     },
     memberCount: {
-        color: COLORS.text,
+        color: colors.textSecondary,
         fontSize: 14,
-        fontFamily: FONTS.body,
     },
 });
 

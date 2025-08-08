@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'rea
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../context/ThemeContext';
 
-const JoinedCircles = ({ circles = [], shimmerAnimation, loading }) => {
+const JoinedCircles = ({ circles = [], shimmerAnimation, loading, isOwnProfile, userId }) => {
     const navigation = useNavigation();
     const { colors } = useTheme();
     const styles = getStyles(colors);
@@ -21,12 +21,12 @@ const JoinedCircles = ({ circles = [], shimmerAnimation, loading }) => {
     const displayCircles = circles.length > 0 ? circles : mockCircles;
 
     const handleCirclePress = (circle) => {
-        navigation.navigate('Circle', { circleId: circle.id });
+        navigation.navigate('CircleDetails', { circleId: circle.id });
     };
 
     return (
         <View>
-            <Text style={styles.title}>Joined Circles</Text>
+            <Text style={styles.title}>{isOwnProfile ? 'Joined Circles' : 'Circles'}</Text>
             <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}

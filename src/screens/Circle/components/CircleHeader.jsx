@@ -38,7 +38,10 @@ const CircleHeader = ({ name, imageUrl, circleId }) => {
         <Ionicons name="arrow-back" size={24} color={COLORS.light} />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.centerContainer}>
+      <TouchableOpacity
+        style={styles.centerContainer}
+        onPress={() => navigation.navigate('CircleDetails', { circleId })}
+      >
         <Image source={{ uri: imageUrl }} style={styles.profilePic} />
         <Text style={styles.groupName}>{name}</Text>
       </TouchableOpacity>

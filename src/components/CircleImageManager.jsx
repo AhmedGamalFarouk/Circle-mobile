@@ -9,7 +9,7 @@ import ImageUploader from './ImageUploader';
  */
 const CircleImageManager = ({ circleId, circleData, onImageUpdate }) => {
     const [profileImageUrl, setProfileImageUrl] = useState(circleData?.photoUrl);
-    const [coverImageUrl, setCoverImageUrl] = useState(circleData?.coverUrl);
+    const [coverImageUrl, setCoverImageUrl] = useState(circleData?.coverPhoto);
 
     const handleProfileImageUpdate = (url, publicId) => {
         setProfileImageUrl(url);

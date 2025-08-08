@@ -1,17 +1,46 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Pressable, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Pressable, Platform, ActivityIndicator, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from './styles';
 import { COLORS, SHADOWS } from '../../../constants/constants';
+import InterestsSelector from './InterestsSelector';
 
-export const AuthContainer = ({ children }) => (
-    <View style={styles.container}>
-        <View style={styles.contentContainer}>
-            {children}
+export const AuthContainer = ({ children, scrollable = false }) => {
+    if (scrollable) {
+        return (
+            <KeyboardAvoidingView
+                style={styles.keyboardContainer}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            >
+                <ScrollView
+                    style={styles.scrollContainer}
+                    contentContainerStyle={styles.scrollContentContainer}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    bounces={false}
+                    overScrollMode="never"
+                >
+                    <View style={styles.headerSection}>
+                        <Logo />
+                    </View>
+                    <View style={styles.formContainer}>
+                        {children}
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.contentContainer}>
+                {children}
+            </View>
         </View>
-    </View>
-);
+    );
+};
 
 export const Logo = () => (
     <View style={styles.headerSection}>
@@ -258,3 +287,5 @@ export const BottomLink = ({ text, linkText, onPress }) => (
         </Text>
     </View>
 );
+
+export { InterestsSelector };

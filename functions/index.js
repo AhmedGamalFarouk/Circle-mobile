@@ -156,7 +156,7 @@ exports.uploadProfileImage = functions.https.onCall(async (data, context) => {
         // Update Firestore user profile
         const userRef = admin.firestore().collection('users').doc(userId);
         await userRef.set({
-            [imageType === 'avatar' ? 'avatarUrl' : 'coverUrl']: imageUrl
+            [imageType === 'avatar' ? 'avatarPhoto' : 'coverPhoto']: imageUrl
         }, { merge: true });
 
         return { success: true, imageUrl: imageUrl };
@@ -190,7 +190,7 @@ exports.deleteProfileImage = functions.https.onCall(async (data, context) => {
         // Update Firestore user profile to remove the image URL
         const userRef = admin.firestore().collection('users').doc(userId);
         await userRef.update({
-            [imageType === 'avatar' ? 'avatarUrl' : 'coverUrl']: admin.firestore.FieldValue.delete()
+            [imageType === 'avatar' ? 'avatarPhoto' : 'coverPhoto']: admin.firestore.FieldValue.delete()
         });
 
         return { success: true };

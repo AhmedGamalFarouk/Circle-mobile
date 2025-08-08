@@ -86,7 +86,7 @@ export const uploadImageToCloudinary = async (userId, imageBase64, imageType, op
         if ((imageType === 'avatar' || imageType === 'cover') && !options.skipFirestoreUpdate) {
             const userRef = doc(db, 'users', userId);
             const updateData = {};
-            updateData[imageType === 'avatar' ? 'avatarUrl' : 'coverUrl'] = imageUrl;
+            updateData[imageType === 'avatar' ? 'avatarPhoto' : 'coverPhoto'] = imageUrl;
 
             await updateDoc(userRef, updateData);
             console.log('Firestore updated successfully with new image URL');
@@ -152,7 +152,7 @@ export const deleteImageFromCloudinary = async (userId, imageType) => {
         // For now, we just remove the reference from the user's profile
         const userRef = doc(db, 'users', userId);
         const updateData = {};
-        updateData[imageType === 'avatar' ? 'avatarUrl' : 'coverUrl'] = null;
+        updateData[imageType === 'avatar' ? 'avatarPhoto' : 'coverPhoto'] = null;
 
         await updateDoc(userRef, updateData);
         console.log('Image reference removed from Firestore successfully');

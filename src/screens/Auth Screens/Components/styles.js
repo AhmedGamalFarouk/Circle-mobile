@@ -10,7 +10,28 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingVertical: 40,
     },
+    keyboardContainer: {
+        flex: 1,
+        backgroundColor: COLORS.darker,
+    },
     contentContainer: {
+        width: '100%',
+        maxWidth: 400,
+        alignItems: 'center',
+    },
+    scrollContainer: {
+        flex: 1,
+        width: '100%',
+    },
+    scrollContentContainer: {
+        paddingBottom: 40,
+        paddingTop: 40,
+        paddingHorizontal: 24,
+        alignItems: 'center',
+        minHeight: '100%',
+        justifyContent: 'flex-start',
+    },
+    formContainer: {
         width: '100%',
         maxWidth: 400,
         alignItems: 'center',
@@ -214,5 +235,10 @@ export const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         fontFamily: FONTS.body,
+    },
+    buttonSection: {
+        width: '100%',
+        marginTop: 20,
+        alignItems: 'center',
     },
 });

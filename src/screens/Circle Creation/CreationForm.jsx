@@ -7,6 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { db } from '../../firebase/config';
 import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { uploadCircleImageToCloudinary } from '../../utils/cloudinaryUpload';
+import { incrementUserStat } from '../../utils/userStatsManager';
 import useAuth from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
@@ -98,6 +99,9 @@ const CreationForm = ({ navigation }) => {
                 });
                 console.log('Circle image uploaded successfully:', uploadedPhotoUrl);
             }
+
+            // Update user's circles stat
+            await incrementUserStat(user.uid, 'circles');
 
             console.log("Circle created successfully with ID:", circleRef.id);
             navigation.navigate('InviteAndShare', { circleName, circleId: circleRef.id });
@@ -281,7 +285,7 @@ const CreationForm = ({ navigation }) => {
                 )}
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.interests')}</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.interests')}</Text>
                     <View style={[styles.interestInputContainer, {
                         backgroundColor: colorVars.surface,
                         borderColor: colorVars.border
