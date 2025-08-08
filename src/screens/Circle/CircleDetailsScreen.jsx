@@ -66,15 +66,15 @@ const CircleDetailsScreen = () => {
                 <CircleDetailsHeader
                     name={circle?.name || circle?.title || 'Circle Name'}
                     description={circle?.description}
-                    image={circle?.image || circle?.imageUrl || circle?.photo}
-                    memberCount={circle?.members?.length || 0}
+                    image={circle?.image}
+                    memberCount={circle?.memberCount || circle?.members?.length || 0}
                     createdAt={circle?.createdAt}
                 />
 
                 <View style={styles.contentContainer}>
                     <CircleStats
                         circle={circle}
-                        memberCount={circle.members?.length || 0}
+                        memberCount={circle?.memberCount || circle?.members?.length || 0}
                     />
 
                     <CircleActions

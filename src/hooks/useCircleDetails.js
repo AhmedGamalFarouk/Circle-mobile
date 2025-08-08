@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { doc, onSnapshot, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { getCircleImageUrl, getUserAvatarUrl } from '../utils/imageUtils';
 
 const useCircleDetails = (circleId) => {
     const [circle, setCircle] = useState(null);
@@ -19,7 +20,7 @@ const useCircleDetails = (circleId) => {
                 membersList.push({
                     id: doc.id,
                     name: userData.username || userData.displayName || 'Unknown User',
-                    avatar: userData.profilePicture || userData.photoURL,
+                    avatar: getUserAvatarUrl(userData),
                     email: userData.email,
                     isOnline: Math.random() > 0.7, // Random online status for demo
                 });
@@ -43,9 +44,19 @@ const useCircleDetails = (circleId) => {
                 const circleData = { id: docSnap.id, ...docSnap.data() };
                 const members = await fetchMembersData(circleId);
 
+                const realImage = getCircleImageUrl(circleData);
+                console.log('Circle image data (refetch):', {
+                    circleData: circleData,
+                    finalImage: realImage
+                });
+
                 setCircle({
                     ...circleData,
                     members,
+                    // Use real image from Firebase or fallback to a default
+                    image: realImage,
+                    // Real member count from actual members array
+                    memberCount: members.length,
                     messageCount: circleData.messageCount || Math.floor(Math.random() * 500) + 50,
                     activeToday: circleData.activeToday || Math.floor(Math.random() * members.length),
                     pollCount: circleData.pollCount || Math.floor(Math.random() * 20) + 1,
@@ -74,10 +85,20 @@ const useCircleDetails = (circleId) => {
                 // Fetch actual member data
                 const members = await fetchMembersData(circleId);
 
-                // Add enhanced data for better UI demonstration
+                // Add enhanced data with real circle image and member count
+                const realImage = getCircleImageUrl(circleData);
+                console.log('Circle image data:', {
+                    circleData: circleData,
+                    finalImage: realImage
+                });
+
                 const enhancedCircle = {
                     ...circleData,
                     members,
+                    // Use real image from Firebase or fallback to a default
+                    image: realImage,
+                    // Real member count from actual members array
+                    memberCount: members.length,
                     messageCount: circleData.messageCount || Math.floor(Math.random() * 500) + 50,
                     activeToday: circleData.activeToday || Math.floor(Math.random() * members.length),
                     pollCount: circleData.pollCount || Math.floor(Math.random() * 20) + 1,

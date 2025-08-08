@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ImageBackground, Animated, Dimensions } from 'r
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../context/ThemeContext';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
+import { getCircleImageUrl } from '../../../../utils/imageUtils';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HEADER_HEIGHT = 300;
@@ -13,6 +14,7 @@ const CircleDetailsHeader = ({ name, description, image, memberCount, createdAt 
 
     // Debug logging
     console.log('CircleDetailsHeader props:', { name, description, image, memberCount, createdAt });
+    console.log('Using image URL:', image);
 
     const formatDate = (timestamp) => {
         if (!timestamp) return '';
@@ -26,27 +28,16 @@ const CircleDetailsHeader = ({ name, description, image, memberCount, createdAt 
 
     return (
         <View style={styles.headerContainer}>
-            {/* Test view to ensure header is visible */}
-            <View style={{
-                position: 'absolute',
-                top: 20,
-                left: 20,
-                backgroundColor: 'red',
-                padding: 10,
-                zIndex: 1000
-            }}>
-                <Text style={{ color: 'white' }}>HEADER TEST</Text>
-            </View>
-
             <View style={styles.imageContainer}>
                 <ImageBackground
-                    source={{
-                        uri: image || 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
-                    }}
+                    source={{ uri: image }}
                     style={styles.backgroundImage}
                     resizeMode="cover"
-                    onError={(error) => console.log('Image load error:', error)}
-                    onLoad={() => console.log('Image loaded successfully')}
+                    onError={(error) => {
+                        console.log('Circle image load error:', error);
+                        console.log('Attempted to load image:', image);
+                    }}
+                    onLoad={() => console.log('Circle image loaded successfully:', image)}
                 >
                     <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}

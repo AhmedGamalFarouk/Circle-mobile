@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react
 import { useTheme } from '../../../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
+import { getUserAvatarUrl } from '../../../../utils/imageUtils';
 import MembersList from '../MembersList';
 
 const CircleMembers = ({ members = [], circleId }) => {
@@ -22,10 +23,9 @@ const CircleMembers = ({ members = [], circleId }) => {
         >
             <View style={styles.avatarContainer}>
                 <Image
-                    source={{
-                        uri: item.avatar || 'https://via.placeholder.com/60x60/ff6b8b/ffffff?text=' + (item.name?.[0] || 'U')
-                    }}
+                    source={{ uri: item.avatar }}
                     style={styles.avatar}
+                    onError={(error) => console.log('Member avatar load error:', error)}
                 />
                 {item.isOnline && <View style={styles.onlineIndicator} />}
             </View>
@@ -46,7 +46,7 @@ const CircleMembers = ({ members = [], circleId }) => {
                 onPress={() => setShowMembersList(true)}
                 activeOpacity={0.7}
             >
-                <Text style={styles.title}>Members ({members.length})</Text>
+                <Text style={styles.title}>Members ({members?.length || 0})</Text>
                 <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
 

@@ -145,13 +145,13 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         marginTop: 20,
         borderBottomWidth: 1,
-        
+
     },
     leftContainer: {
         width: 44, // Same width as icon container for balance
     },
     centerContainer: {
-        
+
         flex: 1,
         alignItems: 'center',
         fontSize: 22,

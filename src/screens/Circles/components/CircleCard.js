@@ -1,19 +1,55 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Image } from 'expo-image'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, RADII, SHADOWS } from '../../../constants/constants'
 import { useTheme } from '../../../context/ThemeContext'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { db } from '../../../firebase/config'
+import { getCircleImageUrl } from '../../../utils/imageUtils'
 
 
 const CircleCard = ({ circle, onPress }) => {
     const { colors } = useTheme()
+    const [memberCount, setMemberCount] = useState(0)
+    const [loading, setLoading] = useState(true)
+
+    // Fetch real member count
+    useEffect(() => {
+        const fetchMemberCount = async () => {
+            if (!circle?.id) {
+                setLoading(false)
+                return
+            }
+
+            try {
+                // Query users who have this circleId in their joinedCircles array
+                const usersRef = collection(db, 'users')
+                const q = query(usersRef, where('joinedCircles', 'array-contains', circle.id))
+                const querySnapshot = await getDocs(q)
+                setMemberCount(querySnapshot.size)
+            } catch (error) {
+                console.error('Error fetching member count:', error)
+                setMemberCount(0)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchMemberCount()
+    }, [circle?.id])
+
+    // Get the real circle image
+    const circleImageUrl = getCircleImageUrl(circle)
     return (
         <TouchableOpacity style={[styles.circleCard, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => onPress(circle)}>
             <View style={styles.cardHeader}>
                 <Image
-                    source={circle.photoUrl ? { uri: circle.photoUrl } : require('../../../../assets/circle.gif')}
+                    source={{ uri: circleImageUrl }}
                     style={styles.circleImage}
+                    placeholder={require('../../../../assets/circle.gif')}
+                    contentFit="cover"
+                    transition={200}
                 />
                 <View style={styles.circleInfo}>
                     <Text style={[styles.circleName, { color: colors.text }]} numberOfLines={1}>
@@ -25,11 +61,13 @@ const CircleCard = ({ circle, onPress }) => {
                     <View style={styles.circleMeta}>
                         <View style={styles.metaItem}>
                             <Ionicons name="people" size={14} style={{ color: colors.text }} />
-                            <Text style={[styles.metaText, { color: colors.text }]}>Public</Text>
+                            <Text style={[styles.metaText, { color: colors.text }]}>
+                                {loading ? '...' : `${memberCount} member${memberCount !== 1 ? 's' : ''}`}
+                            </Text>
                         </View>
                         <View style={styles.metaItem}>
                             <Ionicons name="time" size={14} style={{ color: colors.text }} />
-                            <Text style={styles.metaText}>
+                            <Text style={[styles.metaText, { color: colors.text }]}>
                                 {circle.circleType === 'flash' ? 'Flash' : 'Permanent'}
                             </Text>
                         </View>

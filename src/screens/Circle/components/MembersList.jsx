@@ -4,6 +4,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useTheme } from '../../../context/ThemeContext';
 import { RADII } from '../../../constants/constants';
+import { getUserAvatarUrl } from '../../../utils/imageUtils';
 import { Ionicons } from '@expo/vector-icons';
 
 const MembersList = ({ visible, onClose, circleId, navigation }) => {
@@ -28,9 +29,11 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
 
             const membersList = [];
             querySnapshot.forEach((doc) => {
+                const userData = doc.data();
                 membersList.push({
                     id: doc.id,
-                    ...doc.data()
+                    ...userData,
+                    profilePicture: getUserAvatarUrl(userData, 50)
                 });
             });
 
@@ -61,8 +64,9 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
             activeOpacity={0.7}
         >
             <Image
-                source={{ uri: item.profilePicture || 'https://via.placeholder.com/50' }}
+                source={{ uri: item.profilePicture }}
                 style={styles.memberAvatar}
+                onError={(error) => console.log('Member list avatar load error:', error)}
             />
             <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{item.username || 'Unknown User'}</Text>
