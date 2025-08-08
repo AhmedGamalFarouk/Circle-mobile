@@ -66,7 +66,7 @@ const ChatFeed = ({ circleId, onReply }) => {
     useEffect(() => {
         if (!circleId) return;
 
-        const q = query(collection(db, 'circles', circleId, 'chat'), orderBy('createdAt', 'asc'));
+        const q = query(collection(db, 'circles', circleId, 'chat'), orderBy('timeStamp', 'asc'));
 
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const messagesData = [];
@@ -335,7 +335,7 @@ const ChatFeed = ({ circleId, onReply }) => {
         if (!selectedMessage) return;
 
         const now = new Date();
-        const messageTime = selectedMessage.createdAt.toDate();
+        const messageTime = selectedMessage.timeStamp.toDate();
         const diffInMinutes = (now - messageTime) / (1000 * 60);
 
         if (diffInMinutes > 15) {
@@ -535,7 +535,7 @@ const ChatFeed = ({ circleId, onReply }) => {
         return messages
             .filter(message => !message.hiddenBy?.includes(user.uid)) // Filter out messages hidden by current user
             .map((message) => {
-                if (message.type === 'system') {
+                if (message.messageType === 'system') {
                     return (
                         <View key={message.id} style={styles.systemMessageContainer}>
                             <Text style={styles.systemMessageText}>{message.text}</Text>
@@ -597,10 +597,10 @@ const ChatFeed = ({ circleId, onReply }) => {
                                         }
                                     ]}
                                 >
-                                    {message.replyingTo && (
+                                    {message.replyTo && (
                                         <View style={styles.replyContainer}>
-                                            <Text style={styles.replyUser}>{message.replyingTo.userName}</Text>
-                                            <Text style={styles.replyText} numberOfLines={1}>{message.replyingTo.text}</Text>
+                                            <Text style={styles.replyUser}>{message.replyTo.userName}</Text>
+                                            <Text style={styles.replyText} numberOfLines={1}>{message.replyTo.text}</Text>
                                         </View>
                                     )}
                                     {editingMessage?.id === message.id ? (
@@ -745,7 +745,7 @@ const ChatFeed = ({ circleId, onReply }) => {
             )}
             {showOptions && selectedMessage && (() => {
                 const now = new Date();
-                const messageTime = selectedMessage.createdAt.toDate();
+                const messageTime = selectedMessage.timeStamp.toDate();
                 const diffInMinutes = (now - messageTime) / (1000 * 60);
                 const isEditable = diffInMinutes <= 15;
                 const isCurrentUser = selectedMessage.user.userId === user.uid;

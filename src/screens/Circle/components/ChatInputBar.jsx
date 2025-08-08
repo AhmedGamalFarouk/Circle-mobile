@@ -34,14 +34,15 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
         if (message.trim() === "" || !userProfile) return;
 
         const messageData = {
+            messageType: "text",
             text: message,
-            createdAt: serverTimestamp(),
+            timeStamp: serverTimestamp(),
             user: {
                 userId: user.uid,
                 userName: userProfile.username,
-                imageurl: userProfile.profileImage,
+                imageurl: userProfile.avatarPhoto || null,
             },
-            replyingTo: replyingTo ? {
+            replyTo: replyingTo ? {
                 messageId: replyingTo.id,
                 text: replyingTo.text,
                 userName: replyingTo.user.userName,

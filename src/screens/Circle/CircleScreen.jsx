@@ -94,7 +94,7 @@ const CircleScreen = () => {
             const pollDataWithTimestamp = {
                 ...pollData,
                 deadline: Timestamp.fromDate(pollData.deadline),
-                createdAt: Timestamp.fromDate(pollData.createdAt)
+                timeStamp: Timestamp.fromDate(pollData.timeStamp)
             };
 
             if (pollType === 'activity') {
@@ -102,15 +102,15 @@ const CircleScreen = () => {
                 await addDoc(pollRef, {
                     stage: PLANNING_STAGES.PLANNING_ACTIVITY,
                     activityPoll: { ...pollDataWithTimestamp, votes: {} },
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 // Add system message to chat about activity poll start
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `🗳️ Activity poll started: "${pollData.question}"`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log('Activity poll created successfully');
@@ -124,9 +124,9 @@ const CircleScreen = () => {
                 // Add system message to chat about place poll start
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `📍 Place poll started: "${pollData.question}"`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log('Place poll created successfully');
@@ -178,9 +178,9 @@ const CircleScreen = () => {
                 // Add system message to chat about new option
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `➕ ${userProfile?.username || 'Someone'} added a new activity option: "${optionText}"`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log(`Activity option added: ${optionText} by ${userProfile?.username || 'Unknown user'}`);
@@ -198,9 +198,9 @@ const CircleScreen = () => {
                 // Add system message to chat about new option
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `➕ ${userProfile?.username || 'Someone'} added a new place option: "${optionText}"`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log(`Place option added: ${optionText} by ${userProfile?.username || 'Unknown user'}`);
@@ -231,9 +231,9 @@ const CircleScreen = () => {
                 // Add system message to chat about activity selection
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `📊 Activity poll closed! "${winningOption}" won.`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log(`Activity poll finished. Winner: ${winningOption}`);
@@ -253,9 +253,9 @@ const CircleScreen = () => {
                 // Add system message to chat about place selection
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `📍 Place poll closed! "${winningOption}" won.`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log(`Place poll finished. Winner: ${winningOption}`);
@@ -312,9 +312,9 @@ const CircleScreen = () => {
                 const statusText = status === 'yes' ? 'is going' : status === 'maybe' ? 'might go' : 'can\'t make it';
 
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `${statusEmoji} ${userProfile?.username || 'Someone'} ${statusText}`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
             }
 
@@ -362,9 +362,9 @@ const CircleScreen = () => {
                 // Add system message about event confirmation
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: `🎉 Event confirmed! ${poll.winningPlace} for ${poll.winningActivity}. Please RSVP above!`,
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log('Event confirmed and RSVPs enabled');
@@ -387,9 +387,9 @@ const CircleScreen = () => {
                 // Add system message about starting new planning
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
-                    type: 'system',
+                    messageType: 'system',
                     text: '🆕 Starting new event planning!',
-                    createdAt: serverTimestamp(),
+                    timeStamp: serverTimestamp(),
                 });
 
                 console.log('Poll archived and new planning started');
@@ -430,7 +430,7 @@ const CircleScreen = () => {
                 <View style={styles.innerContainer}>
                     <CircleHeader
                         name={circle?.circleName || circle?.name}
-                        imageUrl={circle?.photoUrl || circle?.imageUrl}
+                        imageUrl={circle?.imageUrl}
                         circleId={circleId}
                     />
                     {isPinVisible ? (

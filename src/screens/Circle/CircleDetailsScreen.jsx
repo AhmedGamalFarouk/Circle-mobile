@@ -9,6 +9,7 @@ import CircleStats from './components/CircleDetails/CircleStats';
 import CircleActions from './components/CircleDetails/CircleActions';
 import CircleActivity from './components/CircleDetails/CircleActivity';
 import useCircleDetails from '../../hooks/useCircleDetails';
+import { getCircleImageUrl } from '../../utils/imageUtils';
 
 const CircleDetailsScreen = () => {
     const { colors } = useTheme();
@@ -66,7 +67,7 @@ const CircleDetailsScreen = () => {
                 <CircleDetailsHeader
                     name={circle?.name || circle?.title || 'Circle Name'}
                     description={circle?.description}
-                    image={circle?.image}
+                    image={getCircleImageUrl(circle)}
                     memberCount={circle?.memberCount || circle?.members?.length || 0}
                     createdAt={circle?.createdAt}
                 />

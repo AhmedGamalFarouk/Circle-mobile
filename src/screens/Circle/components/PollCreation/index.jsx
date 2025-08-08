@@ -46,7 +46,7 @@ const PollCreation = ({ onLaunchPoll, pollType }) => {
             question: question.trim(),
             options: filledOptions.map(option => ({ text: option.trim() })),
             deadline: deadlineDate,
-            createdAt: new Date(),
+            timeStamp: new Date(),
             allowNewOptions: true // Enable adding new options after creation
         };
 

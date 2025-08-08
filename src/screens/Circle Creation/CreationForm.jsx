@@ -5,7 +5,7 @@ import { COLORS, RADII, SHADOWS } from '../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db } from '../../firebase/config';
-import { addDoc, collection, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { uploadCircleImageToCloudinary } from '../../utils/cloudinaryUpload';
 import { incrementUserStat } from '../../utils/userStatsManager';
 import useAuth from '../../hooks/useAuth';
@@ -78,7 +78,7 @@ const CreationForm = ({ navigation }) => {
             const circleRef = await addDoc(collection(db, 'circles'), {
                 circleName,
                 description,
-                photoUrl: null, // Placeholder, will be updated after upload
+                imageUrl: null, // Placeholder, will be updated after upload
                 circlePrivacy,
                 circleType,
                 expiresAt: circleType === 'flash' ? expiresAt : null,
@@ -93,12 +93,17 @@ const CreationForm = ({ navigation }) => {
                 const result = await uploadCircleImageToCloudinary(photoUrl, circleRef.id);
                 uploadedPhotoUrl = result.imageUrl;
 
-                // Update the Firestore document with the actual photo URL
+                // Update the Firestore document with the actual image URL
                 await updateDoc(doc(db, 'circles', circleRef.id), {
-                    photoUrl: uploadedPhotoUrl,
+                    imageUrl: uploadedPhotoUrl,
                 });
                 console.log('Circle image uploaded successfully:', uploadedPhotoUrl);
             }
+
+            // Add the creator to their own joinedCircles array
+            await updateDoc(doc(db, 'users', user.uid), {
+                joinedCircles: arrayUnion(circleRef.id)
+            });
 
             // Update user's circles stat
             await incrementUserStat(user.uid, 'circles');

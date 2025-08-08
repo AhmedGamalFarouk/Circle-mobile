@@ -3,13 +3,16 @@ import { View, Text, StyleSheet, Modal, FlatList, Image, TouchableOpacity, Activ
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useTheme } from '../../../context/ThemeContext';
+import useAuth from '../../../hooks/useAuth';
 import { RADII } from '../../../constants/constants';
 import { getUserAvatarUrl } from '../../../utils/imageUtils';
 import { Ionicons } from '@expo/vector-icons';
 
 const MembersList = ({ visible, onClose, circleId, navigation }) => {
     const { colors } = useTheme();
+    const { user } = useAuth();
     const [members, setMembers] = useState([]);
+    const [totalMembersCount, setTotalMembersCount] = useState(0);
     const [loading, setLoading] = useState(false);
     const styles = getStyles(colors);
 
@@ -27,24 +30,30 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
             const q = query(usersRef, where('joinedCircles', 'array-contains', circleId));
             const querySnapshot = await getDocs(q);
 
-            const membersList = [];
+            const allMembers = [];
             querySnapshot.forEach((doc) => {
                 const userData = doc.data();
-                membersList.push({
+                allMembers.push({
                     id: doc.id,
                     ...userData,
                     profilePicture: getUserAvatarUrl(userData, 50)
                 });
             });
 
+            // Set total count (including current user)
+            setTotalMembersCount(allMembers.length);
+
+            // Filter out current user from display list
+            const membersToDisplay = allMembers.filter(member => member.id !== user?.uid);
+
             // Sort members alphabetically by username
-            membersList.sort((a, b) => {
+            membersToDisplay.sort((a, b) => {
                 const nameA = (a.username || 'Unknown User').toLowerCase();
                 const nameB = (b.username || 'Unknown User').toLowerCase();
                 return nameA.localeCompare(nameB);
             });
 
-            setMembers(membersList);
+            setMembers(membersToDisplay);
         } catch (error) {
             console.error('Error fetching members:', error);
         } finally {
@@ -107,7 +116,9 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
                             showsVerticalScrollIndicator={false}
                             ListEmptyComponent={
                                 <View style={styles.emptyContainer}>
-                                    <Text style={styles.emptyText}>No members found</Text>
+                                    <Text style={styles.emptyText}>
+                                        {totalMembersCount === 1 ? "You are the only member in this circle" : "No other members found"}
+                                    </Text>
                                 </View>
                             }
                         />
@@ -115,7 +126,7 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
 
                     <View style={styles.footer}>
                         <Text style={styles.memberCount}>
-                            {members.length} member{members.length !== 1 ? 's' : ''}
+                            {totalMembersCount} member{totalMembersCount !== 1 ? 's' : ''}
                         </Text>
                     </View>
                 </View>

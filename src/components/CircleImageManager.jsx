@@ -8,7 +8,7 @@ import ImageUploader from './ImageUploader';
  * This component demonstrates how to use the image management system
  */
 const CircleImageManager = ({ circleId, circleData, onImageUpdate }) => {
-    const [profileImageUrl, setProfileImageUrl] = useState(circleData?.photoUrl);
+    const [profileImageUrl, setProfileImageUrl] = useState(circleData?.imageUrl);
     const [coverImageUrl, setCoverImageUrl] = useState(circleData?.coverPhoto);
 
     const handleProfileImageUpdate = (url, publicId) => {
