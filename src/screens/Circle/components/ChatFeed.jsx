@@ -7,6 +7,7 @@ import useUserProfile from '../../../hooks/useUserProfile';
 import { COLORS, RADII, FONTS, SHADOWS } from '../../../constants/constants';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import VoicePlayer from '../../../components/VoicePlayer';
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 
@@ -476,6 +477,42 @@ const ChatFeed = ({ circleId, onReply }) => {
         return Object.values(grouped).sort((a, b) => b.count - a.count);
     };
 
+    // Format timestamp for display
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return '';
+
+        const messageDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const now = new Date();
+        const isToday = messageDate.toDateString() === now.toDateString();
+        const isYesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString() === messageDate.toDateString();
+
+        if (isToday) {
+            // Show time for today's messages (e.g., "2:30 PM")
+            return messageDate.toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        } else if (isYesterday) {
+            // Show "Yesterday" with time for yesterday's messages
+            const time = messageDate.toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return `Yesterday ${time}`;
+        } else {
+            // Show date and time for older messages (e.g., "Jan 15, 2:30 PM")
+            return messageDate.toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+    };
+
     // Handle reaction press with animation
     const handleReactionPress = async (message, emoji) => {
         if (!userProfile) return;
@@ -548,17 +585,32 @@ const ChatFeed = ({ circleId, onReply }) => {
                 lastSender = message.user.userId;
 
                 const renderLeftActions = (progress, dragX) => {
-                    const scale = dragX.interpolate({
-                        inputRange: [0, 80],
-                        outputRange: [0, 1],
+                    const opacity = dragX.interpolate({
+                        inputRange: [0, 50],
+                        outputRange: [0, 0.6],
                         extrapolate: 'clamp',
                     });
+
+                    const translateX = dragX.interpolate({
+                        inputRange: [0, 80],
+                        outputRange: [-20, 0],
+                        extrapolate: 'clamp',
+                    });
+
                     return (
-                        <View style={styles.replyAction}>
-                            <Animated.Text style={[styles.actionText, { transform: [{ scale }], fontSize: 18 }]}>
-                                ↩️
-                            </Animated.Text>
-                        </View>
+                        <Animated.View style={[
+                            styles.replyAction,
+                            {
+                                opacity,
+                                transform: [{ translateX }]
+                            }
+                        ]}>
+                            <Ionicons
+                                name="arrow-undo"
+                                size={20}
+                                color="rgba(255, 255, 255, 0.8)"
+                            />
+                        </Animated.View>
                     );
                 };
 
@@ -571,10 +623,20 @@ const ChatFeed = ({ circleId, onReply }) => {
                             }
                         }}
                         renderLeftActions={renderLeftActions}
+                        leftThreshold={60}
+                        friction={2}
+                        overshootFriction={8}
+                        onSwipeableWillOpen={() => {
+                            // Subtle haptic feedback when swipe threshold is reached
+                            Vibration.vibrate(25);
+                        }}
                         onSwipeableLeftOpen={() => {
                             onReply(message);
+                            // Smooth close animation
                             if (swipeableRefs.current[message.id]) {
-                                swipeableRefs.current[message.id].close();
+                                setTimeout(() => {
+                                    swipeableRefs.current[message.id].close();
+                                }, 100);
                             }
                         }}
                     >
@@ -600,7 +662,14 @@ const ChatFeed = ({ circleId, onReply }) => {
                                     {message.replyTo && (
                                         <View style={styles.replyContainer}>
                                             <Text style={styles.replyUser}>{message.replyTo.userName}</Text>
-                                            <Text style={styles.replyText} numberOfLines={1}>{message.replyTo.text}</Text>
+                                            <View style={styles.replyTextContainer}>
+                                                {!message.replyTo.text && (
+                                                    <Ionicons name="mic" size={12} color={COLORS.text} style={styles.voiceReplyIcon} />
+                                                )}
+                                                <Text style={styles.replyText} numberOfLines={1}>
+                                                    {message.replyTo.text || 'Voice message'}
+                                                </Text>
+                                            </View>
                                         </View>
                                     )}
                                     {editingMessage?.id === message.id ? (
@@ -621,7 +690,26 @@ const ChatFeed = ({ circleId, onReply }) => {
                                             </View>
                                         </View>
                                     ) : (
-                                        <Text style={styles.messageText}>{message.text}</Text>
+                                        <>
+                                            {(message.messageType === 'audio' || message.messageType === 'voice') ? (
+                                                <VoicePlayer
+                                                    audioUrl={message.audioUrl}
+                                                    duration={message.duration}
+                                                    isCurrentUser={isCurrentUser}
+                                                    timestamp={message.timeStamp}
+                                                />
+                                            ) : (
+                                                <View>
+                                                    <Text style={styles.messageText}>{message.text}</Text>
+                                                    <Text style={[
+                                                        styles.messageTimestamp,
+                                                        isCurrentUser ? styles.currentUserTimestamp : styles.otherUserTimestamp
+                                                    ]}>
+                                                        {formatTimestamp(message.timeStamp)}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </>
                                     )}
                                     {message.editedAt && <Text style={styles.editedText}>(edited)</Text>}
                                     {message.reactions && message.reactions.length > 0 && (
@@ -874,17 +962,27 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: COLORS.light,
     },
+    replyTextContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    voiceReplyIcon: {
+        marginRight: 4,
+    },
     replyText: {
         color: COLORS.light,
+        flex: 1,
     },
     replyAction: {
         justifyContent: 'center',
         alignItems: 'center',
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: COLORS.primary,
-        marginHorizontal: 20,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        marginHorizontal: 15,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
     },
     actionText: {
         color: 'white',
@@ -995,6 +1093,17 @@ const styles = StyleSheet.create({
     messageText: {
         color: COLORS.light,
         fontFamily: FONTS.body,
+    },
+    messageTimestamp: {
+        fontSize: 10,
+        marginTop: 4,
+        alignSelf: 'flex-end',
+    },
+    currentUserTimestamp: {
+        color: 'rgba(255, 255, 255, 0.6)',
+    },
+    otherUserTimestamp: {
+        color: 'rgba(255, 255, 255, 0.6)',
     },
     systemMessageContainer: {
         alignItems: 'center',

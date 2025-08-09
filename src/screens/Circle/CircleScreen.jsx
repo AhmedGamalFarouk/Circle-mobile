@@ -93,8 +93,7 @@ const CircleScreen = () => {
             // Convert deadline to Firestore Timestamp
             const pollDataWithTimestamp = {
                 ...pollData,
-                deadline: Timestamp.fromDate(pollData.deadline),
-                timeStamp: Timestamp.fromDate(pollData.timeStamp)
+                deadline: Timestamp.fromDate(pollData.deadline)
             };
 
             if (pollType === 'activity') {
