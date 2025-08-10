@@ -5,8 +5,9 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import MembersList from './MembersList';
 import CircleSettings from './CircleSettings';
+import { getCircleImageUrl } from '../../../utils/imageUtils';
 
-const CircleHeader = ({ name, imageUrl, circleId }) => {
+const CircleHeader = ({ name, imageUrl, circleId, circle }) => {
   const navigation = useNavigation();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showMembersList, setShowMembersList] = useState(false);
@@ -42,7 +43,7 @@ const CircleHeader = ({ name, imageUrl, circleId }) => {
         style={styles.centerContainer}
         onPress={() => navigation.navigate('CircleDetails', { circleId })}
       >
-        <Image source={{ uri: imageUrl }} style={styles.profilePic} />
+        <Image source={{ uri: getCircleImageUrl(circle) }} style={styles.profilePic} />
         <Text style={styles.groupName}>{name}</Text>
       </TouchableOpacity>
 

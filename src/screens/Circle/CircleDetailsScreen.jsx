@@ -67,8 +67,8 @@ const CircleDetailsScreen = () => {
                     name={circle?.circleName || circle?.name || 'Circle Name'}
                     description={circle?.description}
                     image={getCircleImageUrl(circle)}
-                    memberCount={circle?.memberCount || circle?.members?.length || 0}
                     createdAt={circle?.createdAt}
+                    circleId={circleId}
                 />
 
                 <View style={styles.contentContainer}>
@@ -79,7 +79,6 @@ const CircleDetailsScreen = () => {
                     />
 
                     <CircleMembers
-                        members={circle.members || []}
                         circleId={circleId}
                     />
 

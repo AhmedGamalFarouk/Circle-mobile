@@ -3,12 +3,20 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
+import useAuth from '../../../../hooks/useAuth';
+import useCircleMembers from '../../../../hooks/useCircleMembers';
+import { useJoinRequests } from '../../../../hooks/useJoinRequests';
 
 const CircleOptions = ({ circleId, circle, navigation }) => {
     const { colors } = useTheme();
+    const { user } = useAuth();
+    const { isAdmin } = useCircleMembers(circleId);
+    const { pendingCount } = useJoinRequests(circleId, 'pending');
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [muteCircle, setMuteCircle] = useState(false);
     const styles = getStyles(colors);
+
+    const currentUserIsAdmin = isAdmin(user?.uid);
 
     const handleLeaveCircle = () => {
         Alert.alert(
@@ -60,6 +68,10 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
         );
     };
 
+    const handleManageJoinRequests = () => {
+        navigation.navigate('JoinRequests', { circleId });
+    };
+
     const settingsOptions = [
         {
             title: 'Push Notifications',
@@ -79,14 +91,8 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
         },
     ];
 
-    const actionOptions = [
-        {
-            title: 'Edit Circle',
-            subtitle: 'Change name, description, or image',
-            onPress: handleEditCircle,
-            icon: 'create',
-            color: colors.text,
-        },
+    // Base action options for all members
+    const baseActionOptions = [
         {
             title: 'Clear Chat History',
             subtitle: 'Remove all messages for you only',
@@ -109,6 +115,30 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             color: '#FF3B30',
         },
     ];
+
+    // Admin-only options
+    const adminOptions = [
+        {
+            title: 'Edit Circle',
+            subtitle: 'Change name, description, or image',
+            onPress: handleEditCircle,
+            icon: 'create',
+            color: colors.text,
+        },
+        {
+            title: `Manage Join Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}`,
+            subtitle: pendingCount > 0 ? `${pendingCount} pending requests` : 'View and manage join requests',
+            onPress: handleManageJoinRequests,
+            icon: 'people',
+            color: pendingCount > 0 ? colors.warning : colors.text,
+            badge: pendingCount > 0 ? pendingCount : null,
+        },
+    ];
+
+    // Combine options based on user role
+    const actionOptions = currentUserIsAdmin
+        ? [...adminOptions, ...baseActionOptions]
+        : baseActionOptions;
 
     const renderSettingItem = (item, index) => (
         <View key={index} style={styles.optionItem}>
@@ -136,7 +166,14 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             activeOpacity={0.7}
         >
             <View style={styles.optionLeft}>
-                <Ionicons name={item.icon} size={20} color={item.color} style={styles.optionIcon} />
+                <View style={styles.iconContainer}>
+                    <Ionicons name={item.icon} size={20} color={item.color} style={styles.optionIcon} />
+                    {item.badge && (
+                        <View style={[styles.badge, { backgroundColor: item.color }]}>
+                            <Text style={styles.badgeText}>{item.badge}</Text>
+                        </View>
+                    )}
+                </View>
                 <View style={styles.optionTextContainer}>
                     <Text style={[styles.optionTitle, { color: item.color }]}>
                         {item.title}
@@ -201,10 +238,30 @@ const getStyles = (colors) => StyleSheet.create({
         alignItems: 'center',
         flex: 1,
     },
-    optionIcon: {
+    iconContainer: {
+        position: 'relative',
         marginRight: 12,
         width: 24,
+        alignItems: 'center',
+    },
+    optionIcon: {
         textAlign: 'center',
+    },
+    badge: {
+        position: 'absolute',
+        top: -6,
+        right: -8,
+        borderRadius: 8,
+        minWidth: 16,
+        height: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     optionTextContainer: {
         flex: 1,

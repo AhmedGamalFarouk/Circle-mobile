@@ -23,6 +23,7 @@ import { LanguageProvider } from './src/context/LanguageContext';
 const Stack = createNativeStackNavigator();
 import CreationForm from './src/screens/Circle Creation/CreationForm';
 import InviteAndShare from './src/screens/Circle Creation/InviteAndShare';
+import EditCircleScreen from './src/screens/Circle/EditCircleScreen';
 
 import useAuth from './src/hooks/useAuth';
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -54,6 +55,7 @@ const AppContent = () => {
             <Stack.Screen name="Settings" component={SettingsScreen} />
             <Stack.Screen name="InviteAndShare" component={InviteAndShare} options={{ presentation: 'modal' }} />
             <Stack.Screen name="Circle" component={CircleScreen} />
+            <Stack.Screen name="EditCircle" component={EditCircleScreen} options={{ headerShown: false }} />
           </Stack.Navigator>
           <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
         </NavigationContainer>

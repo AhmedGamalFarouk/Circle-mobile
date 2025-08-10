@@ -1,52 +1,39 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, RADII, SHADOWS } from '../../constants/constants';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db } from '../../firebase/config';
-import { addDoc, collection, serverTimestamp, doc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { uploadCircleImageToCloudinary } from '../../utils/cloudinaryUpload';
-import { incrementUserStat } from '../../utils/userStatsManager';
 import useAuth from '../../hooks/useAuth';
-import useUserProfile from '../../hooks/useUserProfile';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
 
-const CreationForm = ({ navigation }) => {
-    const { t } = useLocalization()
+const EditCircleScreen = ({ navigation, route }) => {
+    const { t } = useLocalization();
     const { user } = useAuth();
-    const { profile: userProfile } = useUserProfile(user?.uid);
-    const { colors } = useTheme()
+    const { colors } = useTheme();
+    const { circleId, circle } = route.params;
 
     // Semantic color variables for better organization
     const colorVars = {
-        // Background colors
         background: colors.background,
         surface: colors.surface,
         card: colors.card,
-
-        // Text colors
         textPrimary: colors.text,
         textSecondary: colors.textSecondary,
         textMuted: colors.textSecondary,
-
-        // Border colors
         border: colors.border,
         borderActive: colors.primary,
-
-        // Interactive colors
         primary: colors.primary,
         secondary: colors.secondary,
         accent: colors.accent,
-
-        // State colors
         disabled: colors.textSecondary,
         error: '#ef4444',
         success: '#10b981',
         warning: '#f59e0b',
-
-        // Overlay colors
         overlay: colors.glass,
         shadow: colors.shadow,
     };
@@ -54,83 +41,78 @@ const CreationForm = ({ navigation }) => {
     const [circleName, setCircleName] = useState('');
     const [description, setDescription] = useState('');
     const [photoUrl, setPhotoUrl] = useState(null);
+    const [originalPhotoUrl, setOriginalPhotoUrl] = useState(null);
     const [circlePrivacy, setCirclePrivacy] = useState('public');
     const [circleType, setCircleType] = useState('permanent');
     const [expiresAt, setExpiresAt] = useState(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [interests, setInterests] = useState([]);
     const [interestInput, setInterestInput] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleCreate = async () => {
+    // Initialize form with existing circle data
+    useEffect(() => {
+        if (circle) {
+            setCircleName(circle.circleName || circle.name || '');
+            setDescription(circle.description || '');
+            setPhotoUrl(circle.imageUrl || null);
+            setOriginalPhotoUrl(circle.imageUrl || null);
+            setCirclePrivacy(circle.circlePrivacy || 'public');
+            setCircleType(circle.circleType || 'permanent');
+            setExpiresAt(circle.expiresAt ? new Date(circle.expiresAt.seconds * 1000) : null);
+            setInterests(circle.interests || []);
+        }
+    }, [circle]);
+
+    const handleSave = async () => {
         if (!user) {
-            alert("Please log in to create a circle."); // Provide UI feedback
+            Alert.alert("Error", "Please log in to edit this circle.");
             return;
         }
-        console.log("Attempting to create circle with data:", { // Removed temporary log
-            circleName,
-            description,
-            photoUrl,
-            circlePrivacy,
-            circleType,
-            expiresAt: circleType === 'flash' ? expiresAt : null,
-            interests,
-            createdBy: user.uid,
-        });
+
+        if (circleName.trim() === '') {
+            Alert.alert("Error", "Circle name is required.");
+            return;
+        }
+
+        setLoading(true);
         try {
-            const circleRef = await addDoc(collection(db, 'circles'), {
-                circleName,
-                description,
-                imageUrl: null, // Placeholder, will be updated after upload
+            const updateData = {
+                circleName: circleName.trim(),
+                description: description.trim(),
                 circlePrivacy,
                 circleType,
                 expiresAt: circleType === 'flash' ? expiresAt : null,
                 interests,
-                createdAt: serverTimestamp(),
-                createdBy: user.uid,
-            });
+                updatedAt: serverTimestamp(),
+            };
 
-            let uploadedPhotoUrl = null;
-            if (photoUrl) {
-                console.log('Uploading circle image to Cloudinary...');
-                const result = await uploadCircleImageToCloudinary(photoUrl, circleRef.id);
-                uploadedPhotoUrl = result.imageUrl;
-
-                // Update the Firestore document with the actual image URL
-                await updateDoc(doc(db, 'circles', circleRef.id), {
-                    imageUrl: uploadedPhotoUrl,
-                });
-                console.log('Circle image uploaded successfully:', uploadedPhotoUrl);
+            // Handle image upload if changed
+            if (photoUrl && photoUrl !== originalPhotoUrl) {
+                console.log('Uploading new circle image to Cloudinary...');
+                const result = await uploadCircleImageToCloudinary(photoUrl, circleId);
+                updateData.imageUrl = result.imageUrl;
+                console.log('Circle image uploaded successfully:', result.imageUrl);
             }
 
-            // Add the creator to their own joinedCircles array
-            await updateDoc(doc(db, 'users', user.uid), {
-                joinedCircles: arrayUnion(circleRef.id)
-            });
+            // Update the circle in Firestore
+            await updateDoc(doc(db, 'circles', circleId), updateData);
 
-            // Create members subcollection and add creator as first member
-            const memberRef = doc(db, 'circles', circleRef.id, 'members', user.uid);
-            await setDoc(memberRef, {
-                email: userProfile?.email || user.email || '',
-                isAdmin: true,
-                photoURL: userProfile?.avatarPhoto || user.photoURL || '',
-                username: userProfile?.username || user.displayName || user.email?.split('@')[0] || 'Unknown User',
-                joinedAt: serverTimestamp(),
-                userId: user.uid
-            });
-
-            // Update user's circles stat
-            await incrementUserStat(user.uid, 'circles');
-
-            console.log("Circle created successfully with ID:", circleRef.id);
-            navigation.navigate('InviteAndShare', { circleName, circleId: circleRef.id });
+            console.log("Circle updated successfully");
+            Alert.alert("Success", "Circle updated successfully!", [
+                { text: "OK", onPress: () => navigation.goBack() }
+            ]);
         } catch (error) {
-            console.error("Error creating circle: ", error);
+            console.error("Error updating circle: ", error);
+            Alert.alert("Error", "Failed to update circle. Please try again.");
+        } finally {
+            setLoading(false);
         }
     };
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images, // Changed to Images only
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 3],
             quality: 1,
@@ -142,13 +124,17 @@ const CreationForm = ({ navigation }) => {
     };
 
     const addInterest = () => {
-        if (interestInput.trim() !== '') {
+        if (interestInput.trim() !== '' && !interests.includes(interestInput.trim())) {
             setInterests([...interests, interestInput.trim()]);
             setInterestInput('');
         }
     };
 
-    const isCreateDisabled = circleName.trim() === '';
+    const removeInterest = (indexToRemove) => {
+        setInterests(interests.filter((_, index) => index !== indexToRemove));
+    };
+
+    const isSaveDisabled = circleName.trim() === '' || loading;
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colorVars.background }]}>
@@ -157,9 +143,19 @@ const CreationForm = ({ navigation }) => {
                     <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                         <Ionicons name="arrow-back" size={24} color={colorVars.textPrimary} />
                     </TouchableOpacity>
-                    <Text style={[styles.title, { color: colorVars.textPrimary }]}>{t('circleCreation.createCircle')}</Text>
-                    <TouchableOpacity onPress={handleCreate} disabled={isCreateDisabled} style={styles.createButtonHeader}>
-                        <Text style={[styles.createButtonTextHeader, { color: colorVars.primary }, isCreateDisabled && { color: colorVars.disabled }]}>{t('circleCreation.create')}</Text>
+                    <Text style={[styles.title, { color: colorVars.textPrimary }]}>Edit Circle</Text>
+                    <TouchableOpacity
+                        onPress={handleSave}
+                        disabled={isSaveDisabled}
+                        style={styles.saveButtonHeader}
+                    >
+                        <Text style={[
+                            styles.saveButtonTextHeader,
+                            { color: colorVars.primary },
+                            isSaveDisabled && { color: colorVars.disabled }
+                        ]}>
+                            {loading ? 'Saving...' : 'Save'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
@@ -169,20 +165,20 @@ const CreationForm = ({ navigation }) => {
                     ) : (
                         <View style={[styles.avatarPlaceholder, { borderColor: colorVars.borderActive, backgroundColor: colorVars.surface }]}>
                             <Ionicons name="camera" size={40} color={colorVars.textSecondary} />
-                            <Text style={[styles.addPhotoText, { color: colorVars.textSecondary }]}>{t('circleCreation.addPhoto')}</Text>
+                            <Text style={[styles.addPhotoText, { color: colorVars.textSecondary }]}>Add Photo</Text>
                         </View>
                     )}
                 </TouchableOpacity>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.circleName')}</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>Circle Name</Text>
                     <TextInput
                         style={[styles.input, {
                             backgroundColor: colorVars.surface,
                             borderColor: colorVars.border,
                             color: colorVars.textPrimary
                         }]}
-                        placeholder="The Weekend Crew"
+                        placeholder="Enter circle name"
                         placeholderTextColor={colorVars.textMuted}
                         value={circleName}
                         onChangeText={setCircleName}
@@ -190,14 +186,14 @@ const CreationForm = ({ navigation }) => {
                 </View>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.description')}</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>Description</Text>
                     <TextInput
                         style={[styles.input, styles.descriptionInput, {
                             backgroundColor: colorVars.surface,
                             borderColor: colorVars.border,
                             color: colorVars.textPrimary
                         }]}
-                        placeholder={t('circleCreation.descriptionPlaceholder')}
+                        placeholder="Describe your circle..."
                         placeholderTextColor={colorVars.textMuted}
                         value={description}
                         onChangeText={setDescription}
@@ -206,7 +202,7 @@ const CreationForm = ({ navigation }) => {
                 </View>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.privacy')}</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>Privacy</Text>
                     <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
                         <TouchableOpacity
                             style={[
@@ -219,7 +215,7 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circlePrivacy === 'public' ? colorVars.background : colorVars.textPrimary }
-                            ]}>{t('circleCreation.public')}</Text>
+                            ]}>Public</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -232,13 +228,13 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circlePrivacy === 'private' ? colorVars.background : colorVars.textPrimary }
-                            ]}>{t('circleCreation.private')}</Text>
+                            ]}>Private</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.type')}</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>Type</Text>
                     <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
                         <TouchableOpacity
                             style={[
@@ -251,7 +247,7 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circleType === 'permanent' ? colorVars.background : colorVars.textPrimary }
-                            ]}>{t('circleCreation.permanent')}</Text>
+                            ]}>Permanent</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[
@@ -264,14 +260,14 @@ const CreationForm = ({ navigation }) => {
                             <Text style={[
                                 styles.toggleButtonText,
                                 { color: circleType === 'flash' ? colorVars.background : colorVars.textPrimary }
-                            ]}>{t('circleCreation.flash')}</Text>
+                            ]}>Flash</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {circleType === 'flash' && (
                     <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.expiresAt')}</Text>
+                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>Expires At</Text>
                         <TouchableOpacity
                             style={[styles.input, {
                                 backgroundColor: colorVars.surface,
@@ -280,7 +276,7 @@ const CreationForm = ({ navigation }) => {
                             onPress={() => setShowDatePicker(true)}
                         >
                             <Text style={{ color: expiresAt ? colorVars.textPrimary : colorVars.textMuted }}>
-                                {expiresAt ? expiresAt.toLocaleDateString() : t('circleCreation.selectExpiryDate')}
+                                {expiresAt ? expiresAt.toLocaleDateString() : 'Select expiry date'}
                             </Text>
                         </TouchableOpacity>
                         {showDatePicker && (
@@ -292,9 +288,9 @@ const CreationForm = ({ navigation }) => {
                                 onChange={(event, date) => {
                                     if (event.type === 'set') {
                                         setExpiresAt(date);
-                                        setShowDatePicker(false); // Close the picker after a date is selected
+                                        setShowDatePicker(false);
                                     } else if (event.type === 'dismissed') {
-                                        setShowDatePicker(false); // Close the picker if dismissed without selection
+                                        setShowDatePicker(false);
                                     }
                                 }}
                             />
@@ -303,7 +299,7 @@ const CreationForm = ({ navigation }) => {
                 )}
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.interests')}</Text>
+                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>Interests</Text>
                     <View style={[styles.interestInputContainer, {
                         backgroundColor: colorVars.surface,
                         borderColor: colorVars.border
@@ -313,13 +309,13 @@ const CreationForm = ({ navigation }) => {
                                 backgroundColor: colorVars.surface,
                                 color: colorVars.textPrimary
                             }]}
-                            placeholder={t('circleCreation.addInterest')}
+                            placeholder="Add an interest"
                             placeholderTextColor={colorVars.textMuted}
                             value={interestInput}
                             onChangeText={setInterestInput}
                         />
                         <TouchableOpacity onPress={addInterest} style={[styles.addButton, { backgroundColor: colorVars.accent }]}>
-                            <Text style={[styles.addButtonText, { color: colorVars.background }]}>{t('circleCreation.add')}</Text>
+                            <Text style={[styles.addButtonText, { color: colorVars.background }]}>Add</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={[styles.interestsContainer, { backgroundColor: colorVars.background }]}>
@@ -329,7 +325,7 @@ const CreationForm = ({ navigation }) => {
                                 borderColor: colorVars.border
                             }]}>
                                 <Text style={[styles.interestTagText, { color: colorVars.textPrimary }]}>{interest}</Text>
-                                <TouchableOpacity onPress={() => setInterests(interests.filter((_, i) => i !== index))} style={styles.removeInterestButton}>
+                                <TouchableOpacity onPress={() => removeInterest(index)} style={styles.removeInterestButton}>
                                     <Ionicons name="close-circle" size={16} color={colorVars.textSecondary} />
                                 </TouchableOpacity>
                             </View>
@@ -340,12 +336,14 @@ const CreationForm = ({ navigation }) => {
                 <TouchableOpacity
                     style={[
                         styles.fullWidthButton,
-                        { backgroundColor: isCreateDisabled ? colorVars.disabled : colorVars.primary }
+                        { backgroundColor: isSaveDisabled ? colorVars.disabled : colorVars.primary }
                     ]}
-                    onPress={handleCreate}
-                    disabled={isCreateDisabled}
+                    onPress={handleSave}
+                    disabled={isSaveDisabled}
                 >
-                    <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>{t('circleCreation.createCircle')}</Text>
+                    <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>
+                        {loading ? 'Saving Changes...' : 'Save Changes'}
+                    </Text>
                 </TouchableOpacity>
 
             </ScrollView>
@@ -376,14 +374,12 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: 'bold',
     },
-    createButtonHeader: {
+    saveButtonHeader: {
         padding: 5,
     },
-    createButtonTextHeader: {
+    saveButtonTextHeader: {
         fontWeight: 'bold',
         fontSize: 16,
-    },
-    disabledButtonText: {
     },
     avatarUploader: {
         alignItems: 'center',
@@ -396,7 +392,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        //...SHADOWS.softPrimary,
     },
     addPhotoText: {
         marginTop: 5,
@@ -440,14 +435,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         margin: 2,
     },
-    toggleButtonActive: {
-        //...SHADOWS.btnPrimary,
-    },
     toggleButtonText: {
         fontSize: 16,
         fontWeight: 'bold',
-    },
-    toggleButtonTextActive: {
     },
     interestInputContainer: {
         flexDirection: 'row',
@@ -461,7 +451,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         borderRadius: RADII.rounded,
         marginLeft: 10,
-        //...SHADOWS.btnSecondaryHover,
     },
     addButtonText: {
         fontWeight: 'bold',
@@ -495,10 +484,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 20,
         marginBottom: 40,
-        // ...SHADOWS.btnPrimary,
-    },
-    disabledFullWidthButton: {
-        // ...SHADOWS.card,
     },
     fullWidthButtonText: {
         fontWeight: 'bold',
@@ -506,4 +491,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default CreationForm;
+export default EditCircleScreen;
