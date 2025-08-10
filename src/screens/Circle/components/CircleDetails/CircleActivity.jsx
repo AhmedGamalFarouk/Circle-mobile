@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 
@@ -15,7 +16,7 @@ const CircleActivity = ({ circleId, recentActivity }) => {
             user: 'John Doe',
             action: 'sent a message',
             timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-            icon: '💬',
+            icon: 'chatbubble',
         },
         {
             id: '2',
@@ -23,7 +24,7 @@ const CircleActivity = ({ circleId, recentActivity }) => {
             user: 'Jane Smith',
             action: 'created a poll',
             timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-            icon: '📊',
+            icon: 'bar-chart',
         },
         {
             id: '3',
@@ -31,7 +32,7 @@ const CircleActivity = ({ circleId, recentActivity }) => {
             user: 'Mike Johnson',
             action: 'joined the circle',
             timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-            icon: '👋',
+            icon: 'person-add',
         },
     ];
 
@@ -56,7 +57,7 @@ const CircleActivity = ({ circleId, recentActivity }) => {
     const renderActivityItem = ({ item }) => (
         <TouchableOpacity style={styles.activityItem} activeOpacity={0.7}>
             <View style={styles.activityIcon}>
-                <Text style={styles.iconText}>{item.icon}</Text>
+                <Ionicons name={item.icon} size={18} color={colors.primary} />
             </View>
             <View style={styles.activityContent}>
                 <Text style={styles.activityText}>
@@ -132,9 +133,7 @@ const getStyles = (colors) => StyleSheet.create({
         alignItems: 'center',
         marginRight: 12,
     },
-    iconText: {
-        fontSize: 18,
-    },
+
     activityContent: {
         flex: 1,
     },

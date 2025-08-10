@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 
@@ -11,22 +12,22 @@ const CircleStats = ({ circle, memberCount }) => {
         {
             label: 'Members',
             value: memberCount,
-            icon: '👥',
+            icon: 'people',
         },
         {
             label: 'Messages',
             value: circle.messageCount || 0,
-            icon: '💬',
+            icon: 'chatbubbles',
         },
         {
             label: 'Active Today',
             value: circle.activeToday || 0,
-            icon: '🟢',
+            icon: 'radio-button-on',
         },
         {
             label: 'Polls',
             value: circle.pollCount || 0,
-            icon: '📊',
+            icon: 'bar-chart',
         },
     ];
 
@@ -36,7 +37,7 @@ const CircleStats = ({ circle, memberCount }) => {
             <View style={styles.statsGrid}>
                 {stats.map((stat, index) => (
                     <View key={index} style={styles.statCard}>
-                        <Text style={styles.statIcon}>{stat.icon}</Text>
+                        <Ionicons name={stat.icon} size={24} color={colors.primary} style={styles.statIcon} />
                         <Text style={styles.statValue}>{stat.value}</Text>
                         <Text style={styles.statLabel}>{stat.label}</Text>
                     </View>
@@ -72,7 +73,6 @@ const getStyles = (colors) => StyleSheet.create({
         ...SHADOWS.card,
     },
     statIcon: {
-        fontSize: 24,
         marginBottom: 8,
     },
     statValue: {

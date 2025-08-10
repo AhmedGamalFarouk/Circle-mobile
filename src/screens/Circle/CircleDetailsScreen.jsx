@@ -5,7 +5,6 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import CircleDetailsHeader from './components/CircleDetails/CircleDetailsHeader';
 import CircleMembers from './components/CircleDetails/CircleMembers';
 import CircleOptions from './components/CircleDetails/CircleOptions';
-import CircleStats from './components/CircleDetails/CircleStats';
 import CircleActions from './components/CircleDetails/CircleActions';
 import CircleActivity from './components/CircleDetails/CircleActivity';
 import useCircleDetails from '../../hooks/useCircleDetails';
@@ -65,7 +64,7 @@ const CircleDetailsScreen = () => {
                 }
             >
                 <CircleDetailsHeader
-                    name={circle?.name || circle?.title || 'Circle Name'}
+                    name={circle?.circleName || circle?.name || 'Circle Name'}
                     description={circle?.description}
                     image={getCircleImageUrl(circle)}
                     memberCount={circle?.memberCount || circle?.members?.length || 0}
@@ -73,11 +72,6 @@ const CircleDetailsScreen = () => {
                 />
 
                 <View style={styles.contentContainer}>
-                    <CircleStats
-                        circle={circle}
-                        memberCount={circle?.memberCount || circle?.members?.length || 0}
-                    />
-
                     <CircleActions
                         circleId={circleId}
                         circle={circle}

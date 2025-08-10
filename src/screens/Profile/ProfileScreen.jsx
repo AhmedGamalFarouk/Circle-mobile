@@ -29,9 +29,10 @@ import DraggableCard from './components/DraggableCard';
 import MySquad from './components/MySquad';
 import JoinedCircles from './components/JoinedCircles';
 import LoadingSkeleton from './components/LoadingSkeleton';
+import ImagePickerModal from '../../components/ImagePicker/ImagePickerModal';
 import { auth, db } from '../../firebase/config';
 import { doc, setDoc } from 'firebase/firestore';
-import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../utils/cloudinaryUpload';
+import { uploadImageToCloudinary, deleteImageFromCloudinary, getOptimizedImageUrl } from '../../utils/cloudinaryUpload';
 import useUserProfile from '../../hooks/useUserProfile';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -88,6 +89,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const [imageLoading, setImageLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false); // New state for upload indicator
     const [showImageOptions, setShowImageOptions] = useState(false);
+    const [showImagePicker, setShowImagePicker] = useState(false);
     const [currentImageForOptions, setCurrentImageForOptions] = useState(null);
     const [currentImageType, setCurrentImageType] = useState(null);
 
@@ -176,9 +178,19 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     console.log('Uploading profile image to Cloudinary...');
                     const result = await uploadImageToCloudinary(currentUser.uid, editingProfileImage.base64, 'avatar');
                     console.log('Profile image uploaded successfully:', result.imageUrl);
-                    updatedData.avatarPhoto = result.imageUrl; // Add to updatedData
-                    setEditingProfileImage({ uri: result.imageUrl });
-                    setProfile(prevProfile => ({ ...prevProfile, avatarPhoto: result.imageUrl }));
+
+                    // Use optimized URL for better performance
+                    const optimizedUrl = getOptimizedImageUrl(result.publicId, 'avatar') || result.imageUrl;
+
+                    updatedData.avatarPhoto = optimizedUrl;
+                    updatedData.avatarPhotoPublicId = result.publicId; // Store public ID for future operations
+
+                    setEditingProfileImage({ uri: optimizedUrl });
+                    setProfile(prevProfile => ({
+                        ...prevProfile,
+                        avatarPhoto: optimizedUrl,
+                        avatarPhotoPublicId: result.publicId
+                    }));
                 } catch (error) {
                     console.error('Error uploading profile image:', error);
                     Alert.alert("Error", `Failed to upload profile image: ${error.message || 'Unknown error'}`);
@@ -192,9 +204,19 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     console.log('Uploading cover image to Cloudinary...');
                     const result = await uploadImageToCloudinary(currentUser.uid, editingCoverImage.base64, 'cover');
                     console.log('Cover image uploaded successfully:', result.imageUrl);
-                    updatedData.coverPhoto = result.imageUrl; // Add to updatedData
-                    setEditingCoverImage({ uri: result.imageUrl });
-                    setProfile(prevProfile => ({ ...prevProfile, coverPhoto: result.imageUrl }));
+
+                    // Use optimized URL for better performance
+                    const optimizedUrl = getOptimizedImageUrl(result.publicId, 'cover') || result.imageUrl;
+
+                    updatedData.coverPhoto = optimizedUrl;
+                    updatedData.coverPhotoPublicId = result.publicId; // Store public ID for future operations
+
+                    setEditingCoverImage({ uri: optimizedUrl });
+                    setProfile(prevProfile => ({
+                        ...prevProfile,
+                        coverPhoto: optimizedUrl,
+                        coverPhotoPublicId: result.publicId
+                    }));
                 } catch (error) {
                     console.error('Error uploading cover image:', error);
                     Alert.alert("Error", `Failed to upload cover image: ${error.message || 'Unknown error'}`);
@@ -244,43 +266,39 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         }
     }, [isEditing]);
 
-    const pickImage = useCallback(async (aspectRatio, imageType) => {
-        setShowImageOptions(false);
+    const handleImageSelected = useCallback((imageData) => {
         try {
-            if (Platform.OS === 'ios') {
-                Vibration.vibrate(10);
-            } else {
-                Vibration.vibrate(30);
+            setImageLoading(true);
+
+            if (currentImageType === 'avatar') {
+                setEditingProfileImage({
+                    uri: imageData.uri,
+                    base64: imageData.base64,
+                    width: imageData.width,
+                    height: imageData.height
+                });
+            } else if (currentImageType === 'cover') {
+                setEditingCoverImage({
+                    uri: imageData.uri,
+                    base64: imageData.base64,
+                    width: imageData.width,
+                    height: imageData.height
+                });
             }
 
-            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-            if (permissionResult.granted === false) {
-                Alert.alert('Permission Required', 'Permission to access gallery is required!');
-                return;
-            }
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                aspect: aspectRatio,
-                quality: 0.8,
-                base64: true, // Request base64 for direct upload
-            });
-
-            if (!result.canceled) {
-                setImageLoading(true);
-                if (imageType === 'avatar') {
-                    setEditingProfileImage({ uri: result.assets[0].uri, base64: result.assets[0].base64 });
-                } else if (imageType === 'cover') {
-                    setEditingCoverImage({ uri: result.assets[0].uri, base64: result.assets[0].base64 });
-                }
-                setTimeout(() => setImageLoading(false), 500);
-            }
+            // Simulate loading for better UX
+            setTimeout(() => setImageLoading(false), 500);
         } catch (error) {
-            console.error('Error picking image:', error);
-            Alert.alert('Error', 'Failed to pick image');
+            console.error('Error handling selected image:', error);
+            Alert.alert('Error', 'Failed to process selected image');
+            setImageLoading(false);
         }
+    }, [currentImageType]);
+
+    const openImagePicker = useCallback((imageType) => {
+        setCurrentImageType(imageType);
+        setShowImageOptions(false);
+        setShowImagePicker(true);
     }, []);
 
     const handleDeleteImage = useCallback(async () => {
@@ -290,27 +308,75 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             return;
         }
 
-        try {
-            await deleteImageFromCloudinary(currentUser.uid, currentImageType);
+        // Show confirmation dialog
+        Alert.alert(
+            "Delete Image",
+            `Are you sure you want to delete your ${currentImageType === 'avatar' ? 'profile picture' : 'cover image'}?`,
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setIsUploading(true);
 
-            let updatedData = {};
-            if (currentImageType === 'avatar') {
-                updatedData = { avatarPhoto: PLACEHOLDER_AVATAR_URL };
-                setEditingProfileImage({ uri: PLACEHOLDER_AVATAR_URL });
-                setProfile(prev => ({ ...prev, avatarPhoto: PLACEHOLDER_AVATAR_URL }));
-            } else if (currentImageType === 'cover') {
-                updatedData = { coverPhoto: PLACEHOLDER_COVER_URL };
-                setEditingCoverImage({ uri: PLACEHOLDER_COVER_URL });
-                setProfile(prev => ({ ...prev, coverPhoto: PLACEHOLDER_COVER_URL }));
-            }
+                            // Try to delete from Cloudinary using stored public_id
+                            try {
+                                const publicIdToDelete = currentImageType === 'avatar'
+                                    ? profile?.avatarPhotoPublicId
+                                    : profile?.coverPhotoPublicId;
 
-            await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true });
+                                if (publicIdToDelete) {
+                                    await deleteImageFromCloudinary(publicIdToDelete, currentImageType);
+                                } else {
+                                    console.warn('No public_id found for deletion, skipping Cloudinary cleanup');
+                                }
+                            } catch (cloudinaryError) {
+                                console.warn('Cloudinary deletion failed, but continuing with local cleanup:', cloudinaryError);
+                            }
 
-            Alert.alert("Success", `${currentImageType} image deleted successfully!`);
-        } catch (error) {
-            console.error('Error deleting image:', error);
-            Alert.alert("Error", `Failed to delete ${currentImageType} image: ${error.message || 'Unknown error'}`);
-        }
+                            let updatedData = {};
+                            if (currentImageType === 'avatar') {
+                                updatedData = {
+                                    avatarPhoto: PLACEHOLDER_AVATAR_URL,
+                                    avatarPhotoPublicId: null
+                                };
+                                setEditingProfileImage({ uri: PLACEHOLDER_AVATAR_URL });
+                                setProfile(prev => ({
+                                    ...prev,
+                                    avatarPhoto: PLACEHOLDER_AVATAR_URL,
+                                    avatarPhotoPublicId: null
+                                }));
+                            } else if (currentImageType === 'cover') {
+                                updatedData = {
+                                    coverPhoto: PLACEHOLDER_COVER_URL,
+                                    coverPhotoPublicId: null
+                                };
+                                setEditingCoverImage({ uri: PLACEHOLDER_COVER_URL });
+                                setProfile(prev => ({
+                                    ...prev,
+                                    coverPhoto: PLACEHOLDER_COVER_URL,
+                                    coverPhotoPublicId: null
+                                }));
+                            }
+
+                            await setDoc(doc(db, 'users', currentUser.uid), updatedData, { merge: true });
+
+                            Alert.alert("Success", `${currentImageType === 'avatar' ? 'Profile picture' : 'Cover image'} deleted successfully!`);
+                        } catch (error) {
+                            console.error('Error deleting image:', error);
+                            Alert.alert("Error", `Failed to delete ${currentImageType} image: ${error.message || 'Unknown error'}`);
+                        } finally {
+                            setIsUploading(false);
+                        }
+                    }
+                }
+            ]
+        );
     }, [currentUser, currentImageType]);
 
     // Responsive calculations
@@ -517,15 +583,17 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             <ImageOptionsModal
                 visible={showImageOptions}
                 onClose={() => setShowImageOptions(false)}
-                onChooseNew={() => {
-                    if (currentImageType === 'avatar') {
-                        pickImage([1, 1], 'avatar');
-                    } else if (currentImageType === 'cover') {
-                        pickImage([16, 9], 'cover');
-                    }
-                }}
+                onChooseNew={() => openImagePicker(currentImageType)}
                 onDelete={handleDeleteImage}
                 imageType={currentImageType}
+            />
+
+            <ImagePickerModal
+                visible={showImagePicker}
+                onClose={() => setShowImagePicker(false)}
+                onImageSelected={handleImageSelected}
+                imageType={currentImageType}
+                title={currentImageType === 'avatar' ? 'Profile Picture' : 'Cover Image'}
             />
         </View>
     );

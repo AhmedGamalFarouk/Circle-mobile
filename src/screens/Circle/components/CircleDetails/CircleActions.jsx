@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 
@@ -10,25 +11,25 @@ const CircleActions = ({ circleId, circle, navigation }) => {
     const actions = [
         {
             title: 'Open Chat',
-            icon: '💬',
+            icon: 'chatbubbles',
             color: colors.primary,
             onPress: () => navigation.navigate('Chat', { circleId }),
         },
         {
             title: 'Create Poll',
-            icon: '📊',
+            icon: 'bar-chart',
             color: colors.secondary,
             onPress: () => navigation.navigate('CreatePoll', { circleId }),
         },
         {
             title: 'Share Circle',
-            icon: '📤',
+            icon: 'share',
             color: colors.accent,
             onPress: () => handleShareCircle(),
         },
         {
             title: 'Invite Members',
-            icon: '➕',
+            icon: 'person-add',
             color: colors.primary,
             onPress: () => navigation.navigate('InviteMembers', { circleId }),
         },
@@ -50,7 +51,7 @@ const CircleActions = ({ circleId, circle, navigation }) => {
                         onPress={action.onPress}
                         activeOpacity={0.7}
                     >
-                        <Text style={styles.actionIcon}>{action.icon}</Text>
+                        <Ionicons name={action.icon} size={28} color={action.color} style={styles.actionIcon} />
                         <Text style={[styles.actionTitle, { color: action.color }]}>
                             {action.title}
                         </Text>
@@ -88,7 +89,6 @@ const getStyles = (colors) => StyleSheet.create({
         ...SHADOWS.card,
     },
     actionIcon: {
-        fontSize: 28,
         marginBottom: 8,
     },
     actionTitle: {

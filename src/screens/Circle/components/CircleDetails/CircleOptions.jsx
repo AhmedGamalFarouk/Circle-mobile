@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 
@@ -66,7 +67,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             type: 'switch',
             value: notificationsEnabled,
             onValueChange: setNotificationsEnabled,
-            icon: '🔔',
+            icon: 'notifications',
         },
         {
             title: 'Mute Circle',
@@ -74,7 +75,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             type: 'switch',
             value: muteCircle,
             onValueChange: setMuteCircle,
-            icon: '🔇',
+            icon: 'volume-mute',
         },
     ];
 
@@ -83,28 +84,28 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             title: 'Edit Circle',
             subtitle: 'Change name, description, or image',
             onPress: handleEditCircle,
-            icon: '✏️',
+            icon: 'create',
             color: colors.text,
         },
         {
             title: 'Clear Chat History',
             subtitle: 'Remove all messages for you only',
             onPress: handleClearChat,
-            icon: '🗑️',
+            icon: 'trash',
             color: colors.textSecondary,
         },
         {
             title: 'Report Circle',
             subtitle: 'Report inappropriate content',
             onPress: handleReportCircle,
-            icon: '⚠️',
+            icon: 'warning',
             color: '#FF9500',
         },
         {
             title: 'Leave Circle',
             subtitle: 'You will no longer receive messages',
             onPress: handleLeaveCircle,
-            icon: '🚪',
+            icon: 'exit',
             color: '#FF3B30',
         },
     ];
@@ -112,7 +113,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
     const renderSettingItem = (item, index) => (
         <View key={index} style={styles.optionItem}>
             <View style={styles.optionLeft}>
-                <Text style={styles.optionIcon}>{item.icon}</Text>
+                <Ionicons name={item.icon} size={20} color={colors.primary} style={styles.optionIcon} />
                 <View style={styles.optionTextContainer}>
                     <Text style={styles.optionTitle}>{item.title}</Text>
                     <Text style={styles.optionSubtitle}>{item.subtitle}</Text>
@@ -135,7 +136,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             activeOpacity={0.7}
         >
             <View style={styles.optionLeft}>
-                <Text style={styles.optionIcon}>{item.icon}</Text>
+                <Ionicons name={item.icon} size={20} color={item.color} style={styles.optionIcon} />
                 <View style={styles.optionTextContainer}>
                     <Text style={[styles.optionTitle, { color: item.color }]}>
                         {item.title}
@@ -201,7 +202,6 @@ const getStyles = (colors) => StyleSheet.create({
         flex: 1,
     },
     optionIcon: {
-        fontSize: 20,
         marginRight: 12,
         width: 24,
         textAlign: 'center',

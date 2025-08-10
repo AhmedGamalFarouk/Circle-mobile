@@ -17,7 +17,7 @@ export const CLOUDINARY_CONFIG = {
     // API_SECRET: 'your_api_secret_here', // Don't include this in client code
 };
 
-// Upload settings
+// Upload settings for audio
 export const UPLOAD_SETTINGS = {
     // Maximum file size in bytes (10MB)
     MAX_FILE_SIZE: 10 * 1024 * 1024,
@@ -30,4 +30,39 @@ export const UPLOAD_SETTINGS = {
 
     // Resource type for audio files
     RESOURCE_TYPE: 'video', // Cloudinary uses 'video' for audio files
+};
+
+// Upload settings for images
+export const IMAGE_UPLOAD_SETTINGS = {
+    // Maximum file size in bytes (5MB)
+    MAX_FILE_SIZE: 5 * 1024 * 1024,
+
+    // Allowed image formats
+    ALLOWED_FORMATS: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
+
+    // Upload folder in Cloudinary
+    FOLDER: 'profile_images',
+
+    // Resource type for image files
+    RESOURCE_TYPE: 'image',
+
+    // Image transformations
+    TRANSFORMATIONS: {
+        AVATAR: {
+            width: 400,
+            height: 400,
+            crop: 'fill',
+            gravity: 'face',
+            quality: 'auto:good',
+            format: 'webp'
+        },
+        COVER: {
+            width: 1200,
+            height: 600,
+            crop: 'fill',
+            gravity: 'center',
+            quality: 'auto:good',
+            format: 'webp'
+        }
+    }
 };
