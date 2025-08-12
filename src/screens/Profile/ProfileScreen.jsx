@@ -107,6 +107,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
     // State management
     const [isFollowed, setIsFollowed] = useState(false);
+    const [isConnection, setIsConnection] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editingUserName, setEditingUserName] = useState("");
     const [editingUserBio, setEditingUserBio] = useState("");
@@ -127,6 +128,16 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const { colors } = useTheme();
     // Enhanced interaction handlers with haptic feedback and animations
 
+    useEffect(() => {
+        setIsFollowed(
+            profile?.connectionRequests.some(
+                (req) => req.uid == currentUser.uid
+            )
+        );
+        setIsConnection(
+            profile?.connections.some((c) => c.uid == currentUser.uid)
+        );
+    }, [isFollowed, profile]);
     const handleFollow = useCallback(async () => {
         // Haptic feedback
         if (Platform.OS === "ios") {
@@ -794,6 +805,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     {!isOwnProfile && (
                         <ProfileActions
                             isFollowed={isFollowed}
+                            isConnection={isConnection}
                             onFollow={handleFollow}
                             buttonScale={buttonScale}
                         />
