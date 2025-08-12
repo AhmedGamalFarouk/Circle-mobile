@@ -126,69 +126,7 @@ export const styles = StyleSheet.create({
         fontWeight: '600',
         fontFamily: FONTS.body,
     },
-    dividerSection: {
-        width: '100%',
-        marginBottom: 32,
-    },
-    orContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        width: '100%',
-    },
-    line: {
-        flex: 1,
-        height: 1,
-        backgroundColor: 'rgba(197, 198, 199, 0.2)',
-    },
-    orText: {
-        color: COLORS.text,
-        marginHorizontal: 16,
-        fontSize: 14,
-        fontFamily: FONTS.body,
-        opacity: 0.7,
-    },
-    socialSection: {
-        width: '100%',
-        marginBottom: 24,
-    },
-    socialButtonsContainer: {
-        width: '100%',
-        alignItems: 'center',
-    },
-    googleButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        height: 56,
-        backgroundColor: COLORS.light,
-        borderRadius: RADII.rounded,
-        borderWidth: 1,
-        borderColor: 'rgba(0, 0, 0, 0.1)',
-        //...SHADOWS.card,
-    },
-    googleButtonPressed: {
-        backgroundColor: '#f8f9fa',
-        //...SHADOWS.btnSecondaryHover,
-        transform: [{ scale: 0.98 }],
-    },
-    googleButtonDisabled: {
-        backgroundColor: 'rgba(248, 249, 250, 0.5)',
-        opacity: 0.6,
-    },
-    googleIcon: {
-        marginRight: 12,
-    },
-    googleLogoImage: {
-        width: 20,
-        height: 20,
-    },
-    googleButtonText: {
-        color: '#1f1f1f',
-        fontSize: 16,
-        fontWeight: '500',
-        fontFamily: FONTS.body,
-    },
+
     // Alternative compact social button styles (if you want to keep the icon-only version)
     socialButton: {
         width: 56,

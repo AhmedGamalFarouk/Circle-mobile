@@ -431,6 +431,7 @@ const CircleScreen = () => {
                         name={circle?.circleName || circle?.name}
                         imageUrl={circle?.imageUrl}
                         circleId={circleId}
+                        circle={circle}
                     />
                     {isPinVisible ? (
                         <ContextualPin
