@@ -29,11 +29,11 @@ export const circleRequestsService = {
                 circleName,
                 createdAt: serverTimestamp(),
                 email: userData.email || '',
-                message: `${userName} wants to join your circle "${circleName}".`,
+                message: `${userData.username || userData.displayName || userName} wants to join your circle "${circleName}".`,
                 status: 'pending',
                 type: 'join-request',
                 userId,
-                username: userName
+                username: userData.username || userData.displayName || userName
             };
 
             const docRef = await addDoc(collection(db, 'circleRequests'), requestData);
