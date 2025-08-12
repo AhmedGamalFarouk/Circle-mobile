@@ -56,7 +56,9 @@ const useCircleMembers = (circleId) => {
         nonAdmins: getNonAdmins(),
         isMember,
         isAdmin,
-        getMember
+        getMember,
+        getAdmins,
+        getNonAdmins
     };
 };
 

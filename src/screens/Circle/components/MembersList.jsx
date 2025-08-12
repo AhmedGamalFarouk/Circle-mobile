@@ -102,27 +102,30 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    {loading ? (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={colors.primary} />
-                            <Text style={styles.loadingText}>Loading members...</Text>
-                        </View>
-                    ) : (
-                        <FlatList
-                            data={members}
-                            renderItem={renderMember}
-                            keyExtractor={(item) => item.id}
-                            style={styles.membersList}
-                            showsVerticalScrollIndicator={false}
-                            ListEmptyComponent={
-                                <View style={styles.emptyContainer}>
-                                    <Text style={styles.emptyText}>
-                                        {totalMembersCount === 1 ? "You are the only member in this circle" : "No other members found"}
-                                    </Text>
-                                </View>
-                            }
-                        />
-                    )}
+                    <View style={styles.contentContainer}>
+                        {loading ? (
+                            <View style={styles.loadingContainer}>
+                                <ActivityIndicator size="large" color={colors.primary} />
+                                <Text style={styles.loadingText}>Loading members...</Text>
+                            </View>
+                        ) : (
+                            <FlatList
+                                data={members}
+                                renderItem={renderMember}
+                                keyExtractor={(item) => item.id}
+                                style={styles.membersList}
+                                contentContainerStyle={styles.membersListContent}
+                                showsVerticalScrollIndicator={false}
+                                ListEmptyComponent={
+                                    <View style={styles.emptyContainer}>
+                                        <Text style={styles.emptyText}>
+                                            {totalMembersCount === 1 ? "You are the only member in this circle" : "No other members found"}
+                                        </Text>
+                                    </View>
+                                }
+                            />
+                        )}
+                    </View>
 
                     <View style={styles.footer}>
                         <Text style={styles.memberCount}>
@@ -146,7 +149,7 @@ const getStyles = (colors) => StyleSheet.create({
         backgroundColor: colors.card,
         borderRadius: RADII.medium,
         width: '90%',
-        maxHeight: '80%',
+        height: '80%',
         borderWidth: 1,
         borderColor: colors.border,
     },
@@ -166,6 +169,9 @@ const getStyles = (colors) => StyleSheet.create({
     closeButton: {
         padding: 5,
     },
+    contentContainer: {
+        flex: 1,
+    },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -178,7 +184,11 @@ const getStyles = (colors) => StyleSheet.create({
     },
     membersList: {
         flex: 1,
-        padding: 20,
+    },
+    membersListContent: {
+        paddingHorizontal: 20,
+        paddingTop: 10,
+        paddingBottom: 10,
     },
     memberItem: {
         flexDirection: 'row',
@@ -208,10 +218,10 @@ const getStyles = (colors) => StyleSheet.create({
         marginTop: 2,
     },
     emptyContainer: {
-        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 40,
+        paddingVertical: 60,
+        paddingHorizontal: 40,
     },
     emptyText: {
         color: colors.textSecondary,

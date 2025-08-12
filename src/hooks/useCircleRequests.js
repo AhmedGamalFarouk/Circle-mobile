@@ -66,7 +66,7 @@ const useCircleRequests = (circleId = null, adminId = null) => {
             };
             checkPending();
         }
-    }, [circleId, user, requests]);
+    }, [circleId, user]);
 
     // Helper functions
     const createJoinRequest = async (circleId, userId, adminId, circleName, userName) => {
@@ -76,7 +76,14 @@ const useCircleRequests = (circleId = null, adminId = null) => {
             return { success: false, error: 'You already have a pending request for this circle' };
         }
 
-        return await circleRequestsService.createJoinRequest(circleId, userId, adminId, circleName, userName);
+        const result = await circleRequestsService.createJoinRequest(circleId, userId, adminId, circleName, userName);
+
+        // Update the pending request status if successful
+        if (result.success) {
+            setHasPendingRequest(true);
+        }
+
+        return result;
     };
 
     const approveRequest = async (requestId) => {

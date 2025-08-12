@@ -15,34 +15,23 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, RADII, SHADOWS } from '../constants/constants';
 import useCircleRequests from '../hooks/useCircleRequests';
-import useAuth from '../hooks/useAuth';
-import useUserProfile from '../hooks/useUserProfile';
+
 
 const JoinRequestItem = ({ request, onApprove, onDeny, onViewProfile, processing }) => {
-    const { profile: userProfile, loading } = useUserProfile(request.userId);
-
-    if (loading) {
-        return (
-            <View style={styles.requestCard}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
-                <Text style={styles.loadingText}>Loading user...</Text>
-            </View>
-        );
-    }
-
     return (
         <View style={styles.requestCard}>
             <View style={styles.requestHeader}>
                 <View style={styles.userInfo}>
                     <View style={styles.avatar}>
-                        {userProfile?.avatarPhoto ? (
-                            <Image source={{ uri: userProfile.avatarPhoto }} style={styles.avatarImage} />
+                        {request.avatarPhoto ? (
+                            <Image source={{ uri: request.avatarPhoto }} style={styles.avatarImage} />
                         ) : (
                             <Ionicons name="person" size={24} color={COLORS.text} />
                         )}
                     </View>
                     <View style={styles.userDetails}>
-                        <Text style={styles.userName}>{userProfile?.username || 'Unknown User'}</Text>
+                        <Text style={styles.userName}>{request.username || 'Unknown User'}</Text>
+                        <Text style={styles.userEmail}>{request.email || ''}</Text>
                         <Text style={styles.requestDate}>
                             {request.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently'}
                         </Text>
@@ -99,7 +88,6 @@ const JoinRequestItem = ({ request, onApprove, onDeny, onViewProfile, processing
 };
 
 const JoinRequestsModal = ({ visible, onClose, circleId, circleName, onViewProfile }) => {
-    const { user } = useAuth();
     const {
         requests,
         loading,
@@ -412,6 +400,11 @@ const styles = StyleSheet.create({
         color: COLORS.light,
         fontSize: 16,
         fontWeight: '600',
+        marginBottom: 2,
+    },
+    userEmail: {
+        color: COLORS.text,
+        fontSize: 13,
         marginBottom: 2,
     },
     requestDate: {
