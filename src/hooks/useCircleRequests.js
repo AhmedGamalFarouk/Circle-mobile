@@ -86,6 +86,23 @@ const useCircleRequests = (circleId = null, adminId = null) => {
         return result;
     };
 
+    const createInvitation = async (circleId, userId, inviterId, circleName, inviterName, ownerId) => {
+        // Check if invitation already exists
+        const hasExistingInvitation = await circleRequestsService.checkExistingInvitation(circleId, userId);
+        if (hasExistingInvitation) {
+            return { success: false, error: 'This user already has a pending invitation for this circle' };
+        }
+
+        // Check if user is already a member
+        const { usersService } = await import('../firebase/usersService');
+        const isMember = await usersService.isUserMemberOfCircle(userId, circleId);
+        if (isMember) {
+            return { success: false, error: 'This user is already a member of this circle' };
+        }
+
+        return await circleRequestsService.createInvitation(circleId, userId, inviterId, circleName, inviterName, ownerId);
+    };
+
     const approveRequest = async (requestId) => {
         return await circleRequestsService.approveRequest(requestId, circleMembersService.addMemberToCircle);
     };
@@ -111,6 +128,7 @@ const useCircleRequests = (circleId = null, adminId = null) => {
         loading,
         requestCount,
         createJoinRequest,
+        createInvitation,
         approveRequest,
         denyRequest,
         approveAllRequests,

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADII } from '../../../../constants/constants';
 
-const PollCreation = ({ onLaunchPoll, pollType }) => {
+const PollCreation = ({ onLaunchPoll, pollType, onClose }) => {
     const [question, setQuestion] = useState('');
     const [options, setOptions] = useState(['', '']);
     const [deadline, setDeadline] = useState('24'); // hours
@@ -65,7 +66,12 @@ const PollCreation = ({ onLaunchPoll, pollType }) => {
     return (
         <View style={styles.container}>
             <View style={styles.modal}>
-                <Text style={styles.title}>Create {pollType === 'activity' ? 'Activity' : 'Place'} Poll</Text>
+                <View style={styles.header}>
+                    <Text style={styles.title}>Create {pollType === 'activity' ? 'Activity' : 'Place'} Poll</Text>
+                    <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                        <Ionicons name="close" size={24} color={COLORS.light} />
+                    </TouchableOpacity>
+                </View>
 
                 <TextInput
                     style={styles.questionInput}
@@ -141,12 +147,22 @@ const styles = StyleSheet.create({
         width: '90%',
         maxHeight: '80%',
     },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
     title: {
         color: COLORS.light,
         fontFamily: FONTS.heading,
         fontSize: 24,
+        flex: 1,
         textAlign: 'center',
-        marginBottom: 20,
+        marginRight: 10,
+    },
+    closeButton: {
+        padding: 5,
     },
     questionInput: {
         backgroundColor: COLORS.darker,

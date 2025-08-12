@@ -106,11 +106,11 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
     return (
         <Modal
             visible={visible}
-            transparent={true}
-            animationType="fade"
+            animationType="slide"
+            presentationStyle="pageSheet"
             onRequestClose={onClose}
         >
-            <View style={styles.overlay}>
+            <View style={styles.container}>
                 <View style={styles.modalContainer}>
                     <View style={styles.header}>
                         <Text style={styles.title}>Message Info</Text>
@@ -217,9 +217,9 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
 };
 
 const styles = StyleSheet.create({
-    overlay: {
+    container: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: COLORS.dark,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,

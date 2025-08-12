@@ -151,8 +151,32 @@ const ChatFeed = ({ circleId, onReply }) => {
 
         const isCurrentUser = message.user.userId === user.uid;
 
-        // Always show options menu for all messages (with different options based on ownership)
-        handleShowOptions(message, event);
+        if (isCurrentUser) {
+            // For current user messages: show options menu
+            handleShowOptions(message, event);
+        } else {
+            // For other user messages: show reactions directly
+            handleShowReactions(message, event);
+        }
+    };
+
+    const handleShowReactions = (message, event) => {
+        setSelectedMessage(message);
+        setShowEmojis(true);
+        setShowOptions(false); // Ensure options menu is hidden
+
+        // Enhanced bounce animation with stagger effect
+        scale.setValue(0);
+        createBounceAnimation(scale, 1, 400).start();
+
+        // Stagger emoji animations
+        EMOJI_OPTIONS.forEach((emoji, index) => {
+            const emojiScale = emojiScales[emoji];
+            emojiScale.setValue(0);
+            setTimeout(() => {
+                createBounceAnimation(emojiScale, 1, 300).start();
+            }, index * 50);
+        });
     };
 
     const handleShowOptions = (message, event) => {
@@ -908,38 +932,23 @@ const ChatFeed = ({ circleId, onReply }) => {
                                     <Text style={[styles.optionText, { color: COLORS.primary }]}>Info</Text>
                                 </TouchableOpacity>
 
-                                {/* React option - available for other users' messages */}
-                                {!isCurrentUser && (
+
+
+                                {/* Current user options */}
+                                {isCurrentUser && (
                                     <>
                                         <View style={styles.optionSeparator} />
                                         <TouchableOpacity
                                             style={[styles.optionButton, { backgroundColor: COLORS.primary + '15' }]}
                                             onPress={() => {
                                                 hideOptionsMenu();
-                                                setShowEmojis(true);
-                                                // Enhanced bounce animation with stagger effect
-                                                scale.setValue(0);
-                                                createBounceAnimation(scale, 1, 400).start();
-                                                // Stagger emoji animations
-                                                EMOJI_OPTIONS.forEach((emoji, index) => {
-                                                    const emojiScale = emojiScales[emoji];
-                                                    emojiScale.setValue(0);
-                                                    setTimeout(() => {
-                                                        createBounceAnimation(emojiScale, 1, 300).start();
-                                                    }, index * 50);
-                                                });
+                                                onReply(selectedMessage);
                                             }}
                                             activeOpacity={0.7}
                                         >
-                                            <Ionicons name="happy-outline" size={18} color={COLORS.primary} />
-                                            <Text style={[styles.optionText, { color: COLORS.primary }]}>React</Text>
+                                            <Ionicons name="arrow-undo-outline" size={18} color={COLORS.primary} />
+                                            <Text style={[styles.optionText, { color: COLORS.primary }]}>Reply</Text>
                                         </TouchableOpacity>
-                                    </>
-                                )}
-
-                                {/* Current user options */}
-                                {isCurrentUser && (
-                                    <>
                                         <View style={styles.optionSeparator} />
                                         <TouchableOpacity
                                             style={[

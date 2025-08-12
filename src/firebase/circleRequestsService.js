@@ -44,6 +44,41 @@ export const circleRequestsService = {
         }
     },
 
+    // Create a new invitation
+    createInvitation: async (circleId, userId, inviterId, circleName, inviterName, ownerId) => {
+        try {
+            // Get invitation receiver information
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+
+            // Get inviter information for profile image
+            const inviterDoc = await getDoc(doc(db, 'users', inviterId));
+            const inviterData = inviterDoc.exists() ? inviterDoc.data() : {};
+
+            const requestData = {
+                circleId,
+                circleName,
+                createdAt: serverTimestamp(),
+                email: userData.email || '',
+                message: `${inviterName} invited you to join the circle ${circleName}.`,
+                ownerId,
+                photoUrl: inviterData.photoURL || inviterData.avatar || '',
+                status: 'pending',
+                type: 'invitation',
+                userId,
+                username: userData.username || userData.displayName || 'Unknown User',
+                inviterId,
+                inviterName
+            };
+
+            const docRef = await addDoc(collection(db, 'circleRequests'), requestData);
+            return { success: true, requestId: docRef.id };
+        } catch (error) {
+            console.error('Error creating invitation:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
     // Check if user already has a pending request for this circle
     checkExistingRequest: async (circleId, userId) => {
         try {
@@ -58,6 +93,25 @@ export const circleRequestsService = {
             return !snapshot.empty;
         } catch (error) {
             console.error('Error checking existing request:', error);
+            return false;
+        }
+    },
+
+    // Check if user already has a pending invitation for this circle
+    checkExistingInvitation: async (circleId, userId) => {
+        try {
+            const q = query(
+                collection(db, 'circleRequests'),
+                where('circleId', '==', circleId),
+                where('userId', '==', userId),
+                where('type', '==', 'invitation'),
+                where('status', '==', 'pending')
+            );
+
+            const snapshot = await getDocs(q);
+            return !snapshot.empty;
+        } catch (error) {
+            console.error('Error checking existing invitation:', error);
             return false;
         }
     },

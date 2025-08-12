@@ -134,6 +134,17 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             color: colors.text,
         },
         {
+            title: 'Invite Members',
+            subtitle: 'Search and invite users to join this circle',
+            onPress: () => navigation.navigate('InviteMembers', {
+                circleId,
+                circleName: circle.name,
+                ownerId: circle.createdBy
+            }),
+            icon: 'person-add',
+            color: colors.primary,
+        },
+        {
             title: `Manage Join Requests${requestCount > 0 ? ` (${requestCount})` : ''}`,
             subtitle: requestCount > 0 ? `${requestCount} pending requests` : 'View and manage join requests',
             onPress: handleManageJoinRequests,

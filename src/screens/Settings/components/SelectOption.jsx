@@ -83,11 +83,11 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
 
             <Modal
                 visible={isModalVisible}
-                transparent={true}
-                animationType="fade"
+                animationType="slide"
+                presentationStyle="pageSheet"
                 onRequestClose={() => setIsModalVisible(false)}
             >
-                <View style={styles.modalOverlay}>
+                <View style={styles.container}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
@@ -131,9 +131,9 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: FONTS.body,
     },
-    modalOverlay: {
+    container: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -141,7 +141,6 @@ const styles = StyleSheet.create({
         borderRadius: RADII.rounded,
         width: '80%',
         maxHeight: '60%',
-        // ...SHADOWS.glassCard,
     },
     modalHeader: {
         flexDirection: 'row',

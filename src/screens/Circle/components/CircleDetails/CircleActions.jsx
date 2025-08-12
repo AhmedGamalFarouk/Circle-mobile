@@ -46,7 +46,11 @@ const CircleActions = ({ circleId, circle, navigation }) => {
             title: 'Invite Members',
             icon: 'person-add',
             color: colors.primary,
-            onPress: () => navigation.navigate('InviteMembers', { circleId }),
+            onPress: () => navigation.navigate('InviteMembers', {
+                circleId,
+                circleName: circle.circleName || circle.name,
+                ownerId: circle.createdBy
+            }),
         },
     ];
 

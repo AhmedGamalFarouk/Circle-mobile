@@ -90,10 +90,10 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
         <Modal
             visible={visible}
             animationType="slide"
-            transparent={true}
+            presentationStyle="pageSheet"
             onRequestClose={onClose}
         >
-            <View style={styles.modalOverlay}>
+            <View style={styles.container}>
                 <View style={styles.modalContent}>
                     <View style={styles.header}>
                         <Text style={styles.title}>Circle Members</Text>
@@ -139,19 +139,13 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
 };
 
 const getStyles = (colors) => StyleSheet.create({
-    modalOverlay: {
+    container: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        justifyContent: 'center',
-        alignItems: 'center',
+        backgroundColor: colors.background,
     },
     modalContent: {
-        backgroundColor: colors.card,
-        borderRadius: RADII.medium,
-        width: '90%',
-        height: '80%',
-        borderWidth: 1,
-        borderColor: colors.border,
+        flex: 1,
+        backgroundColor: colors.background,
     },
     header: {
         flexDirection: 'row',

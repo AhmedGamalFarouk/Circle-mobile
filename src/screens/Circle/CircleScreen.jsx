@@ -437,7 +437,6 @@ const CircleScreen = () => {
                 <View style={styles.innerContainer}>
                     <CircleHeader
                         name={circle?.circleName || circle?.name}
-                        imageUrl={circle?.imageUrl}
                         circleId={circleId}
                         circle={circle}
                     />
@@ -485,6 +484,7 @@ const CircleScreen = () => {
                 <PollCreation
                     onLaunchPoll={handleLaunchPoll}
                     pollType={pollType}
+                    onClose={() => setPollModalVisible(false)}
                 />
             </Modal>
         </KeyboardAvoidingView>
