@@ -1,18 +1,21 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 import useAuth from '../../../../hooks/useAuth';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
-import JoinRequestButton from '../../../../components/JoinRequest/JoinRequestButton';
-import { useJoinRequests } from '../../../../hooks/useJoinRequests';
+import useCircleRequests from '../../../../hooks/useCircleRequests';
+import JoinRequestsModal from '../../../../components/JoinRequestsModal';
+
 
 const CircleActions = ({ circleId, circle, navigation }) => {
     const { colors } = useTheme();
     const { user } = useAuth();
-    const { isMember, isAdmin } = useCircleMembers(circleId);
-    const { pendingCount } = useJoinRequests(circleId, 'pending');
+    const { isMember, isAdmin, getAdmins } = useCircleMembers(circleId);
+    const { requestCount, createJoinRequest, hasPendingRequest } = useCircleRequests(circleId);
+    const [isRequestingJoin, setIsRequestingJoin] = useState(false);
+    const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
     const styles = getStyles(colors);
 
     const currentUserIsMember = isMember(user?.uid);
@@ -50,11 +53,11 @@ const CircleActions = ({ circleId, circle, navigation }) => {
     const adminActions = [
         ...memberActions,
         {
-            title: `Join Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}`,
+            title: 'Join Requests',
             icon: 'people',
-            color: pendingCount > 0 ? colors.warning : colors.primary,
-            onPress: () => navigation.navigate('JoinRequests', { circleId }),
-            badge: pendingCount > 0 ? pendingCount : null,
+            color: requestCount > 0 ? colors.warning : colors.textSecondary,
+            badge: requestCount > 0 ? requestCount : null,
+            onPress: () => setShowJoinRequestsModal(true),
         },
     ];
 
@@ -63,23 +66,11 @@ const CircleActions = ({ circleId, circle, navigation }) => {
         console.log('Sharing circle:', circleId);
     };
 
-    // If user is not a member, show join request button
-    if (!currentUserIsMember) {
-        return (
-            <View style={styles.container}>
-                <Text style={styles.sectionTitle}>Join Circle</Text>
-                <View style={styles.joinContainer}>
-                    <JoinRequestButton
-                        circleId={circleId}
-                        onRequestSubmitted={() => {
-                            // Optionally refresh or show success message
-                            console.log('Join request submitted');
-                        }}
-                    />
-                </View>
-            </View>
-        );
-    }
+    const handleViewProfile = (userId) => {
+        setShowJoinRequestsModal(false);
+        navigation.navigate('Profile', { userId });
+    };
+
 
     // Show actions based on user role
     const actions = currentUserIsAdmin ? adminActions : memberActions;
@@ -109,6 +100,14 @@ const CircleActions = ({ circleId, circle, navigation }) => {
                     </TouchableOpacity>
                 ))}
             </View>
+
+            <JoinRequestsModal
+                visible={showJoinRequestsModal}
+                onClose={() => setShowJoinRequestsModal(false)}
+                circleId={circleId}
+                circleName={circle.name}
+                onViewProfile={handleViewProfile}
+            />
         </View>
     );
 };

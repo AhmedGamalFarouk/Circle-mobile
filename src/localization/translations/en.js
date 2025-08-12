@@ -45,8 +45,7 @@ export default {
         dontHaveAccount: "Don't have an account?",
         alreadyHaveAccount: 'Already have an account?',
         createAccount: 'Create Account',
-        signInWithGoogle: 'Sign in with Google',
-        signUpWithGoogle: 'Sign up with Google',
+
         welcomeBack: 'Welcome Back',
         joinCircle: 'Join Circle',
         invalidEmail: 'Invalid email address',

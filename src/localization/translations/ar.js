@@ -45,8 +45,7 @@ export default {
         dontHaveAccount: 'ليس لديك حساب؟',
         alreadyHaveAccount: 'لديك حساب بالفعل؟',
         createAccount: 'إنشاء حساب',
-        signInWithGoogle: 'تسجيل الدخول بجوجل',
-        signUpWithGoogle: 'إنشاء حساب بجوجل',
+
         welcomeBack: 'مرحباً بعودتك',
         joinCircle: 'انضم للدائرة',
         invalidEmail: 'عنوان البريد الإلكتروني غير صحيح',

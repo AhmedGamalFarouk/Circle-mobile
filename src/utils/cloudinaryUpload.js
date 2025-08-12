@@ -321,6 +321,99 @@ export const uploadCircleImageToCloudinary = async (imageUri, circleId) => {
     }
 };
 
+// Upload media (image/video) to Cloudinary for chat messages
+export const uploadChatMediaToCloudinary = async (mediaUri, mediaType, circleId) => {
+    try {
+        if (!mediaUri) {
+            throw new Error('No media URI provided');
+        }
+
+        if (!circleId) {
+            throw new Error('Circle ID is required');
+        }
+
+        // Create form data
+        const formData = new FormData();
+
+        // Get file info
+        const filename = mediaUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+
+        let type, resourceType;
+        if (mediaType === 'image') {
+            type = match ? `image/${match[1]}` : 'image/jpeg';
+            resourceType = 'image';
+        } else if (mediaType === 'video') {
+            type = match ? `video/${match[1]}` : 'video/mp4';
+            resourceType = 'video';
+        } else {
+            throw new Error('Invalid media type. Must be "image" or "video"');
+        }
+
+        formData.append('file', {
+            uri: mediaUri,
+            type: type,
+            name: filename,
+        });
+
+        formData.append('upload_preset', CLOUDINARY_CONFIG.UPLOAD_PRESET);
+        formData.append('resource_type', resourceType);
+        formData.append('folder', `chat_media/${circleId}`);
+        formData.append('public_id', `${mediaType}_${Date.now()}`);
+
+        // Debug logging
+        console.log('Uploading chat media to Cloudinary with:', {
+            cloudName: CLOUDINARY_CONFIG.CLOUD_NAME,
+            uploadPreset: CLOUDINARY_CONFIG.UPLOAD_PRESET,
+            resourceType: resourceType,
+            folder: `chat_media/${circleId}`,
+            mediaType
+        });
+
+        // Upload to Cloudinary
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/${resourceType}/upload`,
+            {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Cloudinary chat media upload error response:', errorText);
+            throw new Error(`Chat media upload failed with status: ${response.status}. ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        console.log('Chat media uploaded successfully:', {
+            publicId: data.public_id,
+            secureUrl: data.secure_url,
+            format: data.format,
+            width: data.width,
+            height: data.height,
+            duration: data.duration
+        });
+
+        return {
+            success: true,
+            mediaUrl: data.secure_url,
+            publicId: data.public_id,
+            format: data.format,
+            width: data.width,
+            height: data.height,
+            duration: data.duration, // For videos
+        };
+    } catch (error) {
+        console.error('Cloudinary chat media upload error:', error);
+        throw new Error(`Failed to upload ${mediaType}: ${error.message}`);
+    }
+};
+
 // Validate image file before upload
 export const validateImageFile = (fileUri, imageType = 'avatar') => {
     try {

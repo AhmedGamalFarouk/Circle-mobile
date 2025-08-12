@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Pressable, Platform, ActivityIndicator, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Platform, ActivityIndicator, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from './styles';
@@ -131,42 +131,7 @@ export const SubmitButton = ({ title, onPress, loading }) => (
     </Pressable>
 );
 
-export const OrDivider = () => (
-    <View style={styles.dividerSection}>
-        <View style={styles.orContainer}>
-            <View style={styles.line} />
-            <Text style={styles.orText}>or continue with</Text>
-            <View style={styles.line} />
-        </View>
-    </View>
-);
 
-export const SocialButtons = ({ onGooglePress, disabled, loading }) => (
-    <View style={styles.socialSection}>
-        <View style={styles.socialButtonsContainer}>
-            <Pressable
-                style={({ pressed }) => [
-                    styles.googleButton,
-                    pressed && styles.googleButtonPressed,
-                    disabled && styles.googleButtonDisabled
-                ]}
-                onPress={onGooglePress}
-                disabled={disabled || loading}
-            >
-                <View style={styles.googleIcon}>
-                    <Image
-                        source={require('../../../../assets/google logo.png')}
-                        style={styles.googleLogoImage}
-                        resizeMode="contain"
-                    />
-                </View>
-                <Text style={styles.googleButtonText}>
-                    {loading ? 'Connecting...' : 'Continue with Google'}
-                </Text>
-            </Pressable>
-        </View>
-    </View>
-);
 
 export const DateOfBirthInput = ({ value, onChange, placeholder = "Date of Birth" }) => {
     const [showPicker, setShowPicker] = useState(false);

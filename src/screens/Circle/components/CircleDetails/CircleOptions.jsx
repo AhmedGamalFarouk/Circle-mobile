@@ -2,18 +2,21 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
-import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
+import { RADII, SHADOWS } from '../../../../constants/constants';
 import useAuth from '../../../../hooks/useAuth';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
-import { useJoinRequests } from '../../../../hooks/useJoinRequests';
+import useCircleRequests from '../../../../hooks/useCircleRequests';
+import JoinRequestsModal from '../../../../components/JoinRequestsModal';
+
 
 const CircleOptions = ({ circleId, circle, navigation }) => {
     const { colors } = useTheme();
     const { user } = useAuth();
     const { isAdmin } = useCircleMembers(circleId);
-    const { pendingCount } = useJoinRequests(circleId, 'pending');
+    const { requestCount } = useCircleRequests(circleId);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [muteCircle, setMuteCircle] = useState(false);
+    const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
     const styles = getStyles(colors);
 
     const currentUserIsAdmin = isAdmin(user?.uid);
@@ -69,7 +72,12 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
     };
 
     const handleManageJoinRequests = () => {
-        navigation.navigate('JoinRequests', { circleId });
+        setShowJoinRequestsModal(true);
+    };
+
+    const handleViewProfile = (userId) => {
+        setShowJoinRequestsModal(false);
+        navigation.navigate('Profile', { userId });
     };
 
     const settingsOptions = [
@@ -126,12 +134,12 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             color: colors.text,
         },
         {
-            title: `Manage Join Requests${pendingCount > 0 ? ` (${pendingCount})` : ''}`,
-            subtitle: pendingCount > 0 ? `${pendingCount} pending requests` : 'View and manage join requests',
+            title: `Manage Join Requests${requestCount > 0 ? ` (${requestCount})` : ''}`,
+            subtitle: requestCount > 0 ? `${requestCount} pending requests` : 'View and manage join requests',
             onPress: handleManageJoinRequests,
             icon: 'people',
-            color: pendingCount > 0 ? colors.warning : colors.text,
-            badge: pendingCount > 0 ? pendingCount : null,
+            color: requestCount > 0 ? colors.warning : colors.text,
+            badge: requestCount > 0 ? requestCount : null,
         },
     ];
 
@@ -200,6 +208,14 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                     {actionOptions.map(renderActionItem)}
                 </View>
             </View>
+
+            <JoinRequestsModal
+                visible={showJoinRequestsModal}
+                onClose={() => setShowJoinRequestsModal(false)}
+                circleId={circleId}
+                circleName={circle.name}
+                onViewProfile={handleViewProfile}
+            />
         </View>
     );
 };

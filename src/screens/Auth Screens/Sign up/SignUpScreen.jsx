@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; // Import doc and setDoc
 import { auth, db } from '../../../firebase/config'; // Import auth and db
 import { validateUsername, isUsernameUnique } from '../../../utils/userValidation'; // Import username validation
-import * as WebBrowser from 'expo-web-browser';
-import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
-import Constants from "expo-constants";
 import useCurrentLocation from '../../../hooks/useCurrentLocation'; // Import the hook
 import {
   AuthContainer,
@@ -17,14 +14,10 @@ import {
   DateOfBirthInput,
   LocationInput,
   SubmitButton,
-  OrDivider,
-  SocialButtons,
   BottomLink,
   InterestsSelector,
 } from '../Components/AuthUI';
 import { styles } from '../Components/styles';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const SignUpScreen = () => {
   const navigation = useNavigation();
@@ -162,85 +155,6 @@ const SignUpScreen = () => {
     }
   }, [locationName]);
 
-  const redirectUri = makeRedirectUri({
-    useProxy: true,
-    path: 'auth', // This path should match your Expo redirect URI setup
-  });
-
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: Constants.expoConfig.extra.webClientId,
-      androidClientId: Constants.expoConfig.extra.androidClientId,
-      iosClientId: Constants.expoConfig.extra.iosClientId,
-      scopes: ['profile', 'email'],
-      redirectUri: redirectUri,
-    },
-    {
-      projectNameForProxy: '@ahmed-gamal/Circle-mobile',
-    }
-  );
-
-  React.useEffect(() => {
-    if (response?.type === 'success') {
-      const { authentication } = response;
-      const { idToken, accessToken } = authentication;
-      const credential = GoogleAuthProvider.credential(idToken, accessToken);
-      signInWithCredential(auth, credential)
-        .then(async (userCredential) => {
-          const user = userCredential.user;
-
-          // Generate a unique username for Google sign-up
-          let proposedUsername = user.displayName || user.email.split('@')[0];
-          proposedUsername = proposedUsername.toLowerCase().replace(/[^a-zA-Z0-9_]/g, '');
-
-          // Ensure username uniqueness by appending numbers if needed
-          let finalUsername = proposedUsername;
-          let counter = 1;
-          while (!(await isUsernameUnique(finalUsername))) {
-            finalUsername = `${proposedUsername}${counter}`;
-            counter++;
-          }
-
-          // Save user profile data to Firestore for Google sign-up
-          await setDoc(doc(db, 'users', user.uid), {
-            username: finalUsername, // Use the unique username
-            email: user.email,
-            phoneNumber: '', // Google sign-up doesn't provide phone directly
-            avatarPhoto: user.photoURL || '',
-            coverPhoto: '',
-            bio: '',
-            dateOfBirth: '', // Google sign-up doesn't provide DOB directly
-            location: '', // Google sign-up doesn't provide location directly
-            interests: [], // Empty interests for Google sign-up
-            createdAt: new Date().toISOString(), // Account creation timestamp
-            friends: [], // Empty friends array
-            friendRequests: {
-              sent: [],
-              received: []
-            },
-            joinedCircles: [], // Empty joined circles array
-            joinedEvents: [], // Empty joined events array
-            stats: {
-              circles: 0,
-              connections: 0,
-              events: 0
-            },
-            reported: 0, // No reports initially
-            isBlocked: false // Not blocked initially
-          });
-          Alert.alert("Success", "Account created with Google successfully!");
-          navigation.navigate('Main', { screen: 'Home' });
-        })
-        .catch((error) => {
-          Alert.alert("Google Sign Up Error", error.message);
-        });
-    }
-  }, [response]);
-
-  const handleGoogleSignUp = () => {
-    promptAsync();
-  };
-
   return (
     <AuthContainer scrollable>
       <Title
@@ -338,8 +252,6 @@ const SignUpScreen = () => {
 
       <View style={styles.buttonSection}>
         <SubmitButton title="Create Account" onPress={handleSignUp} />
-        <OrDivider />
-        <SocialButtons onGooglePress={handleGoogleSignUp} disabled={!request} />
         <BottomLink
           text="Already have an account?"
           linkText="Sign In"

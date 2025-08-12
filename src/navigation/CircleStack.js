@@ -7,8 +7,7 @@ import InviteAndShare from '../screens/Circle Creation/InviteAndShare';
 import Circles from '../screens/Circles';
 import CircleDetailsScreen from '../screens/Circle/CircleDetailsScreen';
 import EditCircleScreen from '../screens/Circle/EditCircleScreen';
-import JoinRequestsScreen from '../screens/Circle/JoinRequestsScreen';
-import AllJoinRequestsScreen from '../screens/Circle/AllJoinRequestsScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -25,18 +24,6 @@ const CircleStack = () => {
             <Stack.Screen name="InviteAndShare" component={InviteAndShare} />
             <Stack.Screen name="CircleDetails" component={CircleDetailsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="EditCircle" component={EditCircleScreen} options={{ headerShown: false }} />
-            <Stack.Screen
-                name="JoinRequests"
-                component={JoinRequestsScreen}
-                options={{
-                    headerShown: true,
-                    title: 'Join Requests',
-                    headerStyle: {
-                        backgroundColor: COLORS.darker,
-                    },
-                    headerTintColor: '#fff',
-                }}
-            />
         </Stack.Navigator>
     );
 };

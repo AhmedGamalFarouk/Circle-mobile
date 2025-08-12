@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
-import Constants from "expo-constants";
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../firebase/config';
 import { COLORS } from '../../../constants/constants';
-import * as WebBrowser from 'expo-web-browser';
-import { useAuthRequest, makeRedirectUri } from 'expo-auth-session';
 import {
   AuthContainer,
   Logo,
@@ -13,19 +10,14 @@ import {
   AuthInput,
   ForgotPasswordLink,
   SubmitButton,
-  OrDivider,
-  SocialButtons,
   BottomLink,
 } from '../Components/AuthUI';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const SignInScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -89,53 +81,6 @@ const SignInScreen = ({ navigation }) => {
     Alert.alert("Forgot Password", "This feature will be implemented soon!");
   };
 
-  const redirectUri = makeRedirectUri({
-    useProxy: true,
-    path: 'auth',
-  });
-
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: Constants.expoConfig.extra.webClientId,
-      androidClientId: Constants.expoConfig.extra.androidClientId,
-      iosClientId: Constants.expoConfig.extra.iosClientId,
-      scopes: ['profile', 'email'],
-      redirectUri: redirectUri,
-    },
-    {
-      projectNameForProxy: '@ahmed-gamal/Circle-mobile',
-    }
-  );
-
-  React.useEffect(() => {
-    if (response?.type === 'success') {
-      setGoogleLoading(true);
-      const { authentication } = response;
-      const credential = GoogleAuthProvider.credential(authentication.idToken);
-      signInWithCredential(auth, credential)
-        .then(() => {
-          Alert.alert("Success", "Welcome! Signed in with Google successfully!");
-          navigation.navigate('Main', { screen: 'Home' });
-        })
-        .catch((error) => {
-          Alert.alert("Google Sign In Error", error.message);
-        })
-        .finally(() => {
-          setGoogleLoading(false);
-        });
-    }
-  }, [response]);
-
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    try {
-      await promptAsync();
-    } catch (error) {
-      Alert.alert("Error", "Failed to open Google sign in");
-      setGoogleLoading(false);
-    }
-  };
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: COLORS.darker }}
@@ -178,14 +123,6 @@ const SignInScreen = ({ navigation }) => {
             title="Sign In"
             onPress={handleLogin}
             loading={loading}
-          />
-
-          <OrDivider />
-
-          <SocialButtons
-            onGooglePress={handleGoogleSignIn}
-            disabled={!request || loading || googleLoading}
-            loading={googleLoading}
           />
 
           <BottomLink

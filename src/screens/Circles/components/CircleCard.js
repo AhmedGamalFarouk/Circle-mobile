@@ -7,12 +7,21 @@ import { useTheme } from '../../../context/ThemeContext'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { db } from '../../../firebase/config'
 import { getCircleImageUrl } from '../../../utils/imageUtils'
+import useAuth from '../../../hooks/useAuth'
+import useCircleMembers from '../../../hooks/useCircleMembers'
+import useCircleRequests from '../../../hooks/useCircleRequests'
 
 
 const CircleCard = ({ circle, onPress }) => {
     const { colors } = useTheme()
+    const { user } = useAuth()
+    const { isMember, isAdmin, getAdmins } = useCircleMembers(circle.id)
+    const { createJoinRequest, hasPendingRequest } = useCircleRequests(circle.id)
     const [memberCount, setMemberCount] = useState(0)
     const [loading, setLoading] = useState(true)
+    const [isRequestingJoin, setIsRequestingJoin] = useState(false)
+
+    const currentUserIsMember = isMember(user?.uid)
 
     // Fetch real member count
     useEffect(() => {
@@ -41,57 +50,113 @@ const CircleCard = ({ circle, onPress }) => {
 
     // Get the real circle image
     const circleImageUrl = getCircleImageUrl(circle)
+
+    const handleJoinRequest = async () => {
+        if (isRequestingJoin) return
+
+        setIsRequestingJoin(true)
+
+        try {
+            if (hasPendingRequest) {
+                Alert.alert('Request Already Sent', 'You have already requested to join this circle.')
+                return
+            }
+
+            const admins = getAdmins();
+            if (admins.length === 0) {
+                Alert.alert('Error', 'No admin found for this circle');
+                return;
+            }
+
+            const adminId = admins[0].userId;
+            const result = await createJoinRequest(
+                circle.id,
+                user.uid,
+                adminId,
+                circle.circleName,
+                user.displayName || user.email || 'Unknown User'
+            )
+
+            if (result.success) {
+                Alert.alert(
+                    'Request Sent',
+                    'Your join request has been sent to the circle admin. You will be notified when it is reviewed.',
+                    [{ text: 'OK' }]
+                )
+            } else {
+                Alert.alert('Error', result.error || 'Failed to send join request')
+            }
+        } catch (error) {
+            Alert.alert('Error', 'Failed to send join request')
+        } finally {
+            setIsRequestingJoin(false)
+        }
+    }
+
     return (
-        <TouchableOpacity style={[styles.circleCard, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => onPress(circle)}>
-            <View style={styles.cardHeader}>
-                <Image
-                    source={{ uri: circleImageUrl }}
-                    style={styles.circleImage}
-                    placeholder={require('../../../../assets/circle.gif')}
-                    contentFit="cover"
-                    transition={200}
-                />
-                <View style={styles.circleInfo}>
-                    <Text style={[styles.circleName, { color: colors.text }]} numberOfLines={1}>
-                        {circle.circleName || 'Unnamed Circle'}
-                    </Text>
-                    <Text style={[styles.circleDescription, { color: colors.text }]} numberOfLines={2}>
-                        {circle.description || 'No description available'}
-                    </Text>
-                    <View style={styles.circleMeta}>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="people" size={14} style={{ color: colors.text }} />
-                            <Text style={[styles.metaText, { color: colors.text }]}>
-                                {loading ? '...' : `${memberCount} member${memberCount !== 1 ? 's' : ''}`}
-                            </Text>
-                        </View>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="time" size={14} style={{ color: colors.text }} />
-                            <Text style={[styles.metaText, { color: colors.text }]}>
-                                {circle.circleType === 'flash' ? 'Flash' : 'Permanent'}
-                            </Text>
+        <View style={[styles.circleCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <TouchableOpacity onPress={() => currentUserIsMember && onPress(circle)}>
+                <View style={styles.cardHeader}>
+                    <Image
+                        source={{ uri: circleImageUrl }}
+                        style={styles.circleImage}
+                        placeholder={require('../../../../assets/circle.gif')}
+                        contentFit="cover"
+                        transition={200}
+                    />
+                    <View style={styles.circleInfo}>
+                        <Text style={[styles.circleName, { color: colors.text }]} numberOfLines={1}>
+                            {circle.circleName || 'Unnamed Circle'}
+                        </Text>
+                        <Text style={[styles.circleDescription, { color: colors.text }]} numberOfLines={2}>
+                            {circle.description || 'No description available'}
+                        </Text>
+                        <View style={styles.circleMeta}>
+                            <View style={styles.metaItem}>
+                                <Ionicons name="people" size={14} style={{ color: colors.text }} />
+                                <Text style={[styles.metaText, { color: colors.text }]}>
+                                    {loading ? '...' : `${memberCount} member${memberCount !== 1 ? 's' : ''}`}
+                                </Text>
+                            </View>
+                            <View style={styles.metaItem}>
+                                <Ionicons name="time" size={14} style={{ color: colors.text }} />
+                                <Text style={[styles.metaText, { color: colors.text }]}>
+                                    {circle.circleType === 'flash' ? 'Flash' : 'Permanent'}
+                                </Text>
+                            </View>
                         </View>
                     </View>
                 </View>
-            </View>
 
-            {circle.interests && circle.interests.length > 0 && (
-                <View style={styles.interestsContainer}>
-                    {circle.interests.slice(0, 3).map((interest, index) => (
-                        <View key={index} style={styles.interestTag}>
-                            <Text style={[styles.interestText, { color: colors.text }]}>
-                                {typeof interest === 'string' ? interest : interest.label || interest.value || 'Interest'}
-                            </Text>
-                        </View>
-                    ))}
-                    {circle.interests.length > 3 && (
-                        <View style={styles.interestTag}>
-                            <Text style={[styles.interestText, { color: colors.text }]}>+{circle.interests.length - 3}</Text>
-                        </View>
-                    )}
-                </View>
+                {circle.interests && circle.interests.length > 0 && (
+                    <View style={styles.interestsContainer}>
+                        {circle.interests.slice(0, 3).map((interest, index) => (
+                            <View key={index} style={styles.interestTag}>
+                                <Text style={[styles.interestText, { color: colors.text }]}>
+                                    {typeof interest === 'string' ? interest : interest.label || interest.value || 'Interest'}
+                                </Text>
+                            </View>
+                        ))}
+                        {circle.interests.length > 3 && (
+                            <View style={styles.interestTag}>
+                                <Text style={[styles.interestText, { color: colors.text }]}>+{circle.interests.length - 3}</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+            </TouchableOpacity>
+            {!currentUserIsMember && (
+                <TouchableOpacity
+                    style={[styles.joinButton, { backgroundColor: colors.primary, opacity: isRequestingJoin || hasPendingRequest ? 0.6 : 1 }]}
+                    onPress={handleJoinRequest}
+                    disabled={isRequestingJoin || hasPendingRequest}
+                >
+                    <Text style={styles.joinButtonText}>
+                        {hasPendingRequest ? 'Request Sent' : (isRequestingJoin ? 'Sending...' : 'Request to Join')}
+                    </Text>
+                </TouchableOpacity>
             )}
-        </TouchableOpacity>
+        </View>
     )
 }
 
@@ -161,5 +226,14 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '500',
     },
-
+    joinButton: {
+        marginTop: 10,
+        paddingVertical: 10,
+        borderRadius: RADII.small,
+        alignItems: 'center',
+    },
+    joinButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+    },
 })
