@@ -23,7 +23,7 @@ const PLANNING_STAGES = {
 
 const CircleScreen = () => {
     const route = useRoute();
-    const { circleId } = route.params;
+    const { circleId, openPollModal } = route.params;
     console.log("CircleScreen circleId:", circleId);
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
@@ -80,6 +80,14 @@ const CircleScreen = () => {
 
         return () => unsubscribe();
     }, [circleId]);
+
+    // Handle opening poll modal from navigation params
+    useEffect(() => {
+        if (openPollModal) {
+            setPollType('activity');
+            setPollModalVisible(true);
+        }
+    }, [openPollModal]);
 
     const handleStartPoll = () => {
         setPollType('activity');

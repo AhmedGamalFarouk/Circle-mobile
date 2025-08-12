@@ -6,7 +6,9 @@ import {
     serverTimestamp,
     query,
     where,
-    getDocs
+    getDocs,
+    updateDoc,
+    arrayUnion
 } from 'firebase/firestore';
 import { db } from './config';
 
@@ -27,10 +29,10 @@ export const circleMembersService = {
             const userDoc = await getDoc(doc(db, 'users', userId));
             const userData = userDoc.exists() ? userDoc.data() : {};
 
-            // Add member to circle
+            // Add member to circle's members subcollection
             const memberData = {
                 userId,
-                userName: userData.displayName || userData.name || 'Unknown User',
+                userName: userData.displayName || userData.username || userData.name || 'Unknown User',
                 userEmail: userData.email || '',
                 userAvatar: userData.photoURL || userData.avatar || '',
                 isAdmin: false,
@@ -39,6 +41,13 @@ export const circleMembersService = {
             };
 
             await addDoc(membersRef, memberData);
+
+            // Also add the circle to the user's joinedCircles array
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+                joinedCircles: arrayUnion(circleId)
+            });
+
             return { success: true };
         } catch (error) {
             console.error('Error adding member to circle:', error);
