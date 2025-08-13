@@ -51,7 +51,7 @@ const CircleScreen = () => {
         };
 
         const checkMembership = async () => {
-            if (!user?.uid) return;
+            if (!user?.uid || !circleId) return;
 
             try {
                 const membersRef = collection(db, 'circles', circleId, 'members');
@@ -86,53 +86,59 @@ const CircleScreen = () => {
         fetchCircleData();
         checkMembership();
 
-        // Set up real-time membership listener
-        const membersRef = collection(db, 'circles', circleId, 'members');
-        const membershipQuery = query(membersRef, where('userId', '==', user?.uid));
-        const unsubscribeMembership = onSnapshot(membershipQuery, (snapshot) => {
-            const isUserMember = !snapshot.empty;
-            setIsMember(isUserMember);
+        let unsubscribeMembership;
+        let unsubscribePolls;
 
-            if (membershipChecked && !isUserMember) {
-                Alert.alert(
-                    "Removed from Circle",
-                    "You have been removed from this circle.",
-                    [
-                        {
-                            text: "OK",
-                            onPress: () => navigation.reset({
-                                index: 0,
-                                routes: [{ name: 'Home' }],
-                            })
-                        }
-                    ]
-                );
-            }
-        }, (error) => {
-            console.error('Error listening to membership:', error);
-        });
+        if (user?.uid && circleId) {
+            const membersRef = collection(db, 'circles', circleId, 'members');
+            const membershipQuery = query(membersRef, where('userId', '==', user?.uid));
+            unsubscribeMembership = onSnapshot(membershipQuery, (snapshot) => {
+                const isUserMember = !snapshot.empty;
+                setIsMember(isUserMember);
 
-        const pollQuery = collection(db, 'circles', circleId, 'polls');
-        const unsubscribe = onSnapshot(pollQuery, (snapshot) => {
-            // Filter out archived polls
-            const activePoll = snapshot.docs.find(doc => !doc.data().archived);
-            if (activePoll) {
-                const currentPoll = activePoll.data();
-                setPoll({ id: activePoll.id, ...currentPoll });
-                setCurrentStage(currentPoll.stage);
-            } else {
-                setPoll(null);
-                setCurrentStage(PLANNING_STAGES.IDLE);
-            }
-        }, (error) => {
-            console.error('Error listening to polls:', error);
-        });
+                if (membershipChecked && !isUserMember) {
+                    Alert.alert(
+                        "Removed from Circle",
+                        "You have been removed from this circle.",
+                        [
+                            {
+                                text: "OK",
+                                onPress: () => navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'Home' }],
+                                })
+                            }
+                        ]
+                    );
+                }
+            }, (error) => {
+                console.error('Error listening to membership:', error);
+            });
+        }
+
+        if (circleId) {
+            const pollQuery = collection(db, 'circles', circleId, 'polls');
+            unsubscribePolls = onSnapshot(pollQuery, (snapshot) => {
+                // Filter out archived polls
+                const activePoll = snapshot.docs.find(doc => !doc.data().archived);
+                if (activePoll) {
+                    const currentPoll = activePoll.data();
+                    setPoll({ id: activePoll.id, ...currentPoll });
+                    setCurrentStage(currentPoll.stage);
+                } else {
+                    setPoll(null);
+                    setCurrentStage(PLANNING_STAGES.IDLE);
+                }
+            }, (error) => {
+                console.error('Error listening to polls:', error);
+            });
+        }
 
         return () => {
-            unsubscribe();
-            unsubscribeMembership();
+            if (unsubscribePolls) unsubscribePolls();
+            if (unsubscribeMembership) unsubscribeMembership();
         };
-    }, [circleId]);
+    }, [circleId, user?.uid]);
 
     // Handle opening poll modal from navigation params
     useEffect(() => {
@@ -599,4 +605,3 @@ const styles = StyleSheet.create({
 });
 
 export default CircleScreen;
-

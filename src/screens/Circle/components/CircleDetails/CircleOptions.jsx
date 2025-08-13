@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
@@ -15,8 +15,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
     const { user } = useAuth();
     const { isAdmin } = useCircleMembers(circleId);
     const { requestCount } = useCircleRequests(circleId);
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const [muteCircle, setMuteCircle] = useState(false);
+
     const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
     const styles = getStyles(colors);
 
@@ -114,24 +113,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
         navigation.navigate('Profile', { userId });
     };
 
-    const settingsOptions = [
-        {
-            title: 'Push Notifications',
-            subtitle: 'Get notified about new messages',
-            type: 'switch',
-            value: notificationsEnabled,
-            onValueChange: setNotificationsEnabled,
-            icon: 'notifications',
-        },
-        {
-            title: 'Mute Circle',
-            subtitle: 'Stop receiving notifications temporarily',
-            type: 'switch',
-            value: muteCircle,
-            onValueChange: setMuteCircle,
-            icon: 'volume-mute',
-        },
-    ];
+
 
     // Base action options for all members
     const baseActionOptions = [
@@ -193,23 +175,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
         ? [...adminOptions, ...baseActionOptions]
         : baseActionOptions;
 
-    const renderSettingItem = (item, index) => (
-        <View key={index} style={styles.optionItem}>
-            <View style={styles.optionLeft}>
-                <Ionicons name={item.icon} size={20} color={colors.primary} style={styles.optionIcon} />
-                <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionTitle}>{item.title}</Text>
-                    <Text style={styles.optionSubtitle}>{item.subtitle}</Text>
-                </View>
-            </View>
-            <Switch
-                value={item.value}
-                onValueChange={item.onValueChange}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={item.value ? 'white' : colors.textSecondary}
-            />
-        </View>
-    );
+
 
     const renderActionItem = (item, index) => (
         <TouchableOpacity
@@ -240,12 +206,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Settings</Text>
-                <View style={styles.optionsCard}>
-                    {settingsOptions.map(renderSettingItem)}
-                </View>
-            </View>
+
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Actions</Text>
