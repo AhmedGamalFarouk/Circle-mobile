@@ -8,9 +8,12 @@ import {
     where,
     getDocs,
     updateDoc,
-    arrayUnion
+    arrayUnion,
+    arrayRemove,
+    deleteDoc
 } from 'firebase/firestore';
 import { db } from './config';
+import { systemMessagesService } from './systemMessagesService';
 
 export const circleMembersService = {
     // Add a user to a circle as a member
@@ -48,6 +51,10 @@ export const circleMembersService = {
                 joinedCircles: arrayUnion(circleId)
             });
 
+            // Create system message for user joining
+            const username = userData.displayName || userData.username || userData.name || 'Unknown User';
+            await systemMessagesService.createUserJoinedMessage(circleId, userId, username);
+
             return { success: true };
         } catch (error) {
             console.error('Error adding member to circle:', error);
@@ -66,6 +73,50 @@ export const circleMembersService = {
             }
         } catch (error) {
             console.error('Error getting circle info:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Remove a user from a circle
+    removeMemberFromCircle: async (circleId, userId) => {
+        try {
+            // Validate inputs
+            if (!circleId || !userId) {
+                return { success: false, error: 'Circle ID and User ID are required' };
+            }
+
+            // Get user information first for the system message
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+            const username = userData.displayName || userData.username || userData.name || 'Unknown User';
+
+            // Find and remove the member document
+            const membersRef = collection(db, 'circles', circleId, 'members');
+            const q = query(membersRef, where('userId', '==', userId));
+            const memberSnapshot = await getDocs(q);
+
+            if (memberSnapshot.empty) {
+                return { success: false, error: 'User is not a member of this circle' };
+            }
+
+            // Delete the member document
+            const memberDoc = memberSnapshot.docs[0];
+            await deleteDoc(memberDoc.ref);
+
+            // Remove the circle from the user's joinedCircles array (only if user document exists)
+            if (userDoc.exists()) {
+                const userRef = doc(db, 'users', userId);
+                await updateDoc(userRef, {
+                    joinedCircles: arrayRemove(circleId)
+                });
+            }
+
+            // Create system message for user leaving
+            await systemMessagesService.createUserLeftMessage(circleId, userId, username);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error removing member from circle:', error);
             return { success: false, error: error.message };
         }
     },

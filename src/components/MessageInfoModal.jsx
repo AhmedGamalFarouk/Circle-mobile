@@ -18,16 +18,8 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
     const [circleMembers, setCircleMembers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Debug logging
-    useEffect(() => {
-        if (visible) {
-            console.log('MessageInfoModal opened with:', { message, circleId });
-        }
-    }, [visible, message, circleId]);
-
     useEffect(() => {
         if (!visible || !circleId) {
-            console.log('MessageInfoModal: Missing visible or circleId', { visible, circleId });
             return;
         }
 
@@ -99,7 +91,6 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
     };
 
     if (!message) {
-        console.log('MessageInfoModal: No message provided');
         return null;
     }
 

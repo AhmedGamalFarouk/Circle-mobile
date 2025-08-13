@@ -25,12 +25,6 @@ const CircleActions = ({ circleId, circle, navigation }) => {
     // Actions for members
     const memberActions = [
         {
-            title: 'Open Chat',
-            icon: 'chatbubbles',
-            color: colors.primary,
-            onPress: () => navigation.navigate('Circle', { circleId }),
-        },
-        {
             title: 'Create Poll',
             icon: 'bar-chart',
             color: colors.secondary,
@@ -68,7 +62,6 @@ const CircleActions = ({ circleId, circle, navigation }) => {
 
     const handleShareCircle = () => {
         // Implement share functionality
-        console.log('Sharing circle:', circleId);
     };
 
     const handleViewProfile = (userId) => {

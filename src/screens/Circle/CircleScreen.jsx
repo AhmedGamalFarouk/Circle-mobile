@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform, LayoutAnimation, Pressable, Text, TouchableWithoutFeedback, Keyboard } from 'react-native';
-import { useRoute } from '@react-navigation/native';
-import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform, LayoutAnimation, Pressable, Text, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute, useNavigation } from '@react-navigation/native';
+import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import ContextualPin from './components/ContextualPin/ContextualPin';
 import ChatFeed from './components/ChatFeed';
@@ -23,8 +24,8 @@ const PLANNING_STAGES = {
 
 const CircleScreen = () => {
     const route = useRoute();
+    const navigation = useNavigation();
     const { circleId, openPollModal } = route.params;
-    console.log("CircleScreen circleId:", circleId);
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
     const [circle, setCircle] = useState(null);
@@ -34,6 +35,8 @@ const CircleScreen = () => {
     const [pollType, setPollType] = useState(null);
     const [replyingTo, setReplyingTo] = useState(null);
     const [isPinVisible, setPinVisible] = useState(true);
+    const [isMember, setIsMember] = useState(true);
+    const [membershipChecked, setMembershipChecked] = useState(false);
 
     useEffect(() => {
         const fetchCircleData = async () => {
@@ -43,34 +46,81 @@ const CircleScreen = () => {
                 const circleData = { id: docSnap.id, ...docSnap.data() };
                 setCircle(circleData);
             } else {
-                console.log("No such document!");
+                // No such document, handle accordingly (e.g., navigate back or show error)
+            }
+        };
+
+        const checkMembership = async () => {
+            if (!user?.uid) return;
+
+            try {
+                const membersRef = collection(db, 'circles', circleId, 'members');
+                const q = query(membersRef, where('userId', '==', user.uid));
+                const memberSnapshot = await getDocs(q);
+
+                const isUserMember = !memberSnapshot.empty;
+                setIsMember(isUserMember);
+                setMembershipChecked(true);
+
+                if (!isUserMember) {
+                    Alert.alert(
+                        "Access Denied",
+                        "You are no longer a member of this circle.",
+                        [
+                            {
+                                text: "OK",
+                                onPress: () => navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'Home' }],
+                                })
+                            }
+                        ]
+                    );
+                }
+            } catch (error) {
+                console.error('Error checking membership:', error);
+                setMembershipChecked(true);
             }
         };
 
         fetchCircleData();
+        checkMembership();
+
+        // Set up real-time membership listener
+        const membersRef = collection(db, 'circles', circleId, 'members');
+        const membershipQuery = query(membersRef, where('userId', '==', user?.uid));
+        const unsubscribeMembership = onSnapshot(membershipQuery, (snapshot) => {
+            const isUserMember = !snapshot.empty;
+            setIsMember(isUserMember);
+
+            if (membershipChecked && !isUserMember) {
+                Alert.alert(
+                    "Removed from Circle",
+                    "You have been removed from this circle.",
+                    [
+                        {
+                            text: "OK",
+                            onPress: () => navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'Home' }],
+                            })
+                        }
+                    ]
+                );
+            }
+        }, (error) => {
+            console.error('Error listening to membership:', error);
+        });
 
         const pollQuery = collection(db, 'circles', circleId, 'polls');
         const unsubscribe = onSnapshot(pollQuery, (snapshot) => {
-            console.log('Poll snapshot received, docs count:', snapshot.docs.length);
-
             // Filter out archived polls
             const activePoll = snapshot.docs.find(doc => !doc.data().archived);
             if (activePoll) {
                 const currentPoll = activePoll.data();
-                console.log('Active poll found:', {
-                    id: activePoll.id,
-                    stage: currentPoll.stage,
-                    hasActivityPoll: !!currentPoll.activityPoll,
-                    hasPlacePoll: !!currentPoll.placePoll,
-                    winningActivity: currentPoll.winningActivity,
-                    winningPlace: currentPoll.winningPlace,
-                    rsvpCount: Object.keys(currentPoll.rsvps || {}).length
-                });
-
                 setPoll({ id: activePoll.id, ...currentPoll });
                 setCurrentStage(currentPoll.stage);
             } else {
-                console.log('No active poll found, setting to IDLE');
                 setPoll(null);
                 setCurrentStage(PLANNING_STAGES.IDLE);
             }
@@ -78,7 +128,10 @@ const CircleScreen = () => {
             console.error('Error listening to polls:', error);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            unsubscribeMembership();
+        };
     }, [circleId]);
 
     // Handle opening poll modal from navigation params
@@ -119,8 +172,6 @@ const CircleScreen = () => {
                     text: `🗳️ Activity poll started: "${pollData.question}"`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log('Activity poll created successfully');
             } else if (pollType === 'place') {
                 const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
                 await updateDoc(pollRef, {
@@ -135,8 +186,6 @@ const CircleScreen = () => {
                     text: `📍 Place poll started: "${pollData.question}"`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log('Place poll created successfully');
             }
         } catch (error) {
             console.error('Error launching poll:', error);
@@ -153,12 +202,10 @@ const CircleScreen = () => {
                 const newVotes = { ...poll.activityPoll.votes };
                 newVotes[user.uid] = option;
                 await updateDoc(pollRef, { 'activityPoll.votes': newVotes });
-                console.log(`Activity vote cast: ${userProfile?.username || 'Unknown user'} voted for ${option}`);
             } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
                 const newVotes = { ...poll.placePoll.votes };
                 newVotes[user.uid] = option;
                 await updateDoc(pollRef, { 'placePoll.votes': newVotes });
-                console.log(`Place vote cast: ${userProfile?.username || 'Unknown user'} voted for ${option}`);
             }
         } catch (error) {
             console.error('Error casting vote:', error);
@@ -189,8 +236,6 @@ const CircleScreen = () => {
                     text: `➕ ${userProfile?.username || 'Someone'} added a new activity option: "${optionText}"`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log(`Activity option added: ${optionText} by ${userProfile?.username || 'Unknown user'}`);
             } else if (pollType === 'place' && currentStage === PLANNING_STAGES.PLANNING_PLACE) {
                 // Check if deadline has passed
                 const deadline = poll.placePoll.deadline.toDate();
@@ -209,8 +254,6 @@ const CircleScreen = () => {
                     text: `➕ ${userProfile?.username || 'Someone'} added a new place option: "${optionText}"`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log(`Place option added: ${optionText} by ${userProfile?.username || 'Unknown user'}`);
             }
         } catch (error) {
             console.error('Error adding option:', error);
@@ -242,9 +285,6 @@ const CircleScreen = () => {
                     text: `📊 Activity poll closed! "${winningOption}" won.`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log(`Activity poll finished. Winner: ${winningOption}`);
-
             } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
                 const winningOption = getWinningOption(poll.placePoll.votes);
                 if (!winningOption) {
@@ -264,8 +304,6 @@ const CircleScreen = () => {
                     text: `📍 Place poll closed! "${winningOption}" won.`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log(`Place poll finished. Winner: ${winningOption}`);
             }
         } catch (error) {
             console.error('Error finishing voting:', error);
@@ -285,8 +323,6 @@ const CircleScreen = () => {
             return acc;
         }, {});
 
-        console.log('Vote counts:', voteCounts);
-
         const options = Object.keys(voteCounts);
         if (options.length === 0) {
             console.warn('No valid votes found');
@@ -297,7 +333,6 @@ const CircleScreen = () => {
             voteCounts[a] > voteCounts[b] ? a : b
         );
 
-        console.log('Winning option:', winner, 'with', voteCounts[winner], 'votes');
         return winner;
     };
 
@@ -324,8 +359,6 @@ const CircleScreen = () => {
                     timeStamp: serverTimestamp(),
                 });
             }
-
-            console.log(`RSVP updated: ${userProfile?.username || 'Unknown user'} - ${status}`);
         } catch (error) {
             console.error('Error updating RSVP:', error);
         }
@@ -373,8 +406,6 @@ const CircleScreen = () => {
                     text: `🎉 Event confirmed! ${poll.winningPlace} for ${poll.winningActivity}. Please RSVP above!`,
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log('Event confirmed and RSVPs enabled');
             }
         } catch (error) {
             console.error('Error proceeding to next step:', error);
@@ -398,8 +429,6 @@ const CircleScreen = () => {
                     text: '🆕 Starting new event planning!',
                     timeStamp: serverTimestamp(),
                 });
-
-                console.log('Poll archived and new planning started');
             }
 
             // Reset local state
@@ -427,54 +456,77 @@ const CircleScreen = () => {
         return null;
     };
 
-    return (
-        <KeyboardAvoidingView
-            style={styles.container}
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
-        >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                <View style={styles.innerContainer}>
-                    <CircleHeader
-                        name={circle?.circleName || circle?.name}
-                        circleId={circleId}
-                        circle={circle}
-                    />
-                    {isPinVisible ? (
-                        <ContextualPin
-                            currentStage={currentStage}
-                            onStartPoll={handleStartPoll}
-                            activityPollData={poll?.activityPoll}
-                            placePollData={poll?.placePoll}
-                            onFinishVoting={handleFinishVoting}
-                            onVote={handleVote}
-                            onAddOption={handleAddOption}
-                            eventData={{
-                                winningActivity: poll?.winningActivity,
-                                winningPlace: poll?.winningPlace,
-                                rsvps: poll?.rsvps || {},
-                                currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
-                            }}
-                            onRsvp={handleRsvp}
-                            onStartNewPoll={handleStartNewPoll}
-                            onPollNextStep={handlePollNextStep}
-                            onDismiss={handleDismiss}
-                        />
-                    ) : (
-                        getShowPlanButtonText() && (
-                            <View style={styles.showPlanButtonContainer}>
-                                <Pressable style={styles.showPlanButton} onPress={handleShow}>
-                                    <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
-                                </Pressable>
-                            </View>
-                        )
-                    )}
-                    <View style={styles.chatFeedContainer}>
-                        <ChatFeed circleId={circleId} onReply={handleReply} />
-                    </View>
+    // Don't render circle content if user is not a member
+    if (!membershipChecked) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.loadingContainer}>
+                    <Text style={styles.loadingText}>Loading...</Text>
                 </View>
-            </TouchableWithoutFeedback>
-            <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} />
+            </SafeAreaView>
+        );
+    }
+
+    if (!isMember) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>You are not a member of this circle.</Text>
+                </View>
+            </SafeAreaView>
+        );
+    }
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                style={styles.keyboardContainer}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                    <View style={styles.innerContainer}>
+                        <CircleHeader
+                            name={circle?.circleName || circle?.name}
+                            circleId={circleId}
+                            circle={circle}
+                        />
+                        {isPinVisible ? (
+                            <ContextualPin
+                                currentStage={currentStage}
+                                onStartPoll={handleStartPoll}
+                                activityPollData={poll?.activityPoll}
+                                placePollData={poll?.placePoll}
+                                onFinishVoting={handleFinishVoting}
+                                onVote={handleVote}
+                                onAddOption={handleAddOption}
+                                eventData={{
+                                    winningActivity: poll?.winningActivity,
+                                    winningPlace: poll?.winningPlace,
+                                    rsvps: poll?.rsvps || {},
+                                    currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
+                                }}
+                                onRsvp={handleRsvp}
+                                onStartNewPoll={handleStartNewPoll}
+                                onPollNextStep={handlePollNextStep}
+                                onDismiss={handleDismiss}
+                            />
+                        ) : (
+                            getShowPlanButtonText() && (
+                                <View style={styles.showPlanButtonContainer}>
+                                    <Pressable style={styles.showPlanButton} onPress={handleShow}>
+                                        <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
+                                    </Pressable>
+                                </View>
+                            )
+                        )}
+                        <View style={styles.chatFeedContainer}>
+                            <ChatFeed circleId={circleId} onReply={handleReply} />
+                        </View>
+                    </View>
+                </TouchableWithoutFeedback>
+                <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} />
+            </KeyboardAvoidingView>
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -487,7 +539,7 @@ const CircleScreen = () => {
                     onClose={() => setPollModalVisible(false)}
                 />
             </Modal>
-        </KeyboardAvoidingView>
+        </SafeAreaView>
     );
 };
 
@@ -495,6 +547,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.darker,
+    },
+    keyboardContainer: {
+        flex: 1,
     },
     innerContainer: {
         flex: 1,
@@ -518,6 +573,28 @@ const styles = StyleSheet.create({
     showPlanButtonText: {
         color: 'white',
         fontWeight: 'bold',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.darker,
+    },
+    loadingText: {
+        color: COLORS.light,
+        fontSize: 16,
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: COLORS.darker,
+        padding: 20,
+    },
+    errorText: {
+        color: COLORS.light,
+        fontSize: 16,
+        textAlign: 'center',
     },
 });
 

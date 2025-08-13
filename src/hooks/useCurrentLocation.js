@@ -39,7 +39,6 @@ export default function useCurrentLocation() {
       // Reverse geocoding to get location name
       let geocode = await Location.reverseGeocodeAsync(currentLocation.coords);
       if (geocode && geocode.length > 0) {
-        console.log("Full Location Details:", geocode[0]); // Log full details
         const { district, subregion, city, region } = geocode[0]; // Removed country from destructuring
         const primaryLocation = district || subregion || region || city;
         const addressParts = [primaryLocation].filter(Boolean); // Removed country from addressParts

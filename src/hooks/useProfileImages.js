@@ -29,13 +29,10 @@ export const useProfileImages = (userId) => {
                 setUploadProgress(prev => Math.min(prev + 10, 90));
             }, 100);
 
-            console.log(`Uploading ${imageType} image to Cloudinary...`);
             const result = await uploadImageToCloudinary(userId, imageData.base64, imageType);
 
             clearInterval(progressInterval);
             setUploadProgress(100);
-
-            console.log(`${imageType} image uploaded successfully:`, result.imageUrl);
 
             // Get optimized URL for better performance
             const optimizedUrl = getOptimizedImageUrl(result.publicId, imageType) || result.imageUrl;

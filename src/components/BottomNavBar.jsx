@@ -20,10 +20,10 @@ const BottomNavBar = () => {
       <TouchableOpacity onPress={() => navigation.navigate('Circle')}>
         <Ionicons name="people" size={24} color={getIconColor('Circle')} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => console.log('Add pressed')}>
+      <TouchableOpacity onPress={() => { /* Add pressed */ }}>
         <Ionicons name="add-circle" size={24} color={getIconColor('Add')} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => console.log('Notifications pressed')}>
+      <TouchableOpacity onPress={() => { /* Notifications pressed */ }}>
         <Ionicons
           name="notifications"
           size={24}

@@ -37,7 +37,6 @@ const MyPlan = () => {
     const handlePlanSelect = (planName) => {
         setSelectedPlan(planName);
         // Here you can add logic to handle plan selection (API call, etc.)
-        console.log(`Selected plan: ${planName}`);
     };
 
     return (

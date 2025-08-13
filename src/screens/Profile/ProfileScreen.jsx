@@ -129,15 +129,17 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     // Enhanced interaction handlers with haptic feedback and animations
 
     useEffect(() => {
+        if (!currentUser || !profile) return;
+
         setIsFollowed(
-            profile?.connectionRequests.some(
-                (req) => req.uid == currentUser.uid
-            )
+            profile?.connectionRequests?.some(
+                (req) => req.uid === currentUser.uid
+            ) || false
         );
         setIsConnection(
-            profile?.connections.some((c) => c.uid == currentUser.uid)
+            profile?.connections?.some((c) => c.uid === currentUser.uid) || false
         );
-    }, [isFollowed, profile]);
+    }, [profile, currentUser]);
     const handleFollow = useCallback(async () => {
         // Haptic feedback
         if (Platform.OS === "ios") {
@@ -166,12 +168,10 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
         if (isFollowed) {
             const data = snap.data();
-            console.log(data);
             const requests = data.connectionRequests || [];
             const updatedRequests = requests.filter(
                 (req) => req.uid !== currentUser.uid
             );
-            console.log(updatedRequests);
             await updateDoc(docRef, {
                 connectionRequests: updatedRequests,
             });
@@ -239,18 +239,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                 editingProfileImage &&
                 editingProfileImage.base64 &&
                 editingProfileImage.uri !==
-                    (profile?.avatarPhoto || PLACEHOLDER_AVATAR_URL)
+                (profile?.avatarPhoto || PLACEHOLDER_AVATAR_URL)
             ) {
                 try {
-                    console.log("Uploading profile image to Cloudinary...");
                     const result = await uploadImageToCloudinary(
                         currentUser.uid,
                         editingProfileImage.base64,
                         "avatar"
-                    );
-                    console.log(
-                        "Profile image uploaded successfully:",
-                        result.imageUrl
                     );
 
                     // Use optimized URL for better performance
@@ -271,8 +266,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     console.error("Error uploading profile image:", error);
                     Alert.alert(
                         "Error",
-                        `Failed to upload profile image: ${
-                            error.message || "Unknown error"
+                        `Failed to upload profile image: ${error.message || "Unknown error"
                         }`
                     );
                     return; // Don't continue if image upload fails
@@ -284,18 +278,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                 editingCoverImage &&
                 editingCoverImage.base64 &&
                 editingCoverImage.uri !==
-                    (profile?.coverPhoto || PLACEHOLDER_COVER_URL)
+                (profile?.coverPhoto || PLACEHOLDER_COVER_URL)
             ) {
                 try {
-                    console.log("Uploading cover image to Cloudinary...");
                     const result = await uploadImageToCloudinary(
                         currentUser.uid,
                         editingCoverImage.base64,
                         "cover"
-                    );
-                    console.log(
-                        "Cover image uploaded successfully:",
-                        result.imageUrl
                     );
 
                     // Use optimized URL for better performance
@@ -316,8 +305,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                     console.error("Error uploading cover image:", error);
                     Alert.alert(
                         "Error",
-                        `Failed to upload cover image: ${
-                            error.message || "Unknown error"
+                        `Failed to upload cover image: ${error.message || "Unknown error"
                         }`
                     );
                     return; // Don't continue if image upload fails
@@ -439,10 +427,9 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         // Show confirmation dialog
         Alert.alert(
             "Delete Image",
-            `Are you sure you want to delete your ${
-                currentImageType === "avatar"
-                    ? "profile picture"
-                    : "cover image"
+            `Are you sure you want to delete your ${currentImageType === "avatar"
+                ? "profile picture"
+                : "cover image"
             }?`,
             [
                 {
@@ -517,18 +504,16 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
                             Alert.alert(
                                 "Success",
-                                `${
-                                    currentImageType === "avatar"
-                                        ? "Profile picture"
-                                        : "Cover image"
+                                `${currentImageType === "avatar"
+                                    ? "Profile picture"
+                                    : "Cover image"
                                 } deleted successfully!`
                             );
                         } catch (error) {
                             console.error("Error deleting image:", error);
                             Alert.alert(
                                 "Error",
-                                `Failed to delete ${currentImageType} image: ${
-                                    error.message || "Unknown error"
+                                `Failed to delete ${currentImageType} image: ${error.message || "Unknown error"
                                 }`
                             );
                         } finally {
@@ -645,8 +630,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                                     isEditing && editingCoverImage
                                         ? editingCoverImage
                                         : profile?.coverPhoto
-                                        ? { uri: profile.coverPhoto }
-                                        : { uri: PLACEHOLDER_COVER_URL }
+                                            ? { uri: profile.coverPhoto }
+                                            : { uri: PLACEHOLDER_COVER_URL }
                                 }
                                 style={[
                                     styles.coverImage,
@@ -734,8 +719,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                                         isEditing && editingProfileImage
                                             ? editingProfileImage
                                             : profile?.avatarPhoto
-                                            ? { uri: profile.avatarPhoto }
-                                            : { uri: PLACEHOLDER_AVATAR_URL }
+                                                ? { uri: profile.avatarPhoto }
+                                                : { uri: PLACEHOLDER_AVATAR_URL }
                                     }
                                     style={[
                                         styles.profileImage,

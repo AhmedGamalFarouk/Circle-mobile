@@ -379,7 +379,6 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
         setIsUploadingMedia(true);
 
         try {
-            console.log('Replying to:', replyingTo);
             // Upload media to Cloudinary
             const uploadResult = await uploadChatMediaToCloudinary(selectedMedia.uri, selectedMedia.type, circleId);
 
@@ -406,7 +405,6 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
             if (selectedMedia.type === 'video') {
                 messageData.mediaDuration = uploadResult.duration || selectedMedia.duration;
             }
-            console.log('Sending media message data:', messageData);
             await addDoc(collection(db, "circles", circleId, "chat"), messageData);
 
             // Clear selected media and reply

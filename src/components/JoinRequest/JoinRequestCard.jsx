@@ -6,13 +6,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
 
 const JoinRequestCard = ({ request, onApprove, onDeny }) => {
-    const { data: userProfile, isLoading, error } = useUserProfile(request.userId);
+    const userId = request.requesterId || request.invitedUserId; // Support both old and new field names
+    const { data: userProfile, isLoading, error } = useUserProfile(userId);
     const navigation = useNavigation();
     const { theme } = useTheme();
     const { t } = useLocalization();
 
     const handleViewProfile = () => {
-        navigation.navigate('UserProfile', { userId: request.userId });
+        navigation.navigate('UserProfile', { userId });
     };
 
     if (isLoading) {
@@ -34,9 +35,9 @@ const JoinRequestCard = ({ request, onApprove, onDeny }) => {
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.card }]}>
             <View style={styles.userInfo}>
-                <Image source={{ uri: userProfile?.profilePicture || 'https://via.placeholder.com/50' }} style={styles.profileImage} />
+                <Image source={{ uri: request.requesterPhotoUrl || request.invitedUserPhotoUrl || userProfile?.profilePicture || 'https://via.placeholder.com/50' }} style={styles.profileImage} />
                 <View style={styles.userInfoText}>
-                    <Text style={[styles.userName, { color: theme.colors.text }]}>{userProfile?.username}</Text>
+                    <Text style={[styles.userName, { color: theme.colors.text }]}>{request.requesterUsername || request.invitedUserUsername || userProfile?.username}</Text>
                     <Text style={[styles.message, { color: theme.colors.textMuted }]}>{request.message}</Text>
                 </View>
             </View>

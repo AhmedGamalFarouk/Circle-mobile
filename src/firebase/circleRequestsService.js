@@ -13,6 +13,7 @@ import {
     getDoc
 } from 'firebase/firestore';
 import { db } from './config';
+import { systemMessagesService } from './systemMessagesService';
 
 export const circleRequestsService = {
     // Create a new join request
@@ -22,18 +23,21 @@ export const circleRequestsService = {
             const userDoc = await getDoc(doc(db, 'users', userId));
             const userData = userDoc.exists() ? userDoc.data() : {};
 
+            // Get admin/inviter information
+            const adminDoc = await getDoc(doc(db, 'users', adminId));
+            const adminData = adminDoc.exists() ? adminDoc.data() : {};
+
             const requestData = {
-                adminId,
-                avatarPhoto: userData.photoURL || userData.avatar || '',
                 circleId,
                 circleName,
                 createdAt: serverTimestamp(),
-                email: userData.email || '',
+                requesterEmail: userData.email || '',
+                requesterId: userId,
+                requesterPhotoUrl: userData.photoURL || userData.avatar || '',
+                requesterUsername: userData.username || userData.displayName || userName,
                 message: `${userData.username || userData.displayName || userName} wants to join your circle "${circleName}".`,
                 status: 'pending',
-                type: 'join-request',
-                userId,
-                username: userData.username || userData.displayName || userName
+                type: 'join-request'
             };
 
             const docRef = await addDoc(collection(db, 'circleRequests'), requestData);
@@ -51,7 +55,7 @@ export const circleRequestsService = {
             const userDoc = await getDoc(doc(db, 'users', userId));
             const userData = userDoc.exists() ? userDoc.data() : {};
 
-            // Get inviter information for profile image
+            // Get inviter information
             const inviterDoc = await getDoc(doc(db, 'users', inviterId));
             const inviterData = inviterDoc.exists() ? inviterDoc.data() : {};
 
@@ -59,16 +63,15 @@ export const circleRequestsService = {
                 circleId,
                 circleName,
                 createdAt: serverTimestamp(),
-                email: userData.email || '',
-                message: `${inviterName} invited you to join the circle ${circleName}.`,
-                ownerId,
-                photoUrl: inviterData.photoURL || inviterData.avatar || '',
-                status: 'pending',
-                type: 'invitation',
-                userId,
-                username: userData.username || userData.displayName || 'Unknown User',
+                invitedUserEmail: userData.email || '',
+                invitedUserId: userId,
+                invitedUserPhotoUrl: userData.photoURL || userData.avatar || '',
+                invitedUserUsername: userData.username || userData.displayName || 'Unknown User',
                 inviterId,
-                inviterName
+                inviterUsername: inviterData.username || inviterData.displayName || inviterName,
+                message: `${inviterName} invited you to join the circle "${circleName}".`,
+                status: 'pending',
+                type: 'invitation'
             };
 
             const docRef = await addDoc(collection(db, 'circleRequests'), requestData);
@@ -82,11 +85,18 @@ export const circleRequestsService = {
     // Check if user already has a pending request for this circle
     checkExistingRequest: async (circleId, userId) => {
         try {
+            // Validate inputs
+            if (!circleId || !userId) {
+                console.warn('checkExistingRequest: Missing circleId or userId');
+                return false;
+            }
+
             const q = query(
                 collection(db, 'circleRequests'),
                 where('circleId', '==', circleId),
-                where('userId', '==', userId),
-                where('status', '==', 'pending')
+                where('requesterId', '==', userId),
+                where('status', '==', 'pending'),
+                where('type', '==', 'join-request')
             );
 
             const snapshot = await getDocs(q);
@@ -100,10 +110,16 @@ export const circleRequestsService = {
     // Check if user already has a pending invitation for this circle
     checkExistingInvitation: async (circleId, userId) => {
         try {
+            // Validate inputs
+            if (!circleId || !userId) {
+                console.warn('checkExistingInvitation: Missing circleId or userId');
+                return false;
+            }
+
             const q = query(
                 collection(db, 'circleRequests'),
                 where('circleId', '==', circleId),
-                where('userId', '==', userId),
+                where('invitedUserId', '==', userId),
                 where('type', '==', 'invitation'),
                 where('status', '==', 'pending')
             );
@@ -118,6 +134,12 @@ export const circleRequestsService = {
 
     // Get all pending requests for a specific circle (for admin)
     getCircleRequests: (circleId, callback) => {
+        // Validate inputs
+        if (!circleId) {
+            console.warn('getCircleRequests: Missing circleId');
+            return () => { }; // Return empty unsubscribe function
+        }
+
         const q = query(
             collection(db, 'circleRequests'),
             where('circleId', '==', circleId),
@@ -130,11 +152,17 @@ export const circleRequestsService = {
         });
     },
 
-    // Get all requests for a specific admin
+    // Get all requests for a specific admin (for join requests, this would be circle admin)
     getAdminRequests: (adminId, callback) => {
+        // Validate inputs
+        if (!adminId) {
+            console.warn('getAdminRequests: Missing adminId');
+            return () => { }; // Return empty unsubscribe function
+        }
+
         const q = query(
             collection(db, 'circleRequests'),
-            where('adminId', '==', adminId),
+            where('inviterId', '==', adminId),
             where('status', '==', 'pending'),
             orderBy('createdAt', 'desc')
         );
@@ -145,19 +173,44 @@ export const circleRequestsService = {
     },
 
     // Approve a join request
-    approveRequest: async (requestId, addMemberToCircle) => {
+    approveRequest: async (requestId, addMemberToCircle, approverId) => {
         try {
             const requestRef = doc(db, 'circleRequests', requestId);
             const requestSnap = await getDoc(requestRef);
             if (!requestSnap.exists()) {
                 return { success: false, error: 'Request not found' };
             }
-            const { circleId, userId } = requestSnap.data();
+            const requestData = requestSnap.data();
+            const { circleId, requesterId, invitedUserId, type } = requestData;
 
+            // Determine the user ID based on request type
+            const userId = requesterId || invitedUserId;
+
+            // Get approver information
+            const approverDoc = await getDoc(doc(db, 'users', approverId));
+            const approverData = approverDoc.exists() ? approverDoc.data() : {};
+
+            // Add member to circle (this will also create the "user joined" system message)
             await addMemberToCircle(circleId, userId);
 
+            // If this was an invitation, create an additional system message
+            if (type === 'invitation' && requestData.inviterId) {
+                const username = requestData.invitedUserUsername || 'Unknown User';
+                const inviterName = requestData.inviterUsername || 'Someone';
+                await systemMessagesService.createUserInvitedMessage(
+                    circleId,
+                    userId,
+                    username,
+                    requestData.inviterId,
+                    inviterName
+                );
+            }
+
+            // Update with new field structure for approved requests
             await updateDoc(requestRef, {
-                status: 'approved',
+                status: 'accepted',
+                approverId: approverId,
+                approverUsername: approverData.username || approverData.displayName || 'Admin',
                 updatedAt: serverTimestamp()
             });
             return { success: true };
@@ -194,7 +247,7 @@ export const circleRequestsService = {
     },
 
     // Approve all pending requests for a circle
-    approveAllRequests: async (circleId, addMemberToCircle) => {
+    approveAllRequests: async (circleId, addMemberToCircle, approverId) => {
         try {
             const q = query(
                 collection(db, 'circleRequests'),
@@ -202,12 +255,36 @@ export const circleRequestsService = {
                 where('status', '==', 'pending')
             );
 
+            // Get approver information
+            const approverDoc = await getDoc(doc(db, 'users', approverId));
+            const approverData = approverDoc.exists() ? approverDoc.data() : {};
+
             const snapshot = await getDocs(q);
-            const promises = snapshot.docs.map(async (doc) => {
-                const { userId } = doc.data();
+            const promises = snapshot.docs.map(async (docSnap) => {
+                const requestData = docSnap.data();
+                const userId = requestData.requesterId || requestData.invitedUserId; // Support both old and new field names
+                const { type } = requestData;
+
+                // Add member to circle (this will also create the "user joined" system message)
                 await addMemberToCircle(circleId, userId);
-                return updateDoc(doc.ref, {
-                    status: 'approved',
+
+                // If this was an invitation, create an additional system message
+                if (type === 'invitation' && requestData.inviterId) {
+                    const username = requestData.invitedUserUsername || 'Unknown User';
+                    const inviterName = requestData.inviterUsername || 'Someone';
+                    await systemMessagesService.createUserInvitedMessage(
+                        circleId,
+                        userId,
+                        username,
+                        requestData.inviterId,
+                        inviterName
+                    );
+                }
+
+                return updateDoc(docSnap.ref, {
+                    status: 'accepted',
+                    approverId: approverId,
+                    approverUsername: approverData.username || approverData.displayName || 'Admin',
                     updatedAt: serverTimestamp()
                 });
             });

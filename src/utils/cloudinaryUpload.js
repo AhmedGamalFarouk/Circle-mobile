@@ -24,14 +24,6 @@ export const uploadAudioToCloudinary = async (audioUri) => {
         formData.append('resource_type', UPLOAD_SETTINGS.RESOURCE_TYPE);
         formData.append('folder', UPLOAD_SETTINGS.FOLDER);
 
-        // Debug logging
-        console.log('Uploading to Cloudinary with:', {
-            cloudName: CLOUDINARY_CONFIG.CLOUD_NAME,
-            uploadPreset: CLOUDINARY_CONFIG.UPLOAD_PRESET,
-            resourceType: UPLOAD_SETTINGS.RESOURCE_TYPE,
-            folder: UPLOAD_SETTINGS.FOLDER
-        });
-
         // Upload to Cloudinary
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/${UPLOAD_SETTINGS.RESOURCE_TYPE}/upload`,
@@ -100,16 +92,6 @@ export const uploadImageToCloudinary = async (userId, base64Data, imageType = 'a
         formData.append('folder', `profile_images/${userId}`);
         formData.append('public_id', publicId);
 
-        // Debug logging
-        console.log('Uploading image to Cloudinary with:', {
-            cloudName: CLOUDINARY_CONFIG.CLOUD_NAME,
-            uploadPreset: CLOUDINARY_CONFIG.UPLOAD_PRESET,
-            folder: `profile_images/${userId}`,
-            publicId: publicId,
-            imageType,
-            dataUriLength: dataUri.length
-        });
-
         // Upload to Cloudinary
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/image/upload`,
@@ -129,14 +111,6 @@ export const uploadImageToCloudinary = async (userId, base64Data, imageType = 'a
         }
 
         const data = await response.json();
-
-        console.log('Image uploaded successfully:', {
-            publicId: data.public_id,
-            secureUrl: data.secure_url,
-            format: data.format,
-            width: data.width,
-            height: data.height
-        });
 
         return {
             success: true,
@@ -179,12 +153,6 @@ export const deleteImageFromCloudinary = async (publicIdToDelete, imageType = 'a
         const timestamp = Math.round(new Date().getTime() / 1000);
         formData.append('timestamp', timestamp.toString());
 
-        console.log('Deleting image from Cloudinary:', {
-            cloudName: CLOUDINARY_CONFIG.CLOUD_NAME,
-            publicId: publicIdToDelete,
-            imageType
-        });
-
         // Delete from Cloudinary
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/image/destroy`,
@@ -204,8 +172,6 @@ export const deleteImageFromCloudinary = async (publicIdToDelete, imageType = 'a
         }
 
         const data = await response.json();
-
-        console.log('Image deletion response:', data);
 
         if (data.result === 'ok' || data.result === 'not found') {
             return {
@@ -271,14 +237,6 @@ export const uploadCircleImageToCloudinary = async (imageUri, circleId) => {
         formData.append('folder', `circle_images`);
         formData.append('public_id', `circle_${circleId}_${Date.now()}`);
 
-        // Debug logging
-        console.log('Uploading circle image to Cloudinary with:', {
-            cloudName: CLOUDINARY_CONFIG.CLOUD_NAME,
-            uploadPreset: CLOUDINARY_CONFIG.UPLOAD_PRESET,
-            folder: 'circle_images',
-            publicId: `circle_${circleId}_${Date.now()}`
-        });
-
         // Upload to Cloudinary
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/image/upload`,
@@ -298,14 +256,6 @@ export const uploadCircleImageToCloudinary = async (imageUri, circleId) => {
         }
 
         const data = await response.json();
-
-        console.log('Circle image uploaded successfully:', {
-            publicId: data.public_id,
-            secureUrl: data.secure_url,
-            format: data.format,
-            width: data.width,
-            height: data.height
-        });
 
         return {
             success: true,
@@ -361,15 +311,6 @@ export const uploadChatMediaToCloudinary = async (mediaUri, mediaType, circleId)
         formData.append('folder', `chat_media/${circleId}`);
         formData.append('public_id', `${mediaType}_${Date.now()}`);
 
-        // Debug logging
-        console.log('Uploading chat media to Cloudinary with:', {
-            cloudName: CLOUDINARY_CONFIG.CLOUD_NAME,
-            uploadPreset: CLOUDINARY_CONFIG.UPLOAD_PRESET,
-            resourceType: resourceType,
-            folder: `chat_media/${circleId}`,
-            mediaType
-        });
-
         // Upload to Cloudinary
         const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.CLOUD_NAME}/${resourceType}/upload`,
@@ -389,15 +330,6 @@ export const uploadChatMediaToCloudinary = async (mediaUri, mediaType, circleId)
         }
 
         const data = await response.json();
-
-        console.log('Chat media uploaded successfully:', {
-            publicId: data.public_id,
-            secureUrl: data.secure_url,
-            format: data.format,
-            width: data.width,
-            height: data.height,
-            duration: data.duration
-        });
 
         return {
             success: true,

@@ -75,7 +75,6 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
             <Image
                 source={{ uri: item.profilePicture }}
                 style={styles.memberAvatar}
-                onError={(error) => console.log('Member list avatar load error:', error)}
             />
             <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{item.username || 'Unknown User'}</Text>

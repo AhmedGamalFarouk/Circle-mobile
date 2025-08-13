@@ -89,16 +89,13 @@ const EditCircleScreen = ({ navigation, route }) => {
 
             // Handle image upload if changed
             if (photoUrl && photoUrl !== originalPhotoUrl) {
-                console.log('Uploading new circle image to Cloudinary...');
                 const result = await uploadCircleImageToCloudinary(photoUrl, circleId);
                 updateData.imageUrl = result.imageUrl;
-                console.log('Circle image uploaded successfully:', result.imageUrl);
             }
 
             // Update the circle in Firestore
             await updateDoc(doc(db, 'circles', circleId), updateData);
 
-            console.log("Circle updated successfully");
             Alert.alert("Success", "Circle updated successfully!", [
                 { text: "OK", onPress: () => navigation.goBack() }
             ]);

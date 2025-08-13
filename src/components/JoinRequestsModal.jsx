@@ -18,20 +18,25 @@ import useCircleRequests from '../hooks/useCircleRequests';
 
 
 const JoinRequestItem = ({ request, onApprove, onDeny, onViewProfile, processing }) => {
+    const userId = request.requesterId || request.invitedUserId; // Support both old and new field names
+    const userPhotoUrl = request.requesterPhotoUrl || request.invitedUserPhotoUrl;
+    const username = request.requesterUsername || request.invitedUserUsername || 'Unknown User';
+    const userEmail = request.requesterEmail || request.invitedUserEmail || '';
+
     return (
         <View style={styles.requestCard}>
             <View style={styles.requestHeader}>
                 <View style={styles.userInfo}>
                     <View style={styles.avatar}>
-                        {request.avatarPhoto ? (
-                            <Image source={{ uri: request.avatarPhoto }} style={styles.avatarImage} />
+                        {userPhotoUrl ? (
+                            <Image source={{ uri: userPhotoUrl }} style={styles.avatarImage} />
                         ) : (
                             <Ionicons name="person" size={24} color={COLORS.text} />
                         )}
                     </View>
                     <View style={styles.userDetails}>
-                        <Text style={styles.userName}>{request.username || 'Unknown User'}</Text>
-                        <Text style={styles.userEmail}>{request.email || ''}</Text>
+                        <Text style={styles.userName}>{username}</Text>
+                        <Text style={styles.userEmail}>{userEmail}</Text>
                         <Text style={styles.requestDate}>
                             {request.createdAt?.toDate?.()?.toLocaleDateString() || 'Recently'}
                         </Text>
@@ -39,7 +44,7 @@ const JoinRequestItem = ({ request, onApprove, onDeny, onViewProfile, processing
                 </View>
                 <TouchableOpacity
                     style={styles.profileButton}
-                    onPress={() => onViewProfile(request.userId)}
+                    onPress={() => onViewProfile(userId)}
                     activeOpacity={0.7}
                 >
                     <Ionicons name="person-circle" size={20} color={COLORS.primary} />

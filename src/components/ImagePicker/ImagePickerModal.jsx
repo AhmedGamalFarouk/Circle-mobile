@@ -38,9 +38,6 @@ const ImagePickerModal = ({
 
     const pickImageFromLibrary = async () => {
         try {
-            console.log('Starting image picker from library...');
-            console.log('IMAGE_UPLOAD_SETTINGS:', IMAGE_UPLOAD_SETTINGS);
-
             const hasPermission = await requestPermissions();
             if (!hasPermission) return;
 
@@ -63,17 +60,9 @@ const ImagePickerModal = ({
 
             if (!result.canceled && result.assets[0]) {
                 const asset = result.assets[0];
-                console.log('Selected asset:', {
-                    uri: asset.uri,
-                    width: asset.width,
-                    height: asset.height,
-                    fileSize: asset.fileSize
-                });
 
                 // Validate file
                 const validation = validateImageFile(asset.uri, imageType);
-                console.log('Validation result:', validation);
-
                 if (!validation.valid) {
                     Alert.alert('Invalid File', validation.error);
                     return;
@@ -81,8 +70,6 @@ const ImagePickerModal = ({
 
                 // Check file size (if available)
                 const maxFileSize = IMAGE_UPLOAD_SETTINGS?.MAX_FILE_SIZE || 5 * 1024 * 1024; // 5MB default
-                console.log('File size check:', { fileSize: asset.fileSize, maxFileSize });
-
                 if (asset.fileSize && asset.fileSize > maxFileSize) {
                     Alert.alert(
                         'File Too Large',
@@ -91,7 +78,6 @@ const ImagePickerModal = ({
                     return;
                 }
 
-                console.log('Image validation passed, calling onImageSelected');
                 onImageSelected({
                     uri: asset.uri,
                     base64: asset.base64,

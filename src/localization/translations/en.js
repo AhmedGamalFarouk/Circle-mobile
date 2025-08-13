@@ -126,6 +126,7 @@ export default {
 
     // Settings
     settings: {
+        settings: 'Settings',
         account: 'Account',
         privacy: 'Privacy',
         appearance: 'Appearance',
@@ -261,6 +262,15 @@ export default {
         eventCreated: 'Event created successfully',
         photoUpdated: 'Photo updated successfully',
         settingsSaved: 'Settings saved successfully',
+    },
+
+    // System messages
+    systemMessages: {
+        userJoined: '{{username}} just joined',
+        userLeft: '{{username}} left the circle',
+        userInvited: '{{username}} was invited by {{inviter}}',
+        circleCreated: 'Circle was created',
+        welcomeToCircle: 'Welcome to {{circleName}}!',
     },
 
     // Circle Creation

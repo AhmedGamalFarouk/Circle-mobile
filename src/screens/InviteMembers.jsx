@@ -8,7 +8,8 @@ import {
     TouchableOpacity,
     Image,
     ActivityIndicator,
-    Alert
+    Alert,
+    SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -143,7 +144,7 @@ const InviteMembers = ({ route, navigation }) => {
     };
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -211,7 +212,7 @@ const InviteMembers = ({ route, navigation }) => {
                     />
                 )}
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -226,6 +227,7 @@ const getStyles = (colors) => StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 16,
+        paddingTop: 20,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
     },

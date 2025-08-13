@@ -38,7 +38,7 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
                 });
                 setAudioModeSet(true);
             } catch (error) {
-                console.log('Error setting audio mode:', error);
+                console.error('Error setting audio mode:', error);
                 setAudioModeSet(true); // Continue anyway
             }
         };
@@ -49,9 +49,8 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
     useEffect(() => {
         return sound
             ? () => {
-                console.log('Cleaning up sound');
                 sound.unloadAsync().catch(error => {
-                    console.log('Error unloading sound:', error);
+                    console.error('Error unloading sound:', error);
                 });
             }
             : undefined;
@@ -86,7 +85,6 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
 
     const playSound = async () => {
         if (!audioModeSet) {
-            console.log('Audio mode not set yet, waiting...');
             return;
         }
 
@@ -117,7 +115,6 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
                     } else {
                         // If at the end or finished, reset to beginning for replay
                         if (status.positionMillis >= status.durationMillis - 100 || status.didJustFinish) {
-                            console.log('Resetting audio for replay');
                             await resetAndPlay(sound);
                         } else {
                             await sound.playAsync();
@@ -129,7 +126,7 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
                     try {
                         await sound.unloadAsync();
                     } catch (unloadError) {
-                        console.log('Error unloading sound:', unloadError);
+                        console.error('Error unloading sound:', unloadError);
                     }
                     setSound(null);
                     // Recursively call playSound to create new sound
@@ -138,8 +135,6 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
                 }
             } else {
                 // Create new sound
-                console.log('Creating new sound for:', audioUrl);
-
                 const { sound: newSound } = await Audio.Sound.createAsync(
                     { uri: audioUrl },
                     {
@@ -196,7 +191,7 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
                 try {
                     await sound.unloadAsync();
                 } catch (cleanupError) {
-                    console.log('Error cleaning up sound:', cleanupError);
+                    console.error('Error cleaning up sound:', cleanupError);
                 }
                 setSound(null);
             }
@@ -254,7 +249,7 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
                     await sound.setRateAsync(newSpeed, true); // true = shouldCorrectPitch
                 }
             } catch (error) {
-                console.log('Error changing playback speed:', error);
+                console.error('Error changing playback speed:', error);
             }
         }
     };
@@ -267,7 +262,7 @@ const VoicePlayer = ({ audioUrl, duration, isCurrentUser, timestamp, onPlaybackS
             await soundInstance.playAsync();
             setIsPlaying(true);
         } catch (error) {
-            console.log('Error resetting and playing:', error);
+            console.error('Error resetting and playing:', error);
             throw error;
         }
     };

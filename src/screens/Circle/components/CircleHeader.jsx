@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 10,
-    marginTop: 20,
     backgroundColor: COLORS.dark,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.glass,
@@ -58,7 +57,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: FONTS.heading,
   },
-
 });
 
 export default CircleHeader;

@@ -126,6 +126,7 @@ export default {
 
     // Settings
     settings: {
+        settings: 'الإعدادات',
         account: 'الحساب',
         privacy: 'الخصوصية',
         appearance: 'المظهر',
@@ -261,6 +262,15 @@ export default {
         eventCreated: 'تم إنشاء الحدث بنجاح',
         photoUpdated: 'تم تحديث الصورة بنجاح',
         settingsSaved: 'تم حفظ الإعدادات بنجاح',
+    },
+
+    // System messages
+    systemMessages: {
+        userJoined: '{{username}} انضم للتو',
+        userLeft: '{{username}} غادر الدائرة',
+        userInvited: 'تم دعوة {{username}} من قبل {{inviter}}',
+        circleCreated: 'تم إنشاء الدائرة',
+        welcomeToCircle: 'مرحباً بك في {{circleName}}!',
     },
 
     // Circle Creation

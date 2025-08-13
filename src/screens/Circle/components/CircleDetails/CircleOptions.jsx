@@ -7,6 +7,7 @@ import useAuth from '../../../../hooks/useAuth';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
 import useCircleRequests from '../../../../hooks/useCircleRequests';
 import JoinRequestsModal from '../../../../components/JoinRequestsModal';
+import { circleMembersService } from '../../../../firebase/circleMembersService';
 
 
 const CircleOptions = ({ circleId, circle, navigation }) => {
@@ -22,16 +23,49 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
     const currentUserIsAdmin = isAdmin(user?.uid);
 
     const handleLeaveCircle = () => {
+        // Validate user and circle data
+        if (!user?.uid) {
+            Alert.alert("Error", "User not authenticated. Please try again.");
+            return;
+        }
+
+        if (!circleId) {
+            Alert.alert("Error", "Circle not found. Please try again.");
+            return;
+        }
+
         Alert.alert(
             "Leave Circle",
-            `Are you sure you want to leave "${circle.name}"? You won't be able to see messages or participate in polls.`,
+            `Are you sure you want to leave "${circle?.circleName || circle?.name || 'this circle'}"? You won't be able to see messages or participate in polls.`,
             [
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Leave",
-                    onPress: () => {
-                        console.log(`Leaving circle ${circleId}`);
-                        navigation.goBack();
+                    onPress: async () => {
+                        try {
+                            const result = await circleMembersService.removeMemberFromCircle(circleId, user.uid);
+
+                            if (result.success) {
+                                // Reset navigation stack and go to Home to prevent going back
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'Home' }],
+                                });
+                            } else {
+                                Alert.alert(
+                                    "Error",
+                                    result.error || "Failed to leave circle. Please try again.",
+                                    [{ text: "OK" }]
+                                );
+                            }
+                        } catch (error) {
+                            console.error('Error leaving circle:', error);
+                            Alert.alert(
+                                "Error",
+                                "An unexpected error occurred. Please try again.",
+                                [{ text: "OK" }]
+                            );
+                        }
                     },
                     style: "destructive"
                 }
@@ -47,7 +81,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Clear",
-                    onPress: () => console.log(`Clearing chat for circle ${circleId}`),
+                    onPress: () => { /* Implement chat clearing logic here */ },
                     style: "destructive"
                 }
             ]
@@ -64,9 +98,9 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             "What would you like to report about this circle?",
             [
                 { text: "Cancel", style: "cancel" },
-                { text: "Inappropriate Content", onPress: () => console.log('Reporting inappropriate content') },
-                { text: "Spam", onPress: () => console.log('Reporting spam') },
-                { text: "Other", onPress: () => console.log('Reporting other') },
+                { text: "Inappropriate Content", onPress: () => { /* Implement reporting logic */ } },
+                { text: "Spam", onPress: () => { /* Implement reporting logic */ } },
+                { text: "Other", onPress: () => { /* Implement reporting logic */ } },
             ]
         );
     };

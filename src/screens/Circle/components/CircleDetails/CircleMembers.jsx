@@ -25,15 +25,14 @@ const CircleMembers = ({ circleId }) => {
         >
             <View style={styles.avatarContainer}>
                 <Image
-                    source={{ uri: item.photoURL || 'https://via.placeholder.com/60' }}
+                    source={{ uri: item.userAvatar || item.photoURL || 'https://via.placeholder.com/60' }}
                     style={styles.avatar}
-                    onError={(error) => console.log('Member avatar load error:', error)}
                 />
                 {item.isAdmin && <View style={styles.adminIndicator} />}
             </View>
             {showName && (
                 <Text style={styles.memberName} numberOfLines={1}>
-                    {item.username || 'Unknown User'}
+                    {item.userName || item.username || 'Unknown User'}
                 </Text>
             )}
         </TouchableOpacity>

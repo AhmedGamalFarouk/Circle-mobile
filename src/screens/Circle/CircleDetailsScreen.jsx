@@ -9,6 +9,7 @@ import CircleActions from './components/CircleDetails/CircleActions';
 import CircleActivity from './components/CircleDetails/CircleActivity';
 import useCircleDetails from '../../hooks/useCircleDetails';
 import { getCircleImageUrl } from '../../utils/imageUtils';
+import StandardHeader from '../../components/StandardHeader';
 
 const CircleDetailsScreen = () => {
     const { colors } = useTheme();
@@ -46,11 +47,13 @@ const CircleDetailsScreen = () => {
         );
     }
 
-    // Debug logging
-    console.log('Circle data:', circle);
-
     return (
         <View style={styles.container}>
+            <StandardHeader
+                title={circle?.circleName || circle?.name || 'Circle Details'}
+                showBackButton={true}
+                navigation={navigation}
+            />
             <Animated.ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}

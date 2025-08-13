@@ -59,17 +59,24 @@ const useCircleRequests = (circleId = null, adminId = null) => {
     }, [circleId, adminId]);
 
     useEffect(() => {
-        if (circleId && user) {
+        if (circleId && user?.uid) {
             const checkPending = async () => {
                 const pending = await circleRequestsService.checkExistingRequest(circleId, user.uid);
                 setHasPendingRequest(pending);
             };
             checkPending();
+        } else {
+            setHasPendingRequest(false);
         }
     }, [circleId, user]);
 
     // Helper functions
     const createJoinRequest = async (circleId, userId, adminId, circleName, userName) => {
+        // Validate inputs
+        if (!circleId || !userId) {
+            return { success: false, error: 'Missing required parameters' };
+        }
+
         // Check if request already exists
         const hasExistingRequest = await circleRequestsService.checkExistingRequest(circleId, userId);
         if (hasExistingRequest) {
@@ -87,6 +94,11 @@ const useCircleRequests = (circleId = null, adminId = null) => {
     };
 
     const createInvitation = async (circleId, userId, inviterId, circleName, inviterName, ownerId) => {
+        // Validate inputs
+        if (!circleId || !userId || !inviterId) {
+            return { success: false, error: 'Missing required parameters' };
+        }
+
         // Check if invitation already exists
         const hasExistingInvitation = await circleRequestsService.checkExistingInvitation(circleId, userId);
         if (hasExistingInvitation) {
@@ -104,7 +116,7 @@ const useCircleRequests = (circleId = null, adminId = null) => {
     };
 
     const approveRequest = async (requestId) => {
-        return await circleRequestsService.approveRequest(requestId, circleMembersService.addMemberToCircle);
+        return await circleRequestsService.approveRequest(requestId, circleMembersService.addMemberToCircle, user?.uid);
     };
 
     const denyRequest = async (requestId) => {
@@ -112,7 +124,7 @@ const useCircleRequests = (circleId = null, adminId = null) => {
     };
 
     const approveAllRequests = async (circleId) => {
-        return await circleRequestsService.approveAllRequests(circleId, circleMembersService.addMemberToCircle);
+        return await circleRequestsService.approveAllRequests(circleId, circleMembersService.addMemberToCircle, user?.uid);
     };
 
     const denyAllRequests = async (circleId) => {

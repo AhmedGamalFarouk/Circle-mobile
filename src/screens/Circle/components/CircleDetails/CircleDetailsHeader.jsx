@@ -14,10 +14,6 @@ const CircleDetailsHeader = ({ name, description, image, createdAt, circleId }) 
     const { memberCount, loading } = useCircleMembers(circleId);
     const styles = getStyles(colors);
 
-    // Debug logging
-    console.log('CircleDetailsHeader props:', { name, description, image, memberCount, createdAt });
-    console.log('Using image URL:', image);
-
     const formatDate = (timestamp) => {
         if (!timestamp) return '';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -37,9 +33,7 @@ const CircleDetailsHeader = ({ name, description, image, createdAt, circleId }) 
                     resizeMode="cover"
                     onError={(error) => {
                         console.log('Circle image load error:', error);
-                        console.log('Attempted to load image:', image);
                     }}
-                    onLoad={() => console.log('Circle image loaded successfully:', image)}
                 >
                     <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}

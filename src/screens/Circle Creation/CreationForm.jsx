@@ -12,6 +12,7 @@ import useAuth from '../../hooks/useAuth';
 import useUserProfile from '../../hooks/useUserProfile';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
+import StandardHeader from '../../components/StandardHeader';
 
 const CreationForm = ({ navigation }) => {
     const { t } = useLocalization()
@@ -66,16 +67,6 @@ const CreationForm = ({ navigation }) => {
             alert("Please log in to create a circle."); // Provide UI feedback
             return;
         }
-        console.log("Attempting to create circle with data:", { // Removed temporary log
-            circleName,
-            description,
-            photoUrl,
-            circlePrivacy,
-            circleType,
-            expiresAt: circleType === 'flash' ? expiresAt : null,
-            interests,
-            createdBy: user.uid,
-        });
         try {
             const circleRef = await addDoc(collection(db, 'circles'), {
                 circleName,
@@ -91,7 +82,6 @@ const CreationForm = ({ navigation }) => {
 
             let uploadedPhotoUrl = null;
             if (photoUrl) {
-                console.log('Uploading circle image to Cloudinary...');
                 const result = await uploadCircleImageToCloudinary(photoUrl, circleRef.id);
                 uploadedPhotoUrl = result.imageUrl;
 
@@ -99,7 +89,6 @@ const CreationForm = ({ navigation }) => {
                 await updateDoc(doc(db, 'circles', circleRef.id), {
                     imageUrl: uploadedPhotoUrl,
                 });
-                console.log('Circle image uploaded successfully:', uploadedPhotoUrl);
             }
 
             // Add the creator to their own joinedCircles array
@@ -121,7 +110,6 @@ const CreationForm = ({ navigation }) => {
             // Update user's circles stat
             await incrementUserStat(user.uid, 'circles');
 
-            console.log("Circle created successfully with ID:", circleRef.id);
             navigation.navigate('InviteAndShare', { circleName, circleId: circleRef.id });
         } catch (error) {
             console.error("Error creating circle: ", error);
@@ -152,14 +140,17 @@ const CreationForm = ({ navigation }) => {
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colorVars.background }]}>
+            <StandardHeader
+                title={t('circleCreation.createCircle')}
+                showBackButton={true}
+                rightIcon={null}
+                navigation={navigation}
+                onRightPress={handleCreate}
+            />
             <ScrollView style={styles.container} contentContainerStyle={{ backgroundColor: colorVars.background }}>
-                <View style={[styles.header, { backgroundColor: colorVars.background }]}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color={colorVars.textPrimary} />
-                    </TouchableOpacity>
-                    <Text style={[styles.title, { color: colorVars.textPrimary }]}>{t('circleCreation.createCircle')}</Text>
-                    <TouchableOpacity onPress={handleCreate} disabled={isCreateDisabled} style={styles.createButtonHeader}>
-                        <Text style={[styles.createButtonTextHeader, { color: colorVars.primary }, isCreateDisabled && { color: colorVars.disabled }]}>{t('circleCreation.create')}</Text>
+                <View style={[styles.createButtonContainer, { backgroundColor: colorVars.background }]}>
+                    <TouchableOpacity onPress={handleCreate} disabled={isCreateDisabled} style={[styles.createButton, { backgroundColor: isCreateDisabled ? colorVars.disabled : colorVars.primary }]}>
+                        <Text style={[styles.createButtonText, { color: colorVars.background }]}>{t('circleCreation.create')}</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -363,27 +354,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 20,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+    createButtonContainer: {
+        marginBottom: 20,
+        paddingHorizontal: 20,
+    },
+    createButton: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: RADII.rounded,
         alignItems: 'center',
-        marginBottom: 30,
     },
-    backButton: {
-        padding: 5,
-    },
-    title: {
-        fontSize: 17,
-        fontWeight: 'bold',
-    },
-    createButtonHeader: {
-        padding: 5,
-    },
-    createButtonTextHeader: {
+    createButtonText: {
         fontWeight: 'bold',
         fontSize: 16,
-    },
-    disabledButtonText: {
     },
     avatarUploader: {
         alignItems: 'center',

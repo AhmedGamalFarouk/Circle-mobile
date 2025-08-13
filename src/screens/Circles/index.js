@@ -9,6 +9,7 @@ import useAuth from '../../hooks/useAuth'
 import CircleCard from './components/CircleCard'
 import EmptyState from './components/EmptyState'
 import { useTheme } from '../../context/ThemeContext'
+import StandardHeader from '../../components/StandardHeader'
 
 
 
@@ -30,7 +31,6 @@ const Circles = ({ navigation }) => {
                 ...doc.data()
             }))
             setCircles(circlesData)
-            console.log('Fetched circles:', circlesData.length)
         } catch (err) {
             console.error('Error fetching circles:', err)
             setError('Failed to load circles. Please try again.')
@@ -51,7 +51,6 @@ const Circles = ({ navigation }) => {
     }, [])
 
     const handleCirclePress = (circle) => {
-        console.log('Pressed circle:', circle.circleName)
         // Navigate to circle details or chat
         if (navigation) {
             navigation.navigate('Circle', { circleId: circle.id, name: circle.circleName })
@@ -75,17 +74,12 @@ const Circles = ({ navigation }) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={[styles.header, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <View style={styles.leftContainer}>
-                    {/* Empty space for consistency with other headers */}
-                </View>
-                <View style={styles.centerContainer}>
-                    <Text style={[styles.headerTitle, { color: colors.text }]}>Circles</Text>
-                </View>
-                <TouchableOpacity style={styles.rightContainer} onPress={handleCreateCircle}>
-                    <Ionicons name="add" size={24} color={colors.text} />
-                </TouchableOpacity>
-            </View>
+            <StandardHeader
+                title="Circles"
+                rightIcon="add"
+                onRightPress={handleCreateCircle}
+                navigation={navigation}
+            />
 
             {error ? (
                 <View style={[styles.errorContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
@@ -137,35 +131,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
         fontSize: 16,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        marginTop: 20,
-        borderBottomWidth: 1,
 
-    },
-    leftContainer: {
-        width: 44, // Same width as icon container for balance
-    },
-    centerContainer: {
-
-        flex: 1,
-        alignItems: 'center',
-        fontSize: 22,
-        fontWeight: 'bold',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    rightContainer: {
-        padding: 10,
-        width: 44,
-        alignItems: 'center',
-    },
     list: {
         flex: 1,
     },
