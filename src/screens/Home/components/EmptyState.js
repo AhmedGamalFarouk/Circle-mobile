@@ -4,18 +4,18 @@ import { COLORS, RADII } from "../../../constants/constants";
 import { Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../../context/ThemeContext";
 
-const EmptyState = ({ onRefresh }) => {
+const EmptyState = ({ onRefresh, message = "No Circles Found", subMessage = "Create your first circle or join existing ones to get started!" }) => {
     const { colors } = useTheme()
     return (
         <View style={styles.emptyState}>
             <Ionicons name="people-circle-outline" size={80} color={colors.text} />
-            <Text style={styles.emptyTitle}>No Circles Found</Text>
-            <Text style={styles.emptySubtitle}>
-                Create your first circle or join existing ones to get started!
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{message}</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.text }]}>
+                {subMessage}
             </Text>
-            <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
-                <Ionicons name="refresh" size={20} color={colors.text} />
-                <Text style={styles.refreshButtonText}>Refresh</Text>
+            <TouchableOpacity style={[styles.refreshButton, { backgroundColor: colors.primary }]} onPress={onRefresh}>
+                <Ionicons name="refresh" size={20} color={colors.background} />
+                <Text style={[styles.refreshButtonText, { color: colors.background }]}>Refresh</Text>
             </TouchableOpacity>
         </View>
     )
@@ -31,14 +31,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 40,
     },
     emptyTitle: {
-        color: COLORS.light,
         fontSize: 20,
         fontWeight: 'bold',
         marginTop: 20,
         marginBottom: 10,
     },
     emptySubtitle: {
-        color: COLORS.text,
         fontSize: 16,
         textAlign: 'center',
         lineHeight: 24,
@@ -47,14 +45,12 @@ const styles = StyleSheet.create({
     refreshButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.primary,
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: RADII.rounded,
         gap: 8,
     },
     refreshButtonText: {
-        color: COLORS.light,
         fontSize: 16,
         fontWeight: '600',
     },

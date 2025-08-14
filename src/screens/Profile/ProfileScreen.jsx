@@ -35,6 +35,8 @@ import DraggableCard from "./components/DraggableCard";
 import MySquad from "./components/MySquad";
 import JoinedCircles from "./components/JoinedCircles";
 import LoadingSkeleton from "./components/LoadingSkeleton";
+import UserInterests from "./components/UserInterests";
+import InterestInputModal from "./components/InterestInputModal";
 import ImagePickerModal from "../../components/ImagePicker/ImagePickerModal";
 import { auth, db } from "../../firebase/config";
 import {
@@ -86,6 +88,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         setEditingUserBio("");
         setEditingProfileImage(null);
         setEditingCoverImage(null);
+        setEditingInterests([]);
     }, [userId]);
 
     // Handle tab press to reset to own profile
@@ -119,6 +122,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const [showImagePicker, setShowImagePicker] = useState(false);
     const [currentImageForOptions, setCurrentImageForOptions] = useState(null);
     const [currentImageType, setCurrentImageType] = useState(null);
+    const [editingInterests, setEditingInterests] = useState([]);
+    const [showInterestModal, setShowInterestModal] = useState(false);
 
     // Animation values
     const scrollY = useRef(new Animated.Value(0)).current;
@@ -232,6 +237,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             const updatedData = {
                 username: editingUserName,
                 bio: editingUserBio,
+                interests: editingInterests,
             };
 
             // Upload profile image if changed
@@ -338,6 +344,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         editingUserBio,
         editingProfileImage,
         editingCoverImage,
+        editingInterests,
         profile,
         navigation,
     ]);
@@ -363,7 +370,21 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                 ? { uri: profile.coverPhoto }
                 : { uri: PLACEHOLDER_COVER_URL }
         );
+        setEditingInterests(profile?.interests || []);
     }, [profile]);
+
+    // Interest handling functions
+    const handleAddInterest = useCallback(() => {
+        setShowInterestModal(true);
+    }, []);
+
+    const handleInterestAdded = useCallback((newInterest) => {
+        setEditingInterests(prev => [...prev, newInterest]);
+    }, []);
+
+    const handleRemoveInterest = useCallback((index) => {
+        setEditingInterests(prev => prev.filter((_, i) => i !== index));
+    }, []);
 
     const handleImagePress = useCallback(
         (imageUri, imageType) => {
@@ -786,6 +807,15 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         loading={loading}
                     />
 
+                    {/* User Interests */}
+                    <UserInterests
+                        interests={isEditing ? editingInterests : profile?.interests}
+                        isEditing={isEditing}
+                        onAddInterest={handleAddInterest}
+                        onRemoveInterest={handleRemoveInterest}
+                        isOwnProfile={isOwnProfile}
+                    />
+
                     {/* Enhanced Profile Actions */}
                     {!isOwnProfile && (
                         <ProfileActions
@@ -817,6 +847,13 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                 onChooseNew={() => openImagePicker(currentImageType)}
                 onDelete={handleDeleteImage}
                 imageType={currentImageType}
+            />
+
+            <InterestInputModal
+                visible={showInterestModal}
+                onClose={() => setShowInterestModal(false)}
+                onAddInterest={handleInterestAdded}
+                existingInterests={editingInterests}
             />
 
             <ImagePickerModal

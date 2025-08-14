@@ -17,8 +17,8 @@ const BottomNavBar = () => {
       <TouchableOpacity onPress={() => navigation.navigate('Home')}>
         <Ionicons name="home" size={24} color={getIconColor('Home')} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Circle')}>
-        <Ionicons name="people" size={24} color={getIconColor('Circle')} />
+      <TouchableOpacity onPress={() => navigation.navigate('Circles')}>
+        <Ionicons name="people" size={24} color={getIconColor('Circles')} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => { /* Add pressed */ }}>
         <Ionicons name="add-circle" size={24} color={getIconColor('Add')} />

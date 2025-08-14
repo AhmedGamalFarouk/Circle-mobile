@@ -1,6 +1,5 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { COLORS } from '../constants/constants';
 import CircleScreen from '../screens/Circle/CircleScreen';
 import CreationForm from '../screens/Circle Creation/CreationForm';
 import InviteAndShare from '../screens/Circle Creation/InviteAndShare';
@@ -24,7 +23,7 @@ const CircleStack = () => {
             <Stack.Screen name="InviteAndShare" component={InviteAndShare} />
             <Stack.Screen name="CircleDetails" component={CircleDetailsScreen} options={{ headerShown: false }} />
             <Stack.Screen name="EditCircle" component={EditCircleScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="InviteMembers" component={InviteMembers} options={{ headerShown: false }} />
+
         </Stack.Navigator>
     );
 };
