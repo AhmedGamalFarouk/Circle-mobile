@@ -9,6 +9,7 @@ import ToggleOption from './components/ToggleOption';
 import SelectOption from './components/SelectOption';
 import ActionButton from './components/ActionButton';
 import MyPlan from './components/MyPlan';
+import StandardHeader from '../../components/StandardHeader';
 
 const SettingsScreen = ({ navigation }) => {
     const { theme, toggleTheme, colors } = useTheme();
@@ -51,7 +52,10 @@ const SettingsScreen = ({ navigation }) => {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* <SettingsHeader navigation={navigation} /> */}
+            <StandardHeader
+                title={t('settings.settings')}
+                navigation={navigation}
+            />
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <SettingsSection title={t('settings.privacy')}>

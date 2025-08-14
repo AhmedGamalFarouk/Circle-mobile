@@ -33,7 +33,7 @@ export const ThemeProvider = ({ children }) => {
                 setTheme(savedTheme);
             }
         } catch (error) {
-            console.log('Error loading theme:', error);
+            console.error('Error loading theme:', error);
         }
     };
 
@@ -42,7 +42,7 @@ export const ThemeProvider = ({ children }) => {
             await AsyncStorage.setItem('userTheme', newTheme);
             setTheme(newTheme);
         } catch (error) {
-            console.log('Error saving theme:', error);
+            console.error('Error saving theme:', error);
         }
     };
 

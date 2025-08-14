@@ -44,16 +44,19 @@ const DynamicBottomTab = () => {
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="home" color={color} size={size} />
                 ),
+                headerShown: false,
             }} />
             <Tab.Screen name={isArabic ? "الملف الشخصي" : "Profile"} component={ProfileScreen} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="person" color={color} size={size} />
                 ),
+                headerShown: false,
             }} />
             <Tab.Screen name={isArabic ? "استكشاف" : "Explore"} component={Explore} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="search" color={color} size={size} />
                 ),
+                headerShown: false,
             }} />
             <Tab.Screen name={isArabic ? "الدوائر" : "Circles"} component={CircleStack} options={{
                 tabBarIcon: ({ color, size }) => (
@@ -65,6 +68,7 @@ const DynamicBottomTab = () => {
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="settings" color={color} size={size} />
                 ),
+                headerShown: false,
             }} />
         </Tab.Navigator>
     );

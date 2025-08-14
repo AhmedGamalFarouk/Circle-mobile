@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 import { getUserAvatarUrl } from '../../../../utils/imageUtils';
 import MembersList from '../MembersList';
+import useCircleMembers from '../../../../hooks/useCircleMembers';
 
-const CircleMembers = ({ members = [], circleId }) => {
+const CircleMembers = ({ circleId }) => {
     const { colors } = useTheme();
     const navigation = useNavigation();
     const [showMembersList, setShowMembersList] = useState(false);
+    const { members, loading, memberCount } = useCircleMembers(circleId);
     const styles = getStyles(colors);
 
     const displayMembers = members.slice(0, 8); // Show first 8 members
@@ -18,20 +20,19 @@ const CircleMembers = ({ members = [], circleId }) => {
     const renderMember = ({ item, showName = true }) => (
         <TouchableOpacity
             style={[styles.memberItem, !showName && styles.memberItemCompact]}
-            onPress={() => navigation.navigate('Profile', { userId: item.id })}
+            onPress={() => navigation.navigate('Profile', { userId: item.userId })}
             activeOpacity={0.7}
         >
             <View style={styles.avatarContainer}>
                 <Image
-                    source={{ uri: item.avatar }}
+                    source={{ uri: item.userAvatar || item.photoURL || 'https://via.placeholder.com/60' }}
                     style={styles.avatar}
-                    onError={(error) => console.log('Member avatar load error:', error)}
                 />
-                {item.isOnline && <View style={styles.onlineIndicator} />}
+                {item.isAdmin && <View style={styles.adminIndicator} />}
             </View>
             {showName && (
                 <Text style={styles.memberName} numberOfLines={1}>
-                    {item.name || 'Unknown User'}
+                    {item.userName || item.username || 'Unknown User'}
                 </Text>
             )}
         </TouchableOpacity>
@@ -46,31 +47,40 @@ const CircleMembers = ({ members = [], circleId }) => {
                 onPress={() => setShowMembersList(true)}
                 activeOpacity={0.7}
             >
-                <Text style={styles.title}>Members ({members?.length || 0})</Text>
+                <Text style={styles.title}>
+                    Members ({loading ? '...' : memberCount})
+                </Text>
                 <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-                style={styles.membersContainer}
-                onPress={() => setShowMembersList(true)}
-                activeOpacity={0.7}
-            >
-                <FlatList
-                    data={displayMembers}
-                    renderItem={({ item }) => renderMember({ item })}
-                    keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.list}
-                    scrollEnabled={false}
-                />
+            {loading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={styles.loadingText}>Loading members...</Text>
+                </View>
+            ) : (
+                <TouchableOpacity
+                    style={styles.membersContainer}
+                    onPress={() => setShowMembersList(true)}
+                    activeOpacity={0.7}
+                >
+                    <FlatList
+                        data={displayMembers}
+                        renderItem={({ item }) => renderMember({ item })}
+                        keyExtractor={(item) => item.userId || Math.random().toString()}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.list}
+                        scrollEnabled={false}
+                    />
 
-                {remainingCount > 0 && (
-                    <View style={styles.moreButton}>
-                        <Text style={styles.moreButtonText}>+{remainingCount}</Text>
-                    </View>
-                )}
-            </TouchableOpacity>
+                    {remainingCount > 0 && (
+                        <View style={styles.moreButton}>
+                            <Text style={styles.moreButtonText}>+{remainingCount}</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            )}
 
             <MembersList
                 visible={showMembersList}
@@ -141,6 +151,19 @@ const getStyles = (colors) => StyleSheet.create({
         borderWidth: 2,
         borderColor: colors.background,
     },
+    adminIndicator: {
+        position: 'absolute',
+        bottom: 2,
+        right: 2,
+        width: 16,
+        height: 16,
+        borderRadius: RADII.circle,
+        backgroundColor: colors.primary,
+        borderWidth: 2,
+        borderColor: colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     memberName: {
         color: colors.text,
         marginTop: 8,
@@ -164,6 +187,17 @@ const getStyles = (colors) => StyleSheet.create({
         color: colors.textSecondary,
         fontSize: 14,
         fontWeight: '600',
+    },
+    loadingContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20,
+    },
+    loadingText: {
+        color: colors.textSecondary,
+        fontSize: 14,
+        marginLeft: 8,
     },
 });
 

@@ -4,17 +4,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../context/ThemeContext';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 import { getCircleImageUrl } from '../../../../utils/imageUtils';
+import useCircleMembers from '../../../../hooks/useCircleMembers';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HEADER_HEIGHT = 300;
 
-const CircleDetailsHeader = ({ name, description, image, memberCount, createdAt }) => {
+const CircleDetailsHeader = ({ name, description, image, createdAt, circleId }) => {
     const { colors } = useTheme();
+    const { memberCount, loading } = useCircleMembers(circleId);
     const styles = getStyles(colors);
-
-    // Debug logging
-    console.log('CircleDetailsHeader props:', { name, description, image, memberCount, createdAt });
-    console.log('Using image URL:', image);
 
     const formatDate = (timestamp) => {
         if (!timestamp) return '';
@@ -35,9 +33,7 @@ const CircleDetailsHeader = ({ name, description, image, memberCount, createdAt 
                     resizeMode="cover"
                     onError={(error) => {
                         console.log('Circle image load error:', error);
-                        console.log('Attempted to load image:', image);
                     }}
-                    onLoad={() => console.log('Circle image loaded successfully:', image)}
                 >
                     <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
@@ -53,7 +49,7 @@ const CircleDetailsHeader = ({ name, description, image, memberCount, createdAt 
                     </Text>
                     <View style={styles.metaInfo}>
                         <Text style={styles.memberCount}>
-                            {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                            {loading ? '...' : memberCount} {memberCount === 1 ? 'member' : 'members'}
                         </Text>
                         {createdAt && (
                             <Text style={styles.createdDate}>

@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/config';
-
+import { useEffect, useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase/config";
 
 const useUserProfile = (userId, isOwnProfile) => {
     const [profile, setProfile] = useState(null);
@@ -17,7 +16,7 @@ const useUserProfile = (userId, isOwnProfile) => {
         }
 
         setLoading(true);
-        const docRef = doc(db, 'users', userId);
+        const docRef = doc(db, "users", userId);
         const unsubscribe = onSnapshot(docRef, (doc) => {
             if (doc.exists()) {
                 const data = doc.data();

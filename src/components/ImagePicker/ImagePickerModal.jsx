@@ -38,9 +38,6 @@ const ImagePickerModal = ({
 
     const pickImageFromLibrary = async () => {
         try {
-            console.log('Starting image picker from library...');
-            console.log('IMAGE_UPLOAD_SETTINGS:', IMAGE_UPLOAD_SETTINGS);
-
             const hasPermission = await requestPermissions();
             if (!hasPermission) return;
 
@@ -63,17 +60,9 @@ const ImagePickerModal = ({
 
             if (!result.canceled && result.assets[0]) {
                 const asset = result.assets[0];
-                console.log('Selected asset:', {
-                    uri: asset.uri,
-                    width: asset.width,
-                    height: asset.height,
-                    fileSize: asset.fileSize
-                });
 
                 // Validate file
                 const validation = validateImageFile(asset.uri, imageType);
-                console.log('Validation result:', validation);
-
                 if (!validation.valid) {
                     Alert.alert('Invalid File', validation.error);
                     return;
@@ -81,8 +70,6 @@ const ImagePickerModal = ({
 
                 // Check file size (if available)
                 const maxFileSize = IMAGE_UPLOAD_SETTINGS?.MAX_FILE_SIZE || 5 * 1024 * 1024; // 5MB default
-                console.log('File size check:', { fileSize: asset.fileSize, maxFileSize });
-
                 if (asset.fileSize && asset.fileSize > maxFileSize) {
                     Alert.alert(
                         'File Too Large',
@@ -91,7 +78,6 @@ const ImagePickerModal = ({
                     return;
                 }
 
-                console.log('Image validation passed, calling onImageSelected');
                 onImageSelected({
                     uri: asset.uri,
                     base64: asset.base64,
@@ -165,11 +151,11 @@ const ImagePickerModal = ({
     return (
         <Modal
             animationType="slide"
-            transparent={true}
+            presentationStyle="pageSheet"
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={styles.centeredView}>
+            <View style={styles.container}>
                 <View style={styles.modalView}>
                     <Text style={styles.modalTitle}>{title}</Text>
                     <Text style={styles.modalSubtitle}>
@@ -206,26 +192,17 @@ const ImagePickerModal = ({
 };
 
 const getStyles = (colors) => StyleSheet.create({
-    centeredView: {
+    container: {
         flex: 1,
+        backgroundColor: colors.background,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     modalView: {
-        margin: 20,
         backgroundColor: colors.surface,
         borderRadius: RADII.large,
         padding: 30,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
         width: '85%',
         maxWidth: 400,
     },

@@ -45,11 +45,6 @@ const useCircleDetails = (circleId) => {
                 const members = await fetchMembersData(circleId);
 
                 const realImage = getCircleImageUrl(circleData);
-                console.log('Circle image data (refetch):', {
-                    circleData: circleData,
-                    finalImage: realImage
-                });
-
                 setCircle({
                     ...circleData,
                     members,
@@ -87,11 +82,6 @@ const useCircleDetails = (circleId) => {
 
                 // Add enhanced data with real circle image and member count
                 const realImage = getCircleImageUrl(circleData);
-                console.log('Circle image data:', {
-                    circleData: circleData,
-                    finalImage: realImage
-                });
-
                 const enhancedCircle = {
                     ...circleData,
                     members,

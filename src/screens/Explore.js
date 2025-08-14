@@ -4,6 +4,7 @@ import MapView, { Marker, Callout } from 'react-native-maps';
 import useCurrentLocation from '../hooks/useCurrentLocation';
 import { COLORS } from '../constants/constants';
 import { useTheme } from '../context/ThemeContext';
+import StandardHeader from '../components/StandardHeader';
 
 const circles = [
   {
@@ -46,52 +47,71 @@ const CircleCallout = React.memo(({ circle, onJoin }) => (
   </View>
 ));
 
-const Explore = () => {
+const Explore = ({ navigation }) => {
   const { location, error } = useCurrentLocation();
   const { colors } = useTheme()
+
   if (error) {
     return (
-      <View style={[styles.loading, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.text }]}>Error: {error.message || 'Failed to get location.'}</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StandardHeader
+          title="Explore"
+          navigation={navigation}
+        />
+        <View style={[styles.loading, { backgroundColor: colors.background }]}>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Error: {error.message || 'Failed to get location.'}</Text>
+        </View>
       </View>
     );
   }
 
   if (!location) {
     return (
-      <View style={[styles.loading, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StandardHeader
+          title="Explore"
+          navigation={navigation}
+        />
+        <View style={[styles.loading, { backgroundColor: colors.background }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <MapView
-      style={[styles.map, { backgroundColor: colors.background }]}
-      initialRegion={{
-        latitude: location.coords.latitude || 30.06263,
-        longitude: location.coords.longitude || 31.25,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      }}
-    >
-      {circles.map((circle) => (
-        <Marker
-          key={circle.id}
-          coordinate={{
-            latitude: circle.lat,
-            longitude: circle.lng,
-          }}
-          image={require('../../assets/circle.gif')}
-          accessibilityLabel={`Marker for ${circle.name}`}
-        >
-          <Callout style={[styles.calloutContainer, { backgroundColor: colors.background }]} tooltip={false}>
-            <CircleCallout circle={circle} onJoin={() => { /* handle join */ }} />
-          </Callout>
-        </Marker>
-      ))}
-    </MapView>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StandardHeader
+        title="Explore"
+        navigation={navigation}
+      />
+      <MapView
+        style={[styles.map, { backgroundColor: colors.background }]}
+        initialRegion={{
+          latitude: location.coords.latitude || 30.06263,
+          longitude: location.coords.longitude || 31.25,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }}
+      >
+        {circles.map((circle) => (
+          <Marker
+            key={circle.id}
+            coordinate={{
+              latitude: circle.lat,
+              longitude: circle.lng,
+            }}
+            image={require('../../assets/circle.gif')}
+            accessibilityLabel={`Marker for ${circle.name}`}
+          >
+            <Callout style={[styles.calloutContainer, { backgroundColor: colors.background }]} tooltip={false}>
+              <CircleCallout circle={circle} onJoin={() => { /* handle join */ }} />
+            </Callout>
+          </Marker>
+        ))}
+      </MapView>
+    </View>
   );
 };
 

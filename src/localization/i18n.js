@@ -20,7 +20,7 @@ const LANGUAGE_DETECTOR = {
             // Users can manually change language in settings
             return callback('en');
         } catch (error) {
-            console.log('Error detecting language:', error);
+            // console.error('Error detecting language:', error);
             return callback('en');
         }
     },
@@ -29,7 +29,7 @@ const LANGUAGE_DETECTOR = {
         try {
             await AsyncStorage.setItem('user-language', language);
         } catch (error) {
-            console.log('Error saving language:', error);
+            // console.error('Error saving language:', error);
         }
     },
 };
@@ -49,7 +49,7 @@ i18n
     .init({
         resources,
         fallbackLng: 'en',
-        debug: __DEV__,
+        debug: false,
 
         interpolation: {
             escapeValue: false, // React already escapes values
@@ -66,7 +66,7 @@ export const changeLanguage = async (language) => {
         await i18n.changeLanguage(language);
         await AsyncStorage.setItem('user-language', language);
     } catch (error) {
-        console.log('Error changing language:', error);
+        // console.error('Error changing language:', error);
     }
 };
 

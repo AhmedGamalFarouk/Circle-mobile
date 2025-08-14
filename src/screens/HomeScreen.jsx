@@ -9,6 +9,7 @@ import DiscoveryConnectionCard from '../components/DiscoveryConnectionCard';
 import UnreadChatMessageCard from '../components/UnreadChatMessageCard';
 import MemoryPromptCard from '../components/MemoryPromptCard';
 import EmptyState from '../components/EmptyState';
+import StandardHeader from '../components/StandardHeader';
 
 const HomeScreen = () => {
   const userName = "User"; // Placeholder for user's name
@@ -18,6 +19,10 @@ const HomeScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StandardHeader
+        title={t('navigation.home')}
+        navigation={navigation}
+      />
       <ScrollView style={styles.feedContainer}>
         {/* Render cards based on logic, for now, just placeholders */}
         <EmptyState userName={userName} />

@@ -9,6 +9,7 @@ import CircleActions from './components/CircleDetails/CircleActions';
 import CircleActivity from './components/CircleDetails/CircleActivity';
 import useCircleDetails from '../../hooks/useCircleDetails';
 import { getCircleImageUrl } from '../../utils/imageUtils';
+import StandardHeader from '../../components/StandardHeader';
 
 const CircleDetailsScreen = () => {
     const { colors } = useTheme();
@@ -46,11 +47,13 @@ const CircleDetailsScreen = () => {
         );
     }
 
-    // Debug logging
-    console.log('Circle data:', circle);
-
     return (
         <View style={styles.container}>
+            <StandardHeader
+                title={circle?.circleName || circle?.name || 'Circle Details'}
+                showBackButton={true}
+                navigation={navigation}
+            />
             <Animated.ScrollView
                 style={styles.scrollView}
                 showsVerticalScrollIndicator={false}
@@ -67,8 +70,8 @@ const CircleDetailsScreen = () => {
                     name={circle?.circleName || circle?.name || 'Circle Name'}
                     description={circle?.description}
                     image={getCircleImageUrl(circle)}
-                    memberCount={circle?.memberCount || circle?.members?.length || 0}
                     createdAt={circle?.createdAt}
+                    circleId={circleId}
                 />
 
                 <View style={styles.contentContainer}>
@@ -79,7 +82,6 @@ const CircleDetailsScreen = () => {
                     />
 
                     <CircleMembers
-                        members={circle.members || []}
                         circleId={circleId}
                     />
 

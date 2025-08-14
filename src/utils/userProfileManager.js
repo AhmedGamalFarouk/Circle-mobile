@@ -10,7 +10,6 @@ export const updateUserProfile = async (userId, profileData) => {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, profileData);
-        console.log(`User profile updated for ${userId}:`, profileData);
     } catch (error) {
         console.error('Error updating user profile:', error);
         throw error;

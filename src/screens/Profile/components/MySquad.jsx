@@ -19,7 +19,6 @@ const MySquad = ({ friends = [], shimmerAnimation, loading, isOwnProfile, userId
     const displayFriends = friends.length > 0 ? friends.slice(0, 5) : mockFriends.slice(0, 5);
 
     const handleFriendPress = (friend) => {
-        console.log('Pressed friend:', friend.name);
         // Navigate to friend's profile
         navigation.navigate('Profile', { userId: friend.id });
     };

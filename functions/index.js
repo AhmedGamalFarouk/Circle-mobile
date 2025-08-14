@@ -200,3 +200,273 @@ exports.deleteProfileImage = functions.https.onCall(async (data, context) => {
         throw new functions.https.HttpsError('internal', 'Failed to delete image or update profile.', error.message);
     }
 });
+
+// Submit a join request for a circle
+exports.submitJoinRequest = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Only authenticated users can submit join requests.');
+    }
+
+    const userId = context.auth.uid;
+    const { circleId } = data;
+
+    if (!circleId) {
+        throw new functions.https.HttpsError('invalid-argument', 'Circle ID is required.');
+    }
+
+    try {
+        // Check if user is already a member
+        const memberRef = admin.firestore().collection('circles').doc(circleId).collection('members').doc(userId);
+        const memberDoc = await memberRef.get();
+
+        if (memberDoc.exists()) {
+            throw new functions.https.HttpsError('already-exists', 'User is already a member of this circle.');
+        }
+
+        // Check if join request already exists
+        const requestRef = admin.firestore().collection('circles').doc(circleId).collection('joinRequests').doc(userId);
+        const requestDoc = await requestRef.get();
+
+        if (requestDoc.exists()) {
+            throw new functions.https.HttpsError('already-exists', 'Join request already submitted.');
+        }
+
+        // Get user profile data
+        const userRef = admin.firestore().collection('users').doc(userId);
+        const userDoc = await userRef.get();
+
+        let userData = {};
+        if (userDoc.exists()) {
+            userData = userDoc.data();
+        }
+
+        // Create join request
+        await requestRef.set({
+            userId: userId,
+            email: userData.email || '',
+            username: userData.username || 'Unknown User',
+            photoURL: userData.avatarPhoto || '',
+            requestedAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'pending'
+        });
+
+        return { success: true, message: 'Join request submitted successfully.' };
+
+    } catch (error) {
+        console.error('Error submitting join request:', error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', 'Failed to submit join request.');
+    }
+});
+
+// Approve or deny a join request
+exports.handleJoinRequest = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Only authenticated users can handle join requests.');
+    }
+
+    const adminUserId = context.auth.uid;
+    const { circleId, requestUserId, action } = data; // action: 'approve' or 'deny'
+
+    if (!circleId || !requestUserId || !action) {
+        throw new functions.https.HttpsError('invalid-argument', 'Circle ID, request user ID, and action are required.');
+    }
+
+    if (action !== 'approve' && action !== 'deny') {
+        throw new functions.https.HttpsError('invalid-argument', 'Action must be "approve" or "deny".');
+    }
+
+    try {
+        // Check if current user is admin of the circle
+        const adminMemberRef = admin.firestore().collection('circles').doc(circleId).collection('members').doc(adminUserId);
+        const adminMemberDoc = await adminMemberRef.get();
+
+        if (!adminMemberDoc.exists() || !adminMemberDoc.data().isAdmin) {
+            throw new functions.https.HttpsError('permission-denied', 'Only circle admins can handle join requests.');
+        }
+
+        // Get the join request
+        const requestRef = admin.firestore().collection('circles').doc(circleId).collection('joinRequests').doc(requestUserId);
+        const requestDoc = await requestRef.get();
+
+        if (!requestDoc.exists()) {
+            throw new functions.https.HttpsError('not-found', 'Join request not found.');
+        }
+
+        const requestData = requestDoc.data();
+
+        if (action === 'approve') {
+            // Add user as member
+            const memberRef = admin.firestore().collection('circles').doc(circleId).collection('members').doc(requestUserId);
+            await memberRef.set({
+                email: requestData.email || '',
+                isAdmin: false,
+                photoURL: requestData.photoURL || '',
+                username: requestData.username || 'Unknown User',
+                joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+                userId: requestUserId
+            });
+
+            // Update request status
+            await requestRef.update({
+                status: 'approved',
+                handledBy: adminUserId,
+                handledAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            return { success: true, message: 'Join request approved successfully.' };
+        } else {
+            // Update request status to denied
+            await requestRef.update({
+                status: 'denied',
+                handledBy: adminUserId,
+                handledAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            return { success: true, message: 'Join request denied successfully.' };
+        }
+
+    } catch (error) {
+        console.error('Error handling join request:', error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', 'Failed to handle join request.');
+    }
+});
+
+// Bulk approve or deny join requests
+exports.bulkHandleJoinRequests = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'Only authenticated users can handle join requests.');
+    }
+
+    const adminUserId = context.auth.uid;
+    const { circleId, action } = data; // action: 'approve_all' or 'deny_all'
+
+    if (!circleId || !action) {
+        throw new functions.https.HttpsError('invalid-argument', 'Circle ID and action are required.');
+    }
+
+    if (action !== 'approve_all' && action !== 'deny_all') {
+        throw new functions.https.HttpsError('invalid-argument', 'Action must be "approve_all" or "deny_all".');
+    }
+
+    try {
+        // Check if current user is admin of the circle
+        const adminMemberRef = admin.firestore().collection('circles').doc(circleId).collection('members').doc(adminUserId);
+        const adminMemberDoc = await adminMemberRef.get();
+
+        if (!adminMemberDoc.exists() || !adminMemberDoc.data().isAdmin) {
+            throw new functions.https.HttpsError('permission-denied', 'Only circle admins can handle join requests.');
+        }
+
+        // Get all pending join requests
+        const requestsRef = admin.firestore().collection('circles').doc(circleId).collection('joinRequests');
+        const pendingRequestsSnapshot = await requestsRef.where('status', '==', 'pending').get();
+
+        if (pendingRequestsSnapshot.empty) {
+            return { success: true, message: 'No pending join requests found.', processedCount: 0 };
+        }
+
+        const batch = admin.firestore().batch();
+        let processedCount = 0;
+
+        for (const requestDoc of pendingRequestsSnapshot.docs) {
+            const requestData = requestDoc.data();
+            const requestUserId = requestDoc.id;
+
+            if (action === 'approve_all') {
+                // Add user as member
+                const memberRef = admin.firestore().collection('circles').doc(circleId).collection('members').doc(requestUserId);
+                batch.set(memberRef, {
+                    email: requestData.email || '',
+                    isAdmin: false,
+                    photoURL: requestData.photoURL || '',
+                    username: requestData.username || 'Unknown User',
+                    joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    userId: requestUserId
+                });
+
+                // Update request status
+                batch.update(requestDoc.ref, {
+                    status: 'approved',
+                    handledBy: adminUserId,
+                    handledAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                // Update request status to denied
+                batch.update(requestDoc.ref, {
+                    status: 'denied',
+                    handledBy: adminUserId,
+                    handledAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
+
+            processedCount++;
+        }
+
+        await batch.commit();
+
+        const actionText = action === 'approve_all' ? 'approved' : 'denied';
+        return {
+            success: true,
+            message: `${processedCount} join requests ${actionText} successfully.`,
+            processedCount
+        };
+
+    } catch (error) {
+        console.error('Error bulk handling join requests:', error);
+        if (error instanceof functions.https.HttpsError) {
+            throw error;
+        }
+        throw new functions.https.HttpsError('internal', 'Failed to bulk handle join requests.');
+    }
+});
+
+// Trigger function to create members subcollection when a circle is created
+exports.onCircleCreated = functions.firestore
+    .document('circles/{circleId}')
+    .onCreate(async (snap, context) => {
+        const circleId = context.params.circleId;
+        const circleData = snap.data();
+        const creatorId = circleData.createdBy;
+
+        if (!creatorId) {
+            console.error('Circle created without createdBy field');
+            return;
+        }
+
+        try {
+            // Get creator's profile data
+            const userRef = admin.firestore().collection('users').doc(creatorId);
+            const userDoc = await userRef.get();
+
+            let userData = {};
+            if (userDoc.exists()) {
+                userData = userDoc.data();
+            }
+
+            // Create the creator as the first member in the members subcollection
+            const memberRef = admin.firestore()
+                .collection('circles')
+                .doc(circleId)
+                .collection('members')
+                .doc(creatorId);
+
+            await memberRef.set({
+                email: userData.email || '',
+                isAdmin: true,
+                photoURL: userData.avatarPhoto || '',
+                username: userData.username || 'Unknown User',
+                joinedAt: admin.firestore.FieldValue.serverTimestamp(),
+                userId: creatorId
+            });
+
+            console.log(`Creator ${creatorId} added as admin member to circle ${circleId}`);
+        } catch (error) {
+            console.error('Error creating initial circle member:', error);
+        }
+    });

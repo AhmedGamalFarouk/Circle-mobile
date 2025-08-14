@@ -8,6 +8,9 @@ import { COLORS, RADII, FONTS, SHADOWS } from '../../../constants/constants';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import VoicePlayer from '../../../components/VoicePlayer';
+import VideoPlayer from '../../../components/VideoPlayer';
+import ImageViewer from '../../../components/ImageViewer';
+import MessageInfoModal from '../../../components/MessageInfoModal';
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 
@@ -54,6 +57,8 @@ const ChatFeed = ({ circleId, onReply }) => {
     const optionsOpacity = useRef(new Animated.Value(0)).current;
     const [editingMessage, setEditingMessage] = useState(null);
     const [editedText, setEditedText] = useState('');
+    const [showMessageInfo, setShowMessageInfo] = useState(false);
+    const [messageInfoData, setMessageInfoData] = useState(null);
 
     // Enhanced animation refs for reactions
     const emojiScales = useRef(EMOJI_OPTIONS.reduce((acc, emoji) => {
@@ -147,25 +152,31 @@ const ChatFeed = ({ circleId, onReply }) => {
         const isCurrentUser = message.user.userId === user.uid;
 
         if (isCurrentUser) {
-            // Show options menu for current user's messages
+            // For current user messages: show options menu
             handleShowOptions(message, event);
         } else {
-            // Show emoji reactions for other users' messages
-            setShowEmojis(true);
-
-            // Enhanced bounce animation with stagger effect
-            scale.setValue(0);
-            createBounceAnimation(scale, 1, 400).start();
-
-            // Stagger emoji animations
-            EMOJI_OPTIONS.forEach((emoji, index) => {
-                const emojiScale = emojiScales[emoji];
-                emojiScale.setValue(0);
-                setTimeout(() => {
-                    createBounceAnimation(emojiScale, 1, 300).start();
-                }, index * 50);
-            });
+            // For other user messages: show reactions directly
+            handleShowReactions(message, event);
         }
+    };
+
+    const handleShowReactions = (message, event) => {
+        setSelectedMessage(message);
+        setShowEmojis(true);
+        setShowOptions(false); // Ensure options menu is hidden
+
+        // Enhanced bounce animation with stagger effect
+        scale.setValue(0);
+        createBounceAnimation(scale, 1, 400).start();
+
+        // Stagger emoji animations
+        EMOJI_OPTIONS.forEach((emoji, index) => {
+            const emojiScale = emojiScales[emoji];
+            emojiScale.setValue(0);
+            setTimeout(() => {
+                createBounceAnimation(emojiScale, 1, 300).start();
+            }, index * 50);
+        });
     };
 
     const handleShowOptions = (message, event) => {
@@ -453,6 +464,14 @@ const ChatFeed = ({ circleId, onReply }) => {
         );
     };
 
+    const handleShowMessageInfo = () => {
+        if (!selectedMessage) return;
+
+        setMessageInfoData(selectedMessage);
+        setShowMessageInfo(true);
+        hideOptionsMenu();
+    };
+
     // Group reactions by emoji with enhanced display
     const groupReactions = (reactions) => {
         if (!reactions || reactions.length === 0) return [];
@@ -667,7 +686,9 @@ const ChatFeed = ({ circleId, onReply }) => {
                                                     <Ionicons name="mic" size={12} color={COLORS.text} style={styles.voiceReplyIcon} />
                                                 )}
                                                 <Text style={styles.replyText} numberOfLines={1}>
-                                                    {message.replyTo.text || 'Voice message'}
+                                                    {message.replyTo.text ||
+                                                        (message.replyTo.messageType === 'image' ? 'Photo' :
+                                                            message.replyTo.messageType === 'video' ? 'Video' : 'Voice message')}
                                                 </Text>
                                             </View>
                                         </View>
@@ -698,6 +719,42 @@ const ChatFeed = ({ circleId, onReply }) => {
                                                     isCurrentUser={isCurrentUser}
                                                     timestamp={message.timeStamp}
                                                 />
+                                            ) : message.messageType === 'image' ? (
+                                                <View style={styles.mediaMessageContainer}>
+                                                    <ImageViewer
+                                                        imageUrl={message.mediaUrl}
+                                                        imageStyle={[
+                                                            styles.messageImage,
+                                                            {
+                                                                aspectRatio: message.mediaWidth && message.mediaHeight
+                                                                    ? message.mediaWidth / message.mediaHeight
+                                                                    : 1
+                                                            }
+                                                        ]}
+                                                    />
+                                                    <Text style={[
+                                                        styles.mediaTimestamp,
+                                                        isCurrentUser ? styles.currentUserTimestamp : styles.otherUserTimestamp
+                                                    ]}>
+                                                        {formatTimestamp(message.timeStamp)}
+                                                    </Text>
+                                                </View>
+                                            ) : message.messageType === 'video' ? (
+                                                <View style={styles.mediaMessageContainer}>
+                                                    <VideoPlayer
+                                                        videoUrl={message.mediaUrl}
+                                                        aspectRatio={message.mediaWidth && message.mediaHeight && typeof message.mediaWidth === 'number' && typeof message.mediaHeight === 'number'
+                                                            ? message.mediaWidth / message.mediaHeight
+                                                            : 16 / 9}
+                                                        style={styles.videoPlayerContainer}
+                                                    />
+                                                    <Text style={[
+                                                        styles.mediaTimestamp,
+                                                        isCurrentUser ? styles.currentUserTimestamp : styles.otherUserTimestamp
+                                                    ]}>
+                                                        {formatTimestamp(message.timeStamp)}
+                                                    </Text>
+                                                </View>
                                             ) : (
                                                 <View>
                                                     <Text style={styles.messageText}>{message.text}</Text>
@@ -864,42 +921,96 @@ const ChatFeed = ({ circleId, onReply }) => {
                                 ]}
                             >
                                 <View style={styles.optionsArrow} />
+
+                                {/* Info option - available for all messages */}
                                 <TouchableOpacity
-                                    style={[
-                                        styles.optionButton,
-                                        !isEditable && styles.disabledOptionButton,
-                                        { backgroundColor: isEditable ? COLORS.primary + '15' : 'transparent' }
-                                    ]}
-                                    onPress={handleEditMessage}
-                                    disabled={!isEditable}
+                                    style={[styles.optionButton, { backgroundColor: COLORS.primary + '15' }]}
+                                    onPress={handleShowMessageInfo}
                                     activeOpacity={0.7}
                                 >
-                                    <Ionicons name="create-outline" size={18} color={isEditable ? COLORS.primary : '#666'} />
-                                    <Text style={[styles.optionText, { color: isEditable ? COLORS.primary : '#666' }]}>Edit</Text>
+                                    <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} />
+                                    <Text style={[styles.optionText, { color: COLORS.primary }]}>Info</Text>
                                 </TouchableOpacity>
-                                <View style={styles.optionSeparator} />
-                                <TouchableOpacity
-                                    style={[styles.optionButton, { backgroundColor: '#FFA50015' }]}
-                                    onPress={handleDeleteForMe}
-                                    activeOpacity={0.7}
-                                >
-                                    <Ionicons name="eye-off-outline" size={18} color="#FFA500" />
-                                    <Text style={[styles.optionText, { color: '#FFA500' }]}>Delete for Me</Text>
-                                </TouchableOpacity>
-                                <View style={styles.optionSeparator} />
-                                <TouchableOpacity
-                                    style={[styles.optionButton, { backgroundColor: '#FF444415' }]}
-                                    onPress={handleDeleteMessage}
-                                    activeOpacity={0.7}
-                                >
-                                    <Ionicons name="trash-outline" size={18} color="#FF4444" />
-                                    <Text style={[styles.optionText, { color: '#FF4444' }]}>Delete for Everyone</Text>
-                                </TouchableOpacity>
+
+
+
+                                {/* Current user options */}
+                                {isCurrentUser && (
+                                    <>
+                                        <View style={styles.optionSeparator} />
+                                        <TouchableOpacity
+                                            style={[styles.optionButton, { backgroundColor: COLORS.primary + '15' }]}
+                                            onPress={() => {
+                                                hideOptionsMenu();
+                                                onReply(selectedMessage);
+                                            }}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="arrow-undo-outline" size={18} color={COLORS.primary} />
+                                            <Text style={[styles.optionText, { color: COLORS.primary }]}>Reply</Text>
+                                        </TouchableOpacity>
+                                        <View style={styles.optionSeparator} />
+                                        <TouchableOpacity
+                                            style={[
+                                                styles.optionButton,
+                                                !isEditable && styles.disabledOptionButton,
+                                                { backgroundColor: isEditable ? COLORS.primary + '15' : 'transparent' }
+                                            ]}
+                                            onPress={handleEditMessage}
+                                            disabled={!isEditable}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="create-outline" size={18} color={isEditable ? COLORS.primary : '#666'} />
+                                            <Text style={[styles.optionText, { color: isEditable ? COLORS.primary : '#666' }]}>Edit</Text>
+                                        </TouchableOpacity>
+                                        <View style={styles.optionSeparator} />
+                                        <TouchableOpacity
+                                            style={[styles.optionButton, { backgroundColor: '#FFA50015' }]}
+                                            onPress={handleDeleteForMe}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="eye-off-outline" size={18} color="#FFA500" />
+                                            <Text style={[styles.optionText, { color: '#FFA500' }]}>Delete for Me</Text>
+                                        </TouchableOpacity>
+                                        <View style={styles.optionSeparator} />
+                                        <TouchableOpacity
+                                            style={[styles.optionButton, { backgroundColor: '#FF444415' }]}
+                                            onPress={handleDeleteMessage}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="trash-outline" size={18} color="#FF4444" />
+                                            <Text style={[styles.optionText, { color: '#FF4444' }]}>Delete for Everyone</Text>
+                                        </TouchableOpacity>
+                                    </>
+                                )}
+
+                                {/* Delete for Me option - available for all messages */}
+                                {!isCurrentUser && (
+                                    <>
+                                        <View style={styles.optionSeparator} />
+                                        <TouchableOpacity
+                                            style={[styles.optionButton, { backgroundColor: '#FFA50015' }]}
+                                            onPress={handleDeleteForMe}
+                                            activeOpacity={0.7}
+                                        >
+                                            <Ionicons name="eye-off-outline" size={18} color="#FFA500" />
+                                            <Text style={[styles.optionText, { color: '#FFA500' }]}>Delete for Me</Text>
+                                        </TouchableOpacity>
+                                    </>
+                                )}
                             </Animated.View>
                         </TouchableOpacity>
                     </TouchableOpacity>
                 );
             })()}
+
+            {/* Message Info Modal */}
+            <MessageInfoModal
+                visible={showMessageInfo}
+                onClose={() => setShowMessageInfo(false)}
+                message={messageInfoData}
+                circleId={circleId}
+            />
         </View>
     );
 };
@@ -1222,6 +1333,28 @@ const styles = StyleSheet.create({
         fontStyle: 'italic',
         alignSelf: 'flex-start',
         marginTop: 2,
+    },
+
+    // Media Message Styles
+    mediaMessageContainer: {
+        position: 'relative',
+    },
+    messageImage: {
+        maxWidth: 250,
+        minWidth: 150,
+        minHeight: 100,
+        borderRadius: RADII.medium,
+        marginBottom: 4,
+    },
+    videoPlayerContainer: {
+        maxWidth: 250,
+        minWidth: 150,
+        minHeight: 100,
+    },
+    mediaTimestamp: {
+        fontSize: 11,
+        marginTop: 4,
+        alignSelf: 'flex-end',
     },
 });
 

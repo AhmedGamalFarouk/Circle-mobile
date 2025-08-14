@@ -3,15 +3,17 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
+import useCircleMembers from '../../../../hooks/useCircleMembers';
 
-const CircleStats = ({ circle, memberCount }) => {
+const CircleStats = ({ circle, circleId }) => {
     const { colors } = useTheme();
+    const { memberCount, loading } = useCircleMembers(circleId);
     const styles = getStyles(colors);
 
     const stats = [
         {
             label: 'Members',
-            value: memberCount,
+            value: loading ? '...' : memberCount,
             icon: 'people',
         },
         {

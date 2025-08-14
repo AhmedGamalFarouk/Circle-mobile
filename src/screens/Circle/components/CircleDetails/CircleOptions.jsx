@@ -1,26 +1,70 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
-import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
+import { RADII, SHADOWS } from '../../../../constants/constants';
+import useAuth from '../../../../hooks/useAuth';
+import useCircleMembers from '../../../../hooks/useCircleMembers';
+import useCircleRequests from '../../../../hooks/useCircleRequests';
+import JoinRequestsModal from '../../../../components/JoinRequestsModal';
+import { circleMembersService } from '../../../../firebase/circleMembersService';
+
 
 const CircleOptions = ({ circleId, circle, navigation }) => {
     const { colors } = useTheme();
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const [muteCircle, setMuteCircle] = useState(false);
+    const { user } = useAuth();
+    const { isAdmin } = useCircleMembers(circleId);
+    const { requestCount } = useCircleRequests(circleId);
+
+    const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
     const styles = getStyles(colors);
 
+    const currentUserIsAdmin = isAdmin(user?.uid);
+
     const handleLeaveCircle = () => {
+        // Validate user and circle data
+        if (!user?.uid) {
+            Alert.alert("Error", "User not authenticated. Please try again.");
+            return;
+        }
+
+        if (!circleId) {
+            Alert.alert("Error", "Circle not found. Please try again.");
+            return;
+        }
+
         Alert.alert(
             "Leave Circle",
-            `Are you sure you want to leave "${circle.name}"? You won't be able to see messages or participate in polls.`,
+            `Are you sure you want to leave "${circle?.circleName || circle?.name || 'this circle'}"? You won't be able to see messages or participate in polls.`,
             [
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Leave",
-                    onPress: () => {
-                        console.log(`Leaving circle ${circleId}`);
-                        navigation.goBack();
+                    onPress: async () => {
+                        try {
+                            const result = await circleMembersService.removeMemberFromCircle(circleId, user.uid);
+
+                            if (result.success) {
+                                // Reset navigation stack and go to Home to prevent going back
+                                navigation.reset({
+                                    index: 0,
+                                    routes: [{ name: 'Home' }],
+                                });
+                            } else {
+                                Alert.alert(
+                                    "Error",
+                                    result.error || "Failed to leave circle. Please try again.",
+                                    [{ text: "OK" }]
+                                );
+                            }
+                        } catch (error) {
+                            console.error('Error leaving circle:', error);
+                            Alert.alert(
+                                "Error",
+                                "An unexpected error occurred. Please try again.",
+                                [{ text: "OK" }]
+                            );
+                        }
                     },
                     style: "destructive"
                 }
@@ -36,7 +80,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                 { text: "Cancel", style: "cancel" },
                 {
                     text: "Clear",
-                    onPress: () => console.log(`Clearing chat for circle ${circleId}`),
+                    onPress: () => { /* Implement chat clearing logic here */ },
                     style: "destructive"
                 }
             ]
@@ -53,40 +97,26 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             "What would you like to report about this circle?",
             [
                 { text: "Cancel", style: "cancel" },
-                { text: "Inappropriate Content", onPress: () => console.log('Reporting inappropriate content') },
-                { text: "Spam", onPress: () => console.log('Reporting spam') },
-                { text: "Other", onPress: () => console.log('Reporting other') },
+                { text: "Inappropriate Content", onPress: () => { /* Implement reporting logic */ } },
+                { text: "Spam", onPress: () => { /* Implement reporting logic */ } },
+                { text: "Other", onPress: () => { /* Implement reporting logic */ } },
             ]
         );
     };
 
-    const settingsOptions = [
-        {
-            title: 'Push Notifications',
-            subtitle: 'Get notified about new messages',
-            type: 'switch',
-            value: notificationsEnabled,
-            onValueChange: setNotificationsEnabled,
-            icon: 'notifications',
-        },
-        {
-            title: 'Mute Circle',
-            subtitle: 'Stop receiving notifications temporarily',
-            type: 'switch',
-            value: muteCircle,
-            onValueChange: setMuteCircle,
-            icon: 'volume-mute',
-        },
-    ];
+    const handleManageJoinRequests = () => {
+        setShowJoinRequestsModal(true);
+    };
 
-    const actionOptions = [
-        {
-            title: 'Edit Circle',
-            subtitle: 'Change name, description, or image',
-            onPress: handleEditCircle,
-            icon: 'create',
-            color: colors.text,
-        },
+    const handleViewProfile = (userId) => {
+        setShowJoinRequestsModal(false);
+        navigation.navigate('Profile', { userId });
+    };
+
+
+
+    // Base action options for all members
+    const baseActionOptions = [
         {
             title: 'Clear Chat History',
             subtitle: 'Remove all messages for you only',
@@ -110,23 +140,42 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
         },
     ];
 
-    const renderSettingItem = (item, index) => (
-        <View key={index} style={styles.optionItem}>
-            <View style={styles.optionLeft}>
-                <Ionicons name={item.icon} size={20} color={colors.primary} style={styles.optionIcon} />
-                <View style={styles.optionTextContainer}>
-                    <Text style={styles.optionTitle}>{item.title}</Text>
-                    <Text style={styles.optionSubtitle}>{item.subtitle}</Text>
-                </View>
-            </View>
-            <Switch
-                value={item.value}
-                onValueChange={item.onValueChange}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor={item.value ? 'white' : colors.textSecondary}
-            />
-        </View>
-    );
+    // Admin-only options
+    const adminOptions = [
+        {
+            title: 'Edit Circle',
+            subtitle: 'Change name, description, or image',
+            onPress: handleEditCircle,
+            icon: 'create',
+            color: colors.text,
+        },
+        {
+            title: 'Invite Members',
+            subtitle: 'Search and invite users to join this circle',
+            onPress: () => navigation.navigate('InviteMembers', {
+                circleId,
+                circleName: circle.name,
+                ownerId: circle.createdBy
+            }),
+            icon: 'person-add',
+            color: colors.primary,
+        },
+        {
+            title: `Manage Join Requests${requestCount > 0 ? ` (${requestCount})` : ''}`,
+            subtitle: requestCount > 0 ? `${requestCount} pending requests` : 'View and manage join requests',
+            onPress: handleManageJoinRequests,
+            icon: 'people',
+            color: requestCount > 0 ? colors.warning : colors.text,
+            badge: requestCount > 0 ? requestCount : null,
+        },
+    ];
+
+    // Combine options based on user role
+    const actionOptions = currentUserIsAdmin
+        ? [...adminOptions, ...baseActionOptions]
+        : baseActionOptions;
+
+
 
     const renderActionItem = (item, index) => (
         <TouchableOpacity
@@ -136,7 +185,14 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             activeOpacity={0.7}
         >
             <View style={styles.optionLeft}>
-                <Ionicons name={item.icon} size={20} color={item.color} style={styles.optionIcon} />
+                <View style={styles.iconContainer}>
+                    <Ionicons name={item.icon} size={20} color={item.color} style={styles.optionIcon} />
+                    {item.badge && (
+                        <View style={[styles.badge, { backgroundColor: item.color }]}>
+                            <Text style={styles.badgeText}>{item.badge}</Text>
+                        </View>
+                    )}
+                </View>
                 <View style={styles.optionTextContainer}>
                     <Text style={[styles.optionTitle, { color: item.color }]}>
                         {item.title}
@@ -150,12 +206,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Settings</Text>
-                <View style={styles.optionsCard}>
-                    {settingsOptions.map(renderSettingItem)}
-                </View>
-            </View>
+
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Actions</Text>
@@ -163,6 +214,14 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                     {actionOptions.map(renderActionItem)}
                 </View>
             </View>
+
+            <JoinRequestsModal
+                visible={showJoinRequestsModal}
+                onClose={() => setShowJoinRequestsModal(false)}
+                circleId={circleId}
+                circleName={circle.name}
+                onViewProfile={handleViewProfile}
+            />
         </View>
     );
 };
@@ -201,10 +260,30 @@ const getStyles = (colors) => StyleSheet.create({
         alignItems: 'center',
         flex: 1,
     },
-    optionIcon: {
+    iconContainer: {
+        position: 'relative',
         marginRight: 12,
         width: 24,
+        alignItems: 'center',
+    },
+    optionIcon: {
         textAlign: 'center',
+    },
+    badge: {
+        position: 'absolute',
+        top: -6,
+        right: -8,
+        borderRadius: 8,
+        minWidth: 16,
+        height: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 4,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     optionTextContainer: {
         flex: 1,

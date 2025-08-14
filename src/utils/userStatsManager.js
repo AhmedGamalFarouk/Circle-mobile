@@ -20,7 +20,6 @@ export const updateUserStats = async (userId, statsUpdate) => {
         });
 
         await updateDoc(userRef, updateData);
-        console.log(`User stats updated for ${userId}:`, statsUpdate);
     } catch (error) {
         console.error('Error updating user stats:', error);
         throw error;
@@ -94,7 +93,6 @@ export const addFriend = async (userId, friendId) => {
             'stats.connections': increment(1)
         });
 
-        console.log(`Friend relationship created between ${userId} and ${friendId}`);
     } catch (error) {
         console.error('Error adding friend:', error);
         throw error;
@@ -122,7 +120,6 @@ export const removeFriend = async (userId, friendId) => {
             'stats.connections': increment(-1)
         });
 
-        console.log(`Friend relationship removed between ${userId} and ${friendId}`);
     } catch (error) {
         console.error('Error removing friend:', error);
         throw error;
@@ -148,7 +145,6 @@ export const sendFriendRequest = async (senderId, receiverId) => {
             'friendRequests.received': arrayUnion(senderId)
         });
 
-        console.log(`Friend request sent from ${senderId} to ${receiverId}`);
     } catch (error) {
         console.error('Error sending friend request:', error);
         throw error;
@@ -178,7 +174,6 @@ export const acceptFriendRequest = async (userId, requesterId) => {
             'stats.connections': increment(1)
         });
 
-        console.log(`Friend request accepted: ${userId} and ${requesterId} are now friends`);
     } catch (error) {
         console.error('Error accepting friend request:', error);
         throw error;
@@ -204,7 +199,6 @@ export const rejectFriendRequest = async (userId, requesterId) => {
             'friendRequests.sent': arrayRemove(userId)
         });
 
-        console.log(`Friend request rejected: ${userId} rejected ${requesterId}`);
     } catch (error) {
         console.error('Error rejecting friend request:', error);
         throw error;
@@ -225,7 +219,6 @@ export const joinCircle = async (userId, circleId) => {
             'stats.circles': increment(1)
         });
 
-        console.log(`User ${userId} joined circle ${circleId}`);
     } catch (error) {
         console.error('Error joining circle:', error);
         throw error;
@@ -246,7 +239,6 @@ export const leaveCircle = async (userId, circleId) => {
             'stats.circles': increment(-1)
         });
 
-        console.log(`User ${userId} left circle ${circleId}`);
     } catch (error) {
         console.error('Error leaving circle:', error);
         throw error;
@@ -267,7 +259,6 @@ export const joinEvent = async (userId, eventId) => {
             'stats.events': increment(1)
         });
 
-        console.log(`User ${userId} joined event ${eventId}`);
     } catch (error) {
         console.error('Error joining event:', error);
         throw error;
@@ -288,7 +279,6 @@ export const leaveEvent = async (userId, eventId) => {
             'stats.events': increment(-1)
         });
 
-        console.log(`User ${userId} left event ${eventId}`);
     } catch (error) {
         console.error('Error leaving event:', error);
         throw error;
@@ -307,7 +297,6 @@ export const reportUser = async (userId) => {
             reported: increment(1)
         });
 
-        console.log(`User ${userId} has been reported`);
     } catch (error) {
         console.error('Error reporting user:', error);
         throw error;
@@ -327,7 +316,6 @@ export const setUserBlocked = async (userId, blocked) => {
             isBlocked: blocked
         });
 
-        console.log(`User ${userId} ${blocked ? 'blocked' : 'unblocked'}`);
     } catch (error) {
         console.error('Error updating user block status:', error);
         throw error;
