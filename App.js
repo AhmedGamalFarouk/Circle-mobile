@@ -27,6 +27,7 @@ import EditCircleScreen from './src/screens/Circle/EditCircleScreen';
 
 import useAuth from './src/hooks/useAuth';
 import { ThemeProvider } from './src/context/ThemeContext';
+import AppStripeProvider from './src/providers/StripeProvider';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -68,7 +69,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AppContent />
+        <AppStripeProvider>
+          <AppContent />
+        </AppStripeProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

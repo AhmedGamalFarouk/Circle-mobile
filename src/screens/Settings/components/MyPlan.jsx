@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
 import { RADII } from '../../../constants/constants';
 import { useTheme } from '../../../context/ThemeContext';
+import { SUBSCRIPTION_PLANS } from '../../../config/stripe';
+import StripePayment from '../../../components/StripePayment';
+import stripeService from '../../../services/stripeService';
 
 const plans = [
     {
@@ -33,10 +36,41 @@ const plans = [
 const MyPlan = () => {
     const { colors } = useTheme();
     const [selectedPlan, setSelectedPlan] = useState('Free');
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
+    const [customerId, setCustomerId] = useState('customer_123'); // Replace with actual user's customer ID
 
     const handlePlanSelect = (planName) => {
         setSelectedPlan(planName);
-        // Here you can add logic to handle plan selection (API call, etc.)
+
+        // If it's not the Free plan, show payment modal
+        if (planName !== 'Free') {
+            const plan = SUBSCRIPTION_PLANS[planName.toUpperCase()];
+            if (plan) {
+                setSelectedPlanForPayment(plan);
+                setShowPaymentModal(true);
+            }
+        }
+    };
+
+    const handlePaymentSuccess = (subscriptionId, plan) => {
+        setSelectedPlan(plan.name);
+        setShowPaymentModal(false);
+        Alert.alert(
+            'Subscription Activated!',
+            `Your ${plan.name} plan is now active.`,
+            [{ text: 'OK' }]
+        );
+    };
+
+    const handlePaymentFailure = (error) => {
+        console.error('Payment failed:', error);
+        setShowPaymentModal(false);
+    };
+
+    const handleCancelPayment = () => {
+        setShowPaymentModal(false);
+        setSelectedPlanForPayment(null);
     };
 
     return (
@@ -93,6 +127,24 @@ const MyPlan = () => {
                     </Text>
                 </TouchableOpacity>
             ))}
+
+            {/* Payment Modal */}
+            <Modal
+                visible={showPaymentModal}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={handleCancelPayment}
+            >
+                {selectedPlanForPayment && (
+                    <StripePayment
+                        plan={selectedPlanForPayment}
+                        customerId={customerId}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentFailure={handlePaymentFailure}
+                        onCancel={handleCancelPayment}
+                    />
+                )}
+            </Modal>
         </View>
     );
 };

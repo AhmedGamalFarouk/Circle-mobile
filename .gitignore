@@ -44,3 +44,4 @@ src/firebase/config.js
 
 # readme
 readme.md
+STRIPE_SETUP.md
