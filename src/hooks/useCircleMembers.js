@@ -44,8 +44,10 @@ const useCircleMembers = (circleId) => {
     // Helper functions
     const getAdmins = () => members.filter(member => member.isAdmin);
     const getNonAdmins = () => members.filter(member => !member.isAdmin);
+    const getOwner = () => members.find(member => member.isOwner);
     const isMember = (userId) => members.some(member => member.userId === userId);
     const isAdmin = (userId) => members.some(member => member.userId === userId && member.isAdmin);
+    const isOwner = (userId) => members.some(member => member.userId === userId && member.isOwner);
     const getMember = (userId) => members.find(member => member.userId === userId);
 
     return {
@@ -54,11 +56,14 @@ const useCircleMembers = (circleId) => {
         memberCount,
         admins: getAdmins(),
         nonAdmins: getNonAdmins(),
+        owner: getOwner(),
         isMember,
         isAdmin,
+        isOwner,
         getMember,
         getAdmins,
-        getNonAdmins
+        getNonAdmins,
+        getOwner
     };
 };
 

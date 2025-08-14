@@ -73,8 +73,11 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
             activeOpacity={0.7}
         >
             <Image
-                source={{ uri: item.profilePicture }}
+                source={{ uri: getUserAvatarUrl(item, 50) }}
                 style={styles.memberAvatar}
+                onError={() => {
+                    // Fallback handled by getUserAvatarUrl
+                }}
             />
             <View style={styles.memberInfo}>
                 <Text style={styles.memberName}>{item.username || 'Unknown User'}</Text>

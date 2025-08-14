@@ -70,13 +70,23 @@ export const getCircleImageUrl = (circle) => {
  * @returns {string} User avatar URL
  */
 export const getUserAvatarUrl = (user, size = 60) => {
-    const imageUrl = getBestImageUrl(user);
+    if (!user) {
+        return generateAvatarUrl('User', size);
+    }
 
+    // Check for direct avatar URLs first
+    const directAvatarUrl = user.userAvatar || user.photoURL || user.avatar || user.profilePicture || user.avatarPhoto;
+    if (directAvatarUrl && typeof directAvatarUrl === 'string' && directAvatarUrl.trim() !== '') {
+        return directAvatarUrl.trim();
+    }
+
+    // Fallback to getBestImageUrl for other possible fields
+    const imageUrl = getBestImageUrl(user);
     if (imageUrl) {
         return imageUrl;
     }
 
     // Generate placeholder avatar based on user name
-    const name = user?.name || user?.username || user?.displayName || 'User';
+    const name = user?.userName || user?.name || user?.username || user?.displayName || 'User';
     return generateAvatarUrl(name, size);
 };

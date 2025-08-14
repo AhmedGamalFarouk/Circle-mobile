@@ -52,13 +52,22 @@ const VideoPlayer = ({ videoUrl, width, height, aspectRatio, style }) => {
                             aspectRatio: typeof aspectRatio === 'number' ? aspectRatio : 16 / 9,
                         }
                     ]}
-                    resizeMode="cover"
+                    resizeMode="contain"
                     shouldPlay={false}
                     isLooping={false}
-                    onPlaybackStatusUpdate={(status) => {
+                    onPlaybackStatusUpdate={async (status) => {
                         if (status.didJustFinish) {
                             setIsPlaying(false);
                             setShowControls(true);
+                            // Stop the video completely and reset to beginning
+                            try {
+                                if (videoRef.current) {
+                                    await videoRef.current.stopAsync();
+                                    await videoRef.current.setPositionAsync(0);
+                                }
+                            } catch (error) {
+                                console.error('Error stopping video:', error);
+                            }
                         }
                     }}
                 />

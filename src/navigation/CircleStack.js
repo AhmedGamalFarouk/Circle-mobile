@@ -4,10 +4,9 @@ import { COLORS } from '../constants/constants';
 import CircleScreen from '../screens/Circle/CircleScreen';
 import CreationForm from '../screens/Circle Creation/CreationForm';
 import InviteAndShare from '../screens/Circle Creation/InviteAndShare';
-import Circles from '../screens/Circles';
+import Home from '../screens/Home/HomeScreen';
 import CircleDetailsScreen from '../screens/Circle/CircleDetailsScreen';
 import EditCircleScreen from '../screens/Circle/EditCircleScreen';
-import InviteMembers from '../screens/InviteMembers';
 
 
 const Stack = createNativeStackNavigator();
@@ -15,7 +14,7 @@ const Stack = createNativeStackNavigator();
 const CircleStack = () => {
     return (
         <Stack.Navigator>
-            <Stack.Screen name="Circles" component={Circles} options={{ headerShown: false }} />
+            <Stack.Screen name="Circles" component={Home} options={{ headerShown: false }} />
             <Stack.Screen
                 name="Circle"
                 component={CircleScreen}

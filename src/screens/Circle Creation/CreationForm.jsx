@@ -96,13 +96,14 @@ const CreationForm = ({ navigation }) => {
                 joinedCircles: arrayUnion(circleRef.id)
             });
 
-            // Create members subcollection and add creator as first member
+            // Create members subcollection and add creator as first member (owner)
             const memberRef = doc(db, 'circles', circleRef.id, 'members', user.uid);
             await setDoc(memberRef, {
-                email: userProfile?.email || user.email || '',
+                userEmail: userProfile?.email || user.email || '',
                 isAdmin: true,
-                photoURL: userProfile?.avatarPhoto || user.photoURL || '',
-                username: userProfile?.username || user.displayName || user.email?.split('@')[0] || 'Unknown User',
+                isOwner: true,
+                userAvatar: userProfile?.avatarPhoto || user.photoURL || '',
+                userName: userProfile?.username || user.displayName || user.email?.split('@')[0] || 'Unknown User',
                 joinedAt: serverTimestamp(),
                 userId: user.uid
             });

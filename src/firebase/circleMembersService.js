@@ -39,6 +39,7 @@ export const circleMembersService = {
                 userEmail: userData.email || '',
                 userAvatar: userData.photoURL || userData.avatar || '',
                 isAdmin: false,
+                isOwner: false,
                 joinedAt: serverTimestamp(),
                 addedBy: 'join_request'
             };
@@ -132,6 +133,181 @@ export const circleMembersService = {
             }
         } catch (error) {
             console.error('Error getting user info:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Make a member an admin
+    makeAdmin: async (circleId, userId, currentUserId) => {
+        try {
+            // Check if current user is owner or admin
+            const currentUserMemberQuery = query(
+                collection(db, 'circles', circleId, 'members'),
+                where('userId', '==', currentUserId)
+            );
+            const currentUserSnapshot = await getDocs(currentUserMemberQuery);
+
+            if (currentUserSnapshot.empty) {
+                return { success: false, error: 'You are not a member of this circle' };
+            }
+
+            const currentUserData = currentUserSnapshot.docs[0].data();
+            if (!currentUserData.isOwner && !currentUserData.isAdmin) {
+                return { success: false, error: 'You do not have permission to make admins' };
+            }
+
+            // Find the target member
+            const memberQuery = query(
+                collection(db, 'circles', circleId, 'members'),
+                where('userId', '==', userId)
+            );
+            const memberSnapshot = await getDocs(memberQuery);
+
+            if (memberSnapshot.empty) {
+                return { success: false, error: 'User is not a member of this circle' };
+            }
+
+            const memberDoc = memberSnapshot.docs[0];
+            await updateDoc(memberDoc.ref, {
+                isAdmin: true
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error making user admin:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Remove admin status from a member
+    removeAdmin: async (circleId, userId, currentUserId) => {
+        try {
+            // Check if current user is owner
+            const currentUserMemberQuery = query(
+                collection(db, 'circles', circleId, 'members'),
+                where('userId', '==', currentUserId)
+            );
+            const currentUserSnapshot = await getDocs(currentUserMemberQuery);
+
+            if (currentUserSnapshot.empty) {
+                return { success: false, error: 'You are not a member of this circle' };
+            }
+
+            const currentUserData = currentUserSnapshot.docs[0].data();
+            if (!currentUserData.isOwner) {
+                return { success: false, error: 'Only the owner can remove admin status' };
+            }
+
+            // Find the target member
+            const memberQuery = query(
+                collection(db, 'circles', circleId, 'members'),
+                where('userId', '==', userId)
+            );
+            const memberSnapshot = await getDocs(memberQuery);
+
+            if (memberSnapshot.empty) {
+                return { success: false, error: 'User is not a member of this circle' };
+            }
+
+            const memberDoc = memberSnapshot.docs[0];
+            const memberData = memberDoc.data();
+
+            // Prevent removing owner's admin status
+            if (memberData.isOwner) {
+                return { success: false, error: 'Cannot remove admin status from the owner' };
+            }
+
+            await updateDoc(memberDoc.ref, {
+                isAdmin: false
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error removing admin status:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Remove a member from circle (admin function)
+    removeMemberByAdmin: async (circleId, userId, currentUserId) => {
+        try {
+            // Check if current user is owner or admin
+            const currentUserMemberQuery = query(
+                collection(db, 'circles', circleId, 'members'),
+                where('userId', '==', currentUserId)
+            );
+            const currentUserSnapshot = await getDocs(currentUserMemberQuery);
+
+            if (currentUserSnapshot.empty) {
+                return { success: false, error: 'You are not a member of this circle' };
+            }
+
+            const currentUserData = currentUserSnapshot.docs[0].data();
+            if (!currentUserData.isOwner && !currentUserData.isAdmin) {
+                return { success: false, error: 'You do not have permission to remove members' };
+            }
+
+            // Find the target member
+            const memberQuery = query(
+                collection(db, 'circles', circleId, 'members'),
+                where('userId', '==', userId)
+            );
+            const memberSnapshot = await getDocs(memberQuery);
+
+            if (memberSnapshot.empty) {
+                return { success: false, error: 'User is not a member of this circle' };
+            }
+
+            const memberData = memberSnapshot.docs[0].data();
+
+            // Prevent removing the owner
+            if (memberData.isOwner) {
+                return { success: false, error: 'Cannot remove the circle owner' };
+            }
+
+            // Non-owners cannot remove admins
+            if (!currentUserData.isOwner && memberData.isAdmin) {
+                return { success: false, error: 'Only the owner can remove admins' };
+            }
+
+            // Use the existing removeMemberFromCircle function
+            return await this.removeMemberFromCircle(circleId, userId);
+        } catch (error) {
+            console.error('Error removing member by admin:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Add circle owner (called when circle is created)
+    addOwnerToCircle: async (circleId, userId) => {
+        try {
+            // Get user information
+            const userDoc = await getDoc(doc(db, 'users', userId));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+
+            // Add owner to circle's members subcollection
+            const memberData = {
+                userId,
+                userName: userData.displayName || userData.username || userData.name || 'Unknown User',
+                userEmail: userData.email || '',
+                userAvatar: userData.photoURL || userData.avatar || '',
+                isAdmin: true,
+                isOwner: true,
+                joinedAt: serverTimestamp(),
+                addedBy: 'circle_creation'
+            };
+
+            await addDoc(collection(db, 'circles', circleId, 'members'), memberData);
+
+            // Also add the circle to the user's joinedCircles array
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+                joinedCircles: arrayUnion(circleId)
+            });
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error adding owner to circle:', error);
             return { success: false, error: error.message };
         }
     }

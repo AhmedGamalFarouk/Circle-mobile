@@ -1,14 +1,13 @@
 import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import HomeScreen from '../screens/HomeScreen'
+import HomeScreen from '../screens/Home/HomeScreen'
 import ProfileScreen from '../screens/Profile/ProfileScreen'
 import SettingsScreen from '../screens/Settings/SettingsScreen'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS } from '../constants/constants'
 import Explore from '../screens/Explore'
 import { FONTS } from '../constants/constants'
-import CircleStack from './CircleStack'
 import { useTheme } from '../context/ThemeContext'
 import { useLocalization } from '../hooks/useLocalization'
 import { useLanguage } from '../context/LanguageContext'
@@ -55,12 +54,6 @@ const DynamicBottomTab = () => {
             <Tab.Screen name={isArabic ? "استكشاف" : "Explore"} component={Explore} options={{
                 tabBarIcon: ({ color, size }) => (
                     <Ionicons name="search" color={color} size={size} />
-                ),
-                headerShown: false,
-            }} />
-            <Tab.Screen name={isArabic ? "الدوائر" : "Circles"} component={CircleStack} options={{
-                tabBarIcon: ({ color, size }) => (
-                    <Ionicons name="people" color={color} size={size} />
                 ),
                 headerShown: false,
             }} />

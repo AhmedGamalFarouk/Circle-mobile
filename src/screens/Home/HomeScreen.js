@@ -13,7 +13,7 @@ import StandardHeader from '../../components/StandardHeader'
 
 
 
-const Circles = ({ navigation }) => {
+const HomeScreen = ({ navigation }) => {
     const [circles, setCircles] = useState([])
     const [loading, setLoading] = useState(true)
     const [refreshing, setRefreshing] = useState(false)
@@ -115,7 +115,7 @@ const Circles = ({ navigation }) => {
     )
 }
 
-export default Circles
+export default HomeScreen
 
 const styles = StyleSheet.create({
     container: {

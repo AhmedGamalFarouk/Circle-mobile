@@ -1341,8 +1341,6 @@ const styles = StyleSheet.create({
     },
     messageImage: {
         maxWidth: 250,
-        minWidth: 150,
-        minHeight: 100,
         borderRadius: RADII.medium,
         marginBottom: 4,
     },

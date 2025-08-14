@@ -25,12 +25,6 @@ const CircleActions = ({ circleId, circle, navigation }) => {
     // Actions for members
     const memberActions = [
         {
-            title: 'Create Poll',
-            icon: 'bar-chart',
-            color: colors.secondary,
-            onPress: () => navigation.navigate('Circle', { circleId, openPollModal: true }),
-        },
-        {
             title: 'Share Circle',
             icon: 'share',
             color: colors.accent,

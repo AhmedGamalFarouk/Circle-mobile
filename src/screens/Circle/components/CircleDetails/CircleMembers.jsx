@@ -4,7 +4,7 @@ import { useTheme } from '../../../../context/ThemeContext';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 import { getUserAvatarUrl } from '../../../../utils/imageUtils';
-import MembersList from '../MembersList';
+import CircleMembersModal from '../../../../components/CircleMembersModal';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
 
 const CircleMembers = ({ circleId }) => {
@@ -25,10 +25,14 @@ const CircleMembers = ({ circleId }) => {
         >
             <View style={styles.avatarContainer}>
                 <Image
-                    source={{ uri: item.userAvatar || item.photoURL || 'https://via.placeholder.com/60' }}
+                    source={{ uri: getUserAvatarUrl(item, 60) }}
                     style={styles.avatar}
+                    onError={() => {
+                        // Fallback handled by getUserAvatarUrl
+                    }}
                 />
-                {item.isAdmin && <View style={styles.adminIndicator} />}
+                {item.isOwner && <View style={styles.ownerIndicator} />}
+                {item.isAdmin && !item.isOwner && <View style={styles.adminIndicator} />}
             </View>
             {showName && (
                 <Text style={styles.memberName} numberOfLines={1}>
@@ -82,7 +86,7 @@ const CircleMembers = ({ circleId }) => {
                 </TouchableOpacity>
             )}
 
-            <MembersList
+            <CircleMembersModal
                 visible={showMembersList}
                 onClose={() => setShowMembersList(false)}
                 circleId={circleId}
@@ -159,6 +163,19 @@ const getStyles = (colors) => StyleSheet.create({
         height: 16,
         borderRadius: RADII.circle,
         backgroundColor: colors.primary,
+        borderWidth: 2,
+        borderColor: colors.background,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    ownerIndicator: {
+        position: 'absolute',
+        bottom: 2,
+        right: 2,
+        width: 16,
+        height: 16,
+        borderRadius: RADII.circle,
+        backgroundColor: '#FFD700',
         borderWidth: 2,
         borderColor: colors.background,
         justifyContent: 'center',

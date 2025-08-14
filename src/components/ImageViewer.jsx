@@ -35,7 +35,7 @@ const ImageViewer = ({ imageUrl, style, imageStyle, children }) => {
                 <Image
                     source={{ uri: imageUrl }}
                     style={imageStyle}
-                    resizeMode="cover"
+                    resizeMode="contain"
                 />
                 {children}
             </TouchableOpacity>
