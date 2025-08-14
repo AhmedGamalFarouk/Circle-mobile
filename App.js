@@ -12,6 +12,7 @@ import './src/localization/i18n';
 import { LanguageProvider } from './src/context/LanguageContext';
 
 import { ThemeProvider } from './src/context/ThemeContext';
+import AppStripeProvider from './src/providers/StripeProvider';
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -32,7 +33,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AppContent />
+        <AppStripeProvider>
+          <AppContent />
+        </AppStripeProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
