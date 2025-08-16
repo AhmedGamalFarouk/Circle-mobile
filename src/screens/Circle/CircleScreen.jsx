@@ -19,6 +19,7 @@ const PLANNING_STAGES = {
     ACTIVITY_POLL_CLOSED: 'Activity Poll Closed',
     PLANNING_PLACE: 'Planning the Place',
     PLACE_POLL_CLOSED: 'Place Poll Closed',
+    PENDING_CONFIRMATION: 'Pending Confirmation',
     EVENT_CONFIRMED: 'Event Confirmed',
 };
 
@@ -30,6 +31,7 @@ const CircleScreen = () => {
     const { profile: userProfile } = useUserProfile(user?.uid);
     const [circle, setCircle] = useState(null);
     const [poll, setPoll] = useState(null);
+    const [event, setEvent] = useState(null);
     const [currentStage, setCurrentStage] = useState(PLANNING_STAGES.IDLE);
     const [isPollModalVisible, setPollModalVisible] = useState(false);
     const [pollType, setPollType] = useState(null);
@@ -134,11 +136,25 @@ const CircleScreen = () => {
             });
         }
 
+        const eventsQuery = query(collection(db, 'circles', circleId, 'events'), where('status', '==', 'confirmed'));
+        const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
+            if (!snapshot.empty) {
+                const confirmedEvent = snapshot.docs[0];
+                setEvent({ id: confirmedEvent.id, ...confirmedEvent.data() });
+                if (poll?.stage !== PLANNING_STAGES.EVENT_CONFIRMED) {
+                    setCurrentStage(PLANNING_STAGES.EVENT_CONFIRMED);
+                }
+            } else {
+                setEvent(null);
+            }
+        });
+
         return () => {
             if (unsubscribePolls) unsubscribePolls();
             if (unsubscribeMembership) unsubscribeMembership();
+            if (unsubscribeEvents) unsubscribeEvents();
         };
-    }, [circleId, user?.uid]);
+    }, [circleId, user?.uid, poll?.stage]);
 
     // Handle opening poll modal from navigation params
     useEffect(() => {
@@ -343,15 +359,15 @@ const CircleScreen = () => {
     };
 
     const handleRsvp = async (status) => {
-        if (!poll?.id || !userProfile) return;
+        if (!event?.id || !userProfile) return;
 
-        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
-        const newRsvps = { ...poll.rsvps || {} };
+        const eventRef = doc(db, 'circles', circleId, 'events', event.id);
+        const newRsvps = { ...event.rsvps || {} };
         const previousRsvp = newRsvps[user.uid];
         newRsvps[user.uid] = status;
 
         try {
-            await updateDoc(pollRef, { rsvps: newRsvps });
+            await updateDoc(eventRef, { rsvps: newRsvps });
 
             // Add system message for RSVP changes (only if it's a new RSVP or change)
             if (previousRsvp !== status) {
@@ -399,17 +415,26 @@ const CircleScreen = () => {
                 setPollType('place');
                 setPollModalVisible(true);
             } else if (currentStage === PLANNING_STAGES.PLACE_POLL_CLOSED) {
-                // Finalize event and enable RSVPs
-                await updateDoc(pollRef, {
-                    stage: PLANNING_STAGES.EVENT_CONFIRMED,
-                    rsvps: {}, // Initialize empty RSVP object
+                // Create a pending event
+                const eventsRef = collection(db, 'circles', circleId, 'events');
+                await addDoc(eventsRef, {
+                    title: poll.winningActivity,
+                    location: poll.winningPlace,
+                    status: 'pending',
+                    createdAt: serverTimestamp(),
+                    createdBy: user.uid,
                 });
 
-                // Add system message about event confirmation
+                // Update the poll stage
+                await updateDoc(pollRef, {
+                    stage: PLANNING_STAGES.PENDING_CONFIRMATION,
+                });
+
+                // Add a system message
                 const chatRef = collection(db, 'circles', circleId, 'chat');
                 await addDoc(chatRef, {
                     messageType: 'system',
-                    text: `🎉 Event confirmed! ${poll.winningPlace} for ${poll.winningActivity}. Please RSVP above!`,
+                    text: `📝 Event "${poll.winningActivity}" is pending confirmation by admins.`,
                     timeStamp: serverTimestamp(),
                 });
             }
@@ -497,6 +522,14 @@ const CircleScreen = () => {
                             circleId={circleId}
                             circle={circle}
                         />
+                        {currentStage === PLANNING_STAGES.EVENT_CONFIRMED && (
+                            <Pressable
+                                style={styles.showPlanButton}
+                                onPress={() => navigation.navigate('EventConfirmation', { circleId })}
+                            >
+                                <Text style={styles.showPlanButtonText}>View Events</Text>
+                            </Pressable>
+                        )}
                         {isPinVisible ? (
                             <ContextualPin
                                 currentStage={currentStage}
@@ -506,12 +539,7 @@ const CircleScreen = () => {
                                 onFinishVoting={handleFinishVoting}
                                 onVote={handleVote}
                                 onAddOption={handleAddOption}
-                                eventData={{
-                                    winningActivity: poll?.winningActivity,
-                                    winningPlace: poll?.winningPlace,
-                                    rsvps: poll?.rsvps || {},
-                                    currentUser: { id: user?.uid, rsvp: poll?.rsvps?.[user?.uid] },
-                                }}
+                                eventData={event}
                                 onRsvp={handleRsvp}
                                 onStartNewPoll={handleStartNewPoll}
                                 onPollNextStep={handlePollNextStep}

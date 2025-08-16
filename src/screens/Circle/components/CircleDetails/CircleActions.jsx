@@ -6,7 +6,9 @@ import { RADII, SHADOWS } from '../../../../constants/constants';
 import useAuth from '../../../../hooks/useAuth';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
 import useCircleRequests from '../../../../hooks/useCircleRequests';
+import usePendingEvents from '../../../../hooks/usePendingEvents';
 import JoinRequestsModal from '../../../../components/JoinRequestsModal';
+import EventConfirmationModal from './EventConfirmationModal';
 
 
 const CircleActions = ({ circleId, circle, navigation }) => {
@@ -14,8 +16,10 @@ const CircleActions = ({ circleId, circle, navigation }) => {
     const { user } = useAuth();
     const { isMember, isAdmin, getAdmins } = useCircleMembers(circleId);
     const { requestCount, createJoinRequest, hasPendingRequest } = useCircleRequests(circleId);
+    const { pendingCount } = usePendingEvents(circleId);
     const [isRequestingJoin, setIsRequestingJoin] = useState(false);
     const [showJoinRequestsModal, setShowJoinRequestsModal] = useState(false);
+    const [showEventConfirmationModal, setShowEventConfirmationModal] = useState(false);
     const styles = getStyles(colors);
 
     const currentUserIsMember = isMember(user?.uid);
@@ -52,6 +56,13 @@ const CircleActions = ({ circleId, circle, navigation }) => {
             badge: requestCount > 0 ? requestCount : null,
             onPress: () => setShowJoinRequestsModal(true),
         },
+        ...(pendingCount > 0 ? [{
+            title: 'Confirm Events',
+            icon: 'calendar',
+            color: colors.primary,
+            badge: pendingCount,
+            onPress: () => setShowEventConfirmationModal(true),
+        }] : []),
     ];
 
     const handleShareCircle = () => {
@@ -172,6 +183,13 @@ const CircleActions = ({ circleId, circle, navigation }) => {
                 circleId={circleId}
                 circleName={circle.name}
                 onViewProfile={handleViewProfile}
+            />
+
+            <EventConfirmationModal
+                visible={showEventConfirmationModal}
+                onClose={() => setShowEventConfirmationModal(false)}
+                circleId={circleId}
+                circleName={circle.circleName || circle.name}
             />
         </View>
     );

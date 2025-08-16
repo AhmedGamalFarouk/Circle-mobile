@@ -6,6 +6,7 @@ import CreationForm from '../screens/Circle Creation/CreationForm';
 import InviteAndShare from '../screens/Circle Creation/InviteAndShare';
 import CircleDetailsScreen from '../screens/Circle/CircleDetailsScreen';
 import EditCircleScreen from '../screens/Circle/EditCircleScreen';
+import EventConfirmation from '../screens/Circle/components/EventConfirmation/EventConfirmation';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,6 +19,7 @@ export default function DynamicNativeStack() {
             <Stack.Screen name="InviteAndShare" component={InviteAndShare} />
             <Stack.Screen name="CircleDetails" component={CircleDetailsScreen} />
             <Stack.Screen name="EditCircle" component={EditCircleScreen} />
+            <Stack.Screen name="EventConfirmation" component={EventConfirmation} />
         </Stack.Navigator>
     );
 }

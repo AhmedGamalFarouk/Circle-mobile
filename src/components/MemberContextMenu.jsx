@@ -180,7 +180,7 @@ const MemberContextMenu = ({
                                 </Text>
                                 {member.isOwner && (
                                     <View style={styles.ownerBadge}>
-                                        <Ionicons name="crown" size={12} color={colors.background} />
+                                        <Ionicons name="ribbon-outline" size={12} color={colors.background} />
                                         <Text style={styles.badgeText}>Owner</Text>
                                     </View>
                                 )}

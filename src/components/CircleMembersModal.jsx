@@ -202,7 +202,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                             <View style={styles.badges}>
                                 {item.isOwner && (
                                     <View style={[styles.badge, styles.ownerBadge]}>
-                                        <Ionicons name="crown" size={12} color={colors.background} />
+                                        <Ionicons name="ribbon-outline" size={12} color={colors.background} />
                                         <Text style={styles.badgeText}>Owner</Text>
                                     </View>
                                 )}
