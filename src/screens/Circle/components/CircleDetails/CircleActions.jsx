@@ -44,6 +44,12 @@ const CircleActions = ({ circleId, circle, navigation }) => {
                 ownerId: circle.createdBy
             }),
         },
+        {
+            title: 'View Events',
+            icon: 'eye',
+            color: colors.secondary,
+            onPress: () => navigation.navigate('EventConfirmation', { circleId }),
+        },
     ];
 
     // Additional actions for admins
@@ -56,13 +62,13 @@ const CircleActions = ({ circleId, circle, navigation }) => {
             badge: requestCount > 0 ? requestCount : null,
             onPress: () => setShowJoinRequestsModal(true),
         },
-        ...(pendingCount > 0 ? [{
+        {
             title: 'Confirm Events',
             icon: 'calendar',
-            color: colors.primary,
-            badge: pendingCount,
+            color: pendingCount > 0 ? colors.warning : colors.textSecondary,
+            badge: pendingCount > 0 ? pendingCount : null,
             onPress: () => setShowEventConfirmationModal(true),
-        }] : []),
+        },
     ];
 
     const handleShareCircle = () => {

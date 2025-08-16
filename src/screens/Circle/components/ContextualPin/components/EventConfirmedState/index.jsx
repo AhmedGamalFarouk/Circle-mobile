@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
 const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
-    const { winningActivity, winningPlace, rsvps, currentUser } = eventData;
+    const { title, location, rsvps, currentUser } = eventData;
 
     const getRsvpCounts = () => {
         const counts = { yes: 0, no: 0, maybe: 0 };
@@ -65,13 +65,13 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                 <View style={styles.detailRow}>
                     <Ionicons name="star" size={20} color={COLORS.primary} />
                     <Text style={styles.detailLabel}>Activity:</Text>
-                    <Text style={styles.detailValue}>{winningActivity}</Text>
+                    <Text style={styles.detailValue}>{title}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
                     <Ionicons name="location" size={20} color={COLORS.primary} />
                     <Text style={styles.detailLabel}>Location:</Text>
-                    <Text style={styles.detailValue}>{winningPlace}</Text>
+                    <Text style={styles.detailValue}>{location}</Text>
                 </View>
             </View>
 

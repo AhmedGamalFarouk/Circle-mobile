@@ -7,17 +7,20 @@ import {
     StyleSheet,
     Alert,
     Linking,
+    ScrollView,
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../../../firebase/config";
 import { useRoute } from "@react-navigation/native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useTheme } from "../../../../context/ThemeContext";
 
 export default function EventForm({ event, onClose, circleId }) {
     const { t } = useTranslation();
+    const { colors } = useTheme();
     const [day, setDay] = useState(event.day ? new Date(event.day) : new Date());
-    const [location, setLocation] = useState(event.Location || "");
+    const [location, setLocation] = useState(event.location || "");
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
     const showDatePicker = () => {
@@ -55,29 +58,25 @@ export default function EventForm({ event, onClose, circleId }) {
     };
 
     const openInMaps = () => {
-        if (!place.trim()) {
+        if (!location.trim()) {
             Alert.alert(t("Input Error"), t("Please enter a place first."));
             return;
         }
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            place
+            location
         )}`;
-        setLocation(mapsUrl);
         Linking.openURL(mapsUrl);
     };
 
+    const styles = getStyles(colors);
+
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             <Text style={styles.title}>{t("Event Confirmation")}</Text>
 
             <View style={styles.inputGroup}>
                 <Text style={styles.label}>{t("Activity")}</Text>
                 <Text style={styles.staticText}>{event.title}</Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-                <Text style={styles.label}>{t("Place")}</Text>
-                <Text style={styles.staticText}>{event.location}</Text>
             </View>
 
             <View style={styles.inputGroup}>
@@ -88,7 +87,7 @@ export default function EventForm({ event, onClose, circleId }) {
                         placeholder={t("Enter place or address")}
                         value={location}
                         onChangeText={setLocation}
-                        placeholderTextColor="#888"
+                        placeholderTextColor={colors.textSecondary}
                     />
                     <TouchableOpacity style={styles.mapsButton} onPress={openInMaps}>
                         <Text style={styles.mapsButtonText}>{t("Open in Maps")}</Text>
@@ -123,96 +122,97 @@ export default function EventForm({ event, onClose, circleId }) {
                     <Text style={styles.submitButtonText}>{t("Cancel")}</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </ScrollView>
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        width: "100%",
-        padding: 20,
-        backgroundColor: "#1A1A2E",
-        borderRadius: 10,
-    },
-    title: {
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#FFFFFF",
-        marginBottom: 20,
-        textAlign: "center",
-    },
-    inputGroup: {
-        marginBottom: 15,
-    },
-    label: {
-        fontSize: 16,
-        color: "#FFFFFF",
-        marginBottom: 8,
-    },
-    input: {
-        backgroundColor: "#2A2A4E",
-        borderRadius: 8,
-        padding: 12,
-        color: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#45B7D1",
-    },
-    staticText: {
-        backgroundColor: "#2A2A4E",
-        borderRadius: 8,
-        padding: 12,
-        color: "#FFFFFF",
-        borderWidth: 1,
-        borderColor: "#45B7D1",
-    },
-    locationInputContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-    },
-    locationInput: {
-        flex: 1,
-        marginRight: 10,
-    },
-    mapsButton: {
-        backgroundColor: "#4ECDC4",
-        padding: 12,
-        borderRadius: 8,
-    },
-    mapsButtonText: {
-        color: "#FFFFFF",
-        fontWeight: "bold",
-    },
-    datePickerButton: {
-        backgroundColor: "#2A2A4E",
-        borderRadius: 8,
-        padding: 12,
-        justifyContent: "center",
-        alignItems: "center",
-        borderWidth: 1,
-        borderColor: "#45B7D1",
-    },
-    datePickerText: {
-        color: "#FFFFFF",
-    },
-    buttonContainer: {
-        marginTop: 20,
-        flexDirection: "row",
-        justifyContent: "space-between",
-    },
-    submitButton: {
-        backgroundColor: "#45B7D1",
-        padding: 15,
-        borderRadius: 8,
-        alignItems: "center",
-        flex: 1,
-    },
-    cancelButton: {
-        backgroundColor: "#FF6B6B",
-        marginLeft: 10,
-    },
-    submitButtonText: {
-        color: "#FFFFFF",
-        fontSize: 16,
-        fontWeight: "bold",
-    },
-});
+const getStyles = (colors) =>
+    StyleSheet.create({
+        container: {
+            width: "100%",
+            padding: 20,
+            backgroundColor: colors.background,
+            borderRadius: 10,
+        },
+        title: {
+            fontSize: 22,
+            fontWeight: "bold",
+            color: colors.text,
+            marginBottom: 20,
+            textAlign: "center",
+        },
+        inputGroup: {
+            marginBottom: 15,
+        },
+        label: {
+            fontSize: 16,
+            color: colors.text,
+            marginBottom: 8,
+        },
+        input: {
+            backgroundColor: colors.surface,
+            borderRadius: 8,
+            padding: 12,
+            color: colors.text,
+            borderWidth: 1,
+            borderColor: colors.primary,
+        },
+        staticText: {
+            backgroundColor: colors.surface,
+            borderRadius: 8,
+            padding: 12,
+            color: colors.text,
+            borderWidth: 1,
+            borderColor: colors.primary,
+        },
+        locationInputContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+        },
+        locationInput: {
+            flex: 1,
+            marginRight: 10,
+        },
+        mapsButton: {
+            backgroundColor: colors.primary,
+            padding: 12,
+            borderRadius: 8,
+        },
+        mapsButtonText: {
+            color: colors.background,
+            fontWeight: "bold",
+        },
+        datePickerButton: {
+            backgroundColor: colors.surface,
+            borderRadius: 8,
+            padding: 12,
+            justifyContent: "center",
+            alignItems: "center",
+            borderWidth: 1,
+            borderColor: colors.primary,
+        },
+        datePickerText: {
+            color: colors.text,
+        },
+        buttonContainer: {
+            marginTop: 20,
+            flexDirection: "row",
+            justifyContent: "space-between",
+        },
+        submitButton: {
+            backgroundColor: colors.primary,
+            padding: 15,
+            borderRadius: 8,
+            alignItems: "center",
+            flex: 1,
+        },
+        cancelButton: {
+            backgroundColor: colors.error,
+            marginLeft: 10,
+        },
+        submitButtonText: {
+            color: colors.background,
+            fontSize: 16,
+            fontWeight: "bold",
+        },
+    });

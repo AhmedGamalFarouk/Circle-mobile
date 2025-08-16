@@ -1,13 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    TextInput,
+    Alert,
+    Animated,
+    Dimensions
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+// import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../../../../../../context/ThemeContext';
+import { RADII, SHADOWS } from '../../../../../../constants/constants';
 
-const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
+const { width } = Dimensions.get('window');
 
+const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollType = 'activity' }) => {
+    const { colors } = useTheme();
     const [remainingTime, setRemainingTime] = useState('');
     const [isExpired, setIsExpired] = useState(false);
     const [showAddOption, setShowAddOption] = useState(false);
     const [newOptionText, setNewOptionText] = useState('');
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [voteAnimations] = useState({});
+    const [progressAnimations] = useState({});
 
     useEffect(() => {
         if (!pollData || !pollData.deadline) {
@@ -63,6 +80,62 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
         return Object.values(pollData.votes).filter(vote => vote === optionText).length;
     };
 
+    const getTotalVotes = () => {
+        if (!pollData.votes) return 0;
+        return Object.keys(pollData.votes).length;
+    };
+
+    const getVotePercentage = (optionText) => {
+        const totalVotes = getTotalVotes();
+        if (totalVotes === 0) return 0;
+        return (getVoteCount(optionText) / totalVotes) * 100;
+    };
+
+    const handleVote = (optionText) => {
+        if (isExpired) return;
+
+        setSelectedOption(optionText);
+
+        // Animate vote button
+        if (!voteAnimations[optionText]) {
+            voteAnimations[optionText] = new Animated.Value(1);
+        }
+
+        Animated.sequence([
+            Animated.timing(voteAnimations[optionText], {
+                toValue: 0.95,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(voteAnimations[optionText], {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start();
+
+        onVote(optionText);
+    };
+
+    // Initialize progress animations
+    useEffect(() => {
+        if (pollData?.options) {
+            pollData.options.forEach((option, index) => {
+                if (!progressAnimations[option.text]) {
+                    progressAnimations[option.text] = new Animated.Value(0);
+                }
+
+                const percentage = getVotePercentage(option.text);
+                Animated.timing(progressAnimations[option.text], {
+                    toValue: percentage,
+                    duration: 500,
+                    delay: index * 100,
+                    useNativeDriver: false,
+                }).start();
+            });
+        }
+    }, [pollData?.votes]);
+
     const handleAddOption = () => {
         if (!newOptionText.trim()) {
             Alert.alert('Error', 'Please enter an option');
@@ -90,39 +163,146 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
     };
 
     const canAddOptions = pollData.allowNewOptions && !isExpired;
+    const totalVotes = getTotalVotes();
+    const styles = getStyles(colors);
 
     return (
         <View style={styles.container}>
-            <Text style={styles.pollQuestion}>{pollData.question}</Text>
-            <Text style={[styles.deadlineText, isExpired && styles.expiredText]}>
-                Ends in: {remainingTime}
-            </Text>
-            {pollData.options.map((option, index) => (
-                <TouchableOpacity
-                    key={index}
-                    style={[styles.optionContainer, isExpired && styles.disabledOption]}
-                    onPress={() => !isExpired && onVote(option.text)}
-                    disabled={isExpired}
-                >
-                    <Text style={[styles.optionText, isExpired && styles.disabledText]}>{option.text}</Text>
-                    <Text style={styles.voteCount}>{getVoteCount(option.text)}</Text>
-                </TouchableOpacity>
-            ))}
+            {/* Poll Header */}
+            <View style={styles.header}>
+                <View style={styles.pollTypeIcon}>
+                    <Ionicons
+                        name={pollType === 'activity' ? 'game-controller' : 'location'}
+                        size={20}
+                        color={colors.primary}
+                    />
+                </View>
+                <View style={styles.headerText}>
+                    <Text style={styles.pollQuestion} numberOfLines={2}>
+                        {pollData.question}
+                    </Text>
+                    <View style={styles.pollMeta}>
+                        <View style={styles.metaItem}>
+                            <Ionicons name="time" size={16} color={isExpired ? colors.error : colors.success} />
+                            <Text style={[styles.deadlineText, isExpired && styles.expiredText]}>
+                                {remainingTime}
+                            </Text>
+                        </View>
+                        <View style={styles.metaItem}>
+                            <Ionicons name="people" size={16} color={colors.textSecondary} />
+                            <Text style={styles.voteCountText}>
+                                {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+                            </Text>
+                        </View>
+                    </View>
+                </View>
+            </View>
 
+            {/* Options */}
+            <View style={styles.optionsContainer}>
+                {pollData.options.map((option, index) => {
+                    const voteCount = getVoteCount(option.text);
+                    const percentage = getVotePercentage(option.text);
+                    const isSelected = selectedOption === option.text;
+
+                    return (
+                        <Animated.View
+                            key={index}
+                            style={[
+                                styles.optionWrapper,
+                                voteAnimations[option.text] && {
+                                    transform: [{ scale: voteAnimations[option.text] || 1 }]
+                                }
+                            ]}
+                        >
+                            <TouchableOpacity
+                                style={[
+                                    styles.optionContainer,
+                                    isExpired && styles.disabledOption,
+                                    isSelected && styles.selectedOption
+                                ]}
+                                onPress={() => handleVote(option.text)}
+                                disabled={isExpired}
+                            >
+                                {/* Progress Bar Background */}
+                                <Animated.View
+                                    style={[
+                                        styles.progressBar,
+                                        {
+                                            width: progressAnimations[option.text]?.interpolate({
+                                                inputRange: [0, 100],
+                                                outputRange: ['0%', '100%'],
+                                                extrapolate: 'clamp',
+                                            }) || '0%',
+                                        }
+                                    ]}
+                                />
+
+                                {/* Option Content */}
+                                <View style={styles.optionContent}>
+                                    <View style={styles.optionLeft}>
+                                        <Text style={[
+                                            styles.optionText,
+                                            isExpired && styles.disabledText,
+                                            isSelected && styles.selectedOptionText,
+                                            { color: colors.text }
+                                        ]}>
+                                            {option.text}
+                                        </Text>
+                                        {totalVotes > 0 && (
+                                            <Text style={[styles.percentageText, { color: colors.textSecondary }]}>
+                                                {Math.round(percentage)}%
+                                            </Text>
+                                        )}
+                                    </View>
+
+                                    <View style={styles.optionRight}>
+                                        <View style={[
+                                            styles.voteCountBadge,
+                                            voteCount > 0 && styles.activeVoteCountBadge
+                                        ]}>
+                                            <Text style={[
+                                                styles.voteCount,
+                                                voteCount > 0 && styles.activeVoteCount
+                                            ]}>
+                                                {voteCount}
+                                            </Text>
+                                        </View>
+                                        {isSelected && (
+                                            <Ionicons
+                                                name="checkmark-circle"
+                                                size={24}
+                                                color={colors.success}
+                                            />
+                                        )}
+                                    </View>
+                                </View>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    );
+                })}
+            </View>
+
+            {/* Add Option */}
             {canAddOptions && (
-                <>
+                <View style={styles.addOptionSection}>
                     {showAddOption ? (
                         <View style={styles.addOptionContainer}>
                             <TextInput
                                 style={styles.addOptionInput}
-                                placeholder="Enter new option..."
-                                placeholderTextColor={COLORS.text}
+                                placeholder={`Add ${pollType} option...`}
+                                placeholderTextColor={colors.textSecondary}
                                 value={newOptionText}
                                 onChangeText={setNewOptionText}
                                 maxLength={50}
+                                autoFocus
                             />
                             <View style={styles.addOptionButtons}>
-                                <TouchableOpacity style={styles.addOptionConfirm} onPress={handleAddOption}>
+                                <TouchableOpacity
+                                    style={styles.addOptionConfirm}
+                                    onPress={handleAddOption}
+                                >
+                                    <Ionicons name="checkmark" size={20} color={colors.background} />
                                     <Text style={styles.addOptionConfirmText}>Add</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
@@ -132,7 +312,7 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
                                         setNewOptionText('');
                                     }}
                                 >
-                                    <Text style={styles.addOptionCancelText}>Cancel</Text>
+                                    <Ionicons name="close" size={20} color={colors.textSecondary} />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -141,159 +321,254 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption }) => {
                             style={styles.addOptionButton}
                             onPress={() => setShowAddOption(true)}
                         >
-                            <Text style={styles.addOptionButtonText}>+ Add Option</Text>
+                            <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+                            <Text style={styles.addOptionButtonText}>Add Option</Text>
                         </TouchableOpacity>
                     )}
-                </>
+                </View>
             )}
 
+            {/* Action Button */}
             <TouchableOpacity
                 style={[styles.finishButton, isExpired && styles.disabledButton]}
                 onPress={onFinishVoting}
                 disabled={isExpired}
             >
-                <Text style={[styles.finishButtonText, isExpired && styles.disabledText]}>
-                    {isExpired ? 'Poll Ended' : 'Finish Voting'}
-                </Text>
+                <View
+                    style={[styles.finishButtonGradient, { backgroundColor: isExpired ? colors.surface : colors.success }]}
+                >
+                    <Ionicons
+                        name={isExpired ? "time" : "checkmark-circle"}
+                        size={20}
+                        color={isExpired ? colors.textSecondary : colors.background}
+                    />
+                    <Text style={[styles.finishButtonText, isExpired && styles.disabledText]}>
+                        {isExpired ? 'Poll Ended' : 'Close Poll'}
+                    </Text>
+                </View>
             </TouchableOpacity>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
     container: {
-        backgroundColor: COLORS.dark,
-        borderBottomLeftRadius: RADII.largeRounded,
-        borderBottomRightRadius: RADII.largeRounded,
-        padding: 25,
-        width: '100%',
+        paddingBottom: 8,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        marginBottom: 20,
+    },
+    pollTypeIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: colors.primary + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    headerText: {
+        flex: 1,
     },
     pollQuestion: {
-        color: COLORS.light,
-        fontFamily: FONTS.heading,
-        fontSize: 22,
-        marginBottom: 20,
-        textAlign: 'center',
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: colors.text,
+        marginBottom: 8,
+        lineHeight: 26,
+    },
+    pollMeta: {
+        flexDirection: 'row',
+        gap: 16,
+    },
+    metaItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
     },
     deadlineText: {
-        color: COLORS.text,
-        fontFamily: FONTS.body,
         fontSize: 14,
-        textAlign: 'center',
-        marginBottom: 15,
-    },
-    optionContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: COLORS.darker,
-        padding: 18,
-        borderRadius: RADII.rounded,
-        marginBottom: 12,
-    },
-    optionText: {
-        color: COLORS.text,
-        fontFamily: FONTS.body,
-        fontSize: 16,
-    },
-    voteCount: {
-        color: COLORS.primary,
-        fontFamily: FONTS.body,
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
-    finishButton: {
-        backgroundColor: COLORS.accent,
-        padding: 18,
-        borderRadius: RADII.pill,
-        alignItems: 'center',
-        marginTop: 25,
-        //...SHADOWS.btnSecondaryHover,
-    },
-    finishButtonText: {
-        color: COLORS.darker,
-        fontFamily: FONTS.body,
-        fontWeight: 'bold',
-        fontSize: 18,
+        color: colors.success,
+        fontWeight: '600',
     },
     expiredText: {
-        color: COLORS.accent,
-        fontWeight: 'bold',
+        color: colors.error,
+    },
+    voteCountText: {
+        fontSize: 14,
+        color: colors.textSecondary,
+        fontWeight: '500',
+    },
+    optionsContainer: {
+        marginBottom: 20,
+        gap: 12,
+    },
+    optionWrapper: {
+        borderRadius: RADII.medium,
+        overflow: 'hidden',
+    },
+    optionContainer: {
+        backgroundColor: colors.surface,
+        borderRadius: RADII.medium,
+        borderWidth: 2,
+        borderColor: colors.border,
+        overflow: 'hidden',
+        position: 'relative',
+    },
+    selectedOption: {
+        borderColor: colors.success,
+        backgroundColor: colors.success + '10',
     },
     disabledOption: {
         opacity: 0.6,
     },
-    disabledButton: {
-        backgroundColor: COLORS.darker,
-        opacity: 0.6,
+    progressBar: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        backgroundColor: colors.primary + '20',
+        zIndex: 1,
+    },
+    optionContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        zIndex: 2,
+    },
+    optionLeft: {
+        flex: 1,
+        marginRight: 12,
+    },
+    optionText: {
+        fontSize: 16,
+        color: colors.text,
+        fontWeight: '500',
+        marginBottom: 2,
+    },
+    selectedOptionText: {
+        color: colors.success,
+        fontWeight: '600',
+    },
+    percentageText: {
+        fontSize: 12,
+        color: colors.textSecondary,
+        fontWeight: '500',
     },
     disabledText: {
-        color: COLORS.text,
         opacity: 0.6,
     },
-    addOptionButton: {
-        backgroundColor: COLORS.primary,
-        padding: 15,
-        borderRadius: RADII.rounded,
+    optionRight: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 15,
-        borderWidth: 1,
-        borderColor: COLORS.primary,
-        borderStyle: 'dashed',
+        gap: 8,
     },
-    addOptionButtonText: {
-        color: COLORS.light,
-        fontFamily: FONTS.body,
+    voteCountBadge: {
+        minWidth: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: colors.border,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    activeVoteCountBadge: {
+        backgroundColor: colors.primary,
+    },
+    voteCount: {
         fontSize: 14,
         fontWeight: 'bold',
+        color: colors.textSecondary,
+    },
+    activeVoteCount: {
+        color: colors.background,
+    },
+    addOptionSection: {
+        marginBottom: 20,
+    },
+    addOptionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.surface,
+        borderWidth: 2,
+        borderColor: colors.primary,
+        borderStyle: 'dashed',
+        borderRadius: RADII.medium,
+        padding: 16,
+        gap: 8,
+    },
+    addOptionButtonText: {
+        fontSize: 16,
+        color: colors.primary,
+        fontWeight: '600',
     },
     addOptionContainer: {
-        backgroundColor: COLORS.darker,
-        padding: 15,
-        borderRadius: RADII.rounded,
-        marginBottom: 15,
+        backgroundColor: colors.surface,
+        borderRadius: RADII.medium,
+        padding: 16,
+        borderWidth: 2,
+        borderColor: colors.border,
     },
     addOptionInput: {
-        backgroundColor: COLORS.dark,
-        color: COLORS.text,
-        fontFamily: FONTS.body,
+        backgroundColor: colors.background,
+        color: colors.text,
         fontSize: 16,
         padding: 12,
-        borderRadius: RADII.rounded,
-        marginBottom: 10,
+        borderRadius: RADII.small,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     addOptionButtons: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: 12,
     },
     addOptionConfirm: {
-        backgroundColor: COLORS.accent,
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: RADII.rounded,
-        flex: 0.45,
+        flex: 1,
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.primary,
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: RADII.small,
+        gap: 8,
     },
     addOptionConfirmText: {
-        color: COLORS.darker,
-        fontFamily: FONTS.body,
-        fontWeight: 'bold',
-        fontSize: 14,
+        color: colors.background,
+        fontSize: 16,
+        fontWeight: '600',
     },
     addOptionCancel: {
-        backgroundColor: 'transparent',
-        paddingVertical: 8,
-        paddingHorizontal: 20,
-        borderRadius: RADII.rounded,
-        borderWidth: 1,
-        borderColor: COLORS.text,
-        flex: 0.45,
+        padding: 12,
+        borderRadius: RADII.small,
+        backgroundColor: colors.surface,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    addOptionCancelText: {
-        color: COLORS.text,
-        fontFamily: FONTS.body,
-        fontSize: 14,
+    finishButton: {
+        borderRadius: RADII.medium,
+        overflow: 'hidden',
+        ...SHADOWS.medium,
+    },
+    finishButtonGradient: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 24,
+        gap: 8,
+    },
+    finishButtonText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: colors.background,
+    },
+    disabledButton: {
+        opacity: 0.6,
     },
 });
 

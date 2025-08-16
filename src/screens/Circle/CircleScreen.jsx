@@ -9,7 +9,7 @@ import ChatFeed from './components/ChatFeed';
 import ChatInputBar from './components/ChatInputBar';
 import CircleHeader from './components/CircleHeader';
 import { COLORS } from '../../constants/constants';
-import PollCreation from './components/PollCreation';
+import SimplePollCreation from './components/PollCreation/SimplePollCreation';
 import useAuth from '../../hooks/useAuth';
 import useUserProfile from '../../hooks/useUserProfile';
 
@@ -165,8 +165,11 @@ const CircleScreen = () => {
     }, [openPollModal]);
 
     const handleStartPoll = () => {
+        console.log('CircleScreen: handleStartPoll called');
+        console.log('CircleScreen: Current isPollModalVisible:', isPollModalVisible);
         setPollType('activity');
         setPollModalVisible(true);
+        console.log('CircleScreen: Set isPollModalVisible to true');
     };
 
     const handleLaunchPoll = async (pollData) => {
@@ -522,14 +525,6 @@ const CircleScreen = () => {
                             circleId={circleId}
                             circle={circle}
                         />
-                        {currentStage === PLANNING_STAGES.EVENT_CONFIRMED && (
-                            <Pressable
-                                style={styles.showPlanButton}
-                                onPress={() => navigation.navigate('EventConfirmation', { circleId })}
-                            >
-                                <Text style={styles.showPlanButtonText}>View Events</Text>
-                            </Pressable>
-                        )}
                         {isPinVisible ? (
                             <ContextualPin
                                 currentStage={currentStage}
@@ -567,7 +562,7 @@ const CircleScreen = () => {
                 visible={isPollModalVisible}
                 onRequestClose={() => setPollModalVisible(false)}
             >
-                <PollCreation
+                <SimplePollCreation
                     onLaunchPoll={handleLaunchPoll}
                     pollType={pollType}
                     onClose={() => setPollModalVisible(false)}

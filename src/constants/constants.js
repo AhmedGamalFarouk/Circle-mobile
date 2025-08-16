@@ -111,6 +111,26 @@ export const SHADOWS = {
     shadowRadius: 25,
     elevation: 15,
   },
+  medium: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  large: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
 };
 
 export const RADII = {
@@ -119,6 +139,8 @@ export const RADII = {
   rounded: 20,
   largeRounded: 30,
   small: 8,
+  medium: 12,
+  large: 16,
 };
 
 export const Z_INDEX = {

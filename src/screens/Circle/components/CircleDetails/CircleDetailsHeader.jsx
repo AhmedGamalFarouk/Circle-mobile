@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, ImageBackground, Animated, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../context/ThemeContext';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 import { getCircleImageUrl } from '../../../../utils/imageUtils';
@@ -35,10 +34,7 @@ const CircleDetailsHeader = ({ name, description, image, createdAt, circleId }) 
                         console.log('Circle image load error:', error);
                     }}
                 >
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.8)']}
-                        style={styles.gradient}
-                    />
+                    <View style={styles.gradientOverlay} />
                 </ImageBackground>
             </View>
 
@@ -86,8 +82,9 @@ const getStyles = (colors) => StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-    gradient: {
+    gradientOverlay: {
         ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.4)', // Approximating the gradient effect with a solid color
     },
     contentOverlay: {
         position: 'absolute',

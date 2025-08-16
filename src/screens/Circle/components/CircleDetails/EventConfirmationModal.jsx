@@ -7,7 +7,9 @@ import {
     TouchableOpacity,
     FlatList,
     ActivityIndicator,
-    Alert
+    Alert,
+    Animated,
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
@@ -15,10 +17,48 @@ import { RADII, SHADOWS } from '../../../../constants/constants';
 import usePendingEvents from '../../../../hooks/usePendingEvents';
 import PendingEventItem from './PendingEventItem';
 
+const { height } = Dimensions.get('window');
+
 const EventConfirmationModal = ({ visible, onClose, circleId, circleName }) => {
     const { colors } = useTheme();
     const { pendingEvents, loading } = usePendingEvents(circleId);
+    const [slideAnim] = useState(new Animated.Value(height));
+    const [fadeAnim] = useState(new Animated.Value(0));
     const styles = getStyles(colors);
+
+    React.useEffect(() => {
+        if (visible) {
+            Animated.parallel([
+                Animated.timing(slideAnim, {
+                    toValue: 0,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [visible]);
+
+    const handleClose = () => {
+        Animated.parallel([
+            Animated.timing(slideAnim, {
+                toValue: height,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+            Animated.timing(fadeAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            onClose();
+        });
+    };
 
     const renderPendingEvent = ({ item }) => (
         <PendingEventItem
@@ -32,102 +72,201 @@ const EventConfirmationModal = ({ visible, onClose, circleId, circleName }) => {
 
     const renderEmptyState = () => (
         <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={48} color={colors.textSecondary} />
-            <Text style={styles.emptyTitle}>No Pending Events</Text>
-            <Text style={styles.emptyText}>
-                All events have been confirmed or there are no events awaiting confirmation.
-            </Text>
+            <View
+                style={[styles.emptyGradient, { backgroundColor: colors.surface }]}
+            >
+                <View style={styles.emptyIconContainer}>
+                    <Ionicons name="calendar-outline" size={64} color={colors.primary} />
+                </View>
+                <Text style={styles.emptyTitle}>All Caught Up!</Text>
+                <Text style={styles.emptyText}>
+                    No events are waiting for confirmation. All your events have been processed.
+                </Text>
+                <View style={styles.emptyActions}>
+                    <TouchableOpacity style={styles.emptyActionButton} onPress={handleClose}>
+                        <Ionicons name="checkmark-circle" size={20} color={colors.primary} />
+                        <Text style={styles.emptyActionText}>Got it</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </View>
     );
 
     return (
         <Modal
             visible={visible}
-            animationType="slide"
-            presentationStyle="pageSheet"
-            onRequestClose={onClose}
+            animationType="none"
+            transparent={true}
+            onRequestClose={handleClose}
         >
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <View style={styles.headerContent}>
-                        <Text style={styles.title}>Event Confirmations</Text>
-                        <Text style={styles.subtitle}>{circleName}</Text>
-                    </View>
-                    <TouchableOpacity
-                        style={styles.closeButton}
-                        onPress={onClose}
+            <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+                <Animated.View
+                    style={[
+                        styles.container,
+                        { transform: [{ translateY: slideAnim }] }
+                    ]}
+                >
+                    <View
+                        style={[styles.gradientBackground, { backgroundColor: colors.surface }]}
                     >
-                        <Ionicons name="close" size={24} color={colors.text} />
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.content}>
-                    {loading ? (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color={colors.primary} />
-                            <Text style={styles.loadingText}>Loading pending events...</Text>
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <View style={styles.headerContent}>
+                                <View style={styles.headerIcon}>
+                                    <Ionicons name="calendar" size={24} color={colors.primary} />
+                                </View>
+                                <View style={styles.headerText}>
+                                    <Text style={styles.title}>Event Confirmations</Text>
+                                    <Text style={styles.subtitle}>{circleName}</Text>
+                                </View>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.closeButton}
+                                onPress={handleClose}
+                            >
+                                <Ionicons name="close" size={24} color={colors.text} />
+                            </TouchableOpacity>
                         </View>
-                    ) : (
-                        <FlatList
-                            data={pendingEvents}
-                            renderItem={renderPendingEvent}
-                            keyExtractor={(item) => item.id}
-                            ListEmptyComponent={renderEmptyState}
-                            showsVerticalScrollIndicator={false}
-                            contentContainerStyle={styles.listContainer}
-                        />
-                    )}
-                </View>
-            </View>
+
+                        {/* Stats Bar */}
+                        <View style={styles.statsBar}>
+                            <View style={styles.statItem}>
+                                <Text style={styles.statNumber}>{pendingEvents.length}</Text>
+                                <Text style={styles.statLabel}>Pending</Text>
+                            </View>
+                            <View style={styles.statDivider} />
+                            <View style={styles.statItem}>
+                                <Text style={styles.statNumber}>
+                                    {pendingEvents.filter(e => e.priority === 'high').length}
+                                </Text>
+                                <Text style={styles.statLabel}>Urgent</Text>
+                            </View>
+                        </View>
+
+                        {/* Content */}
+                        <View style={styles.content}>
+                            {loading ? (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="large" color={colors.primary} />
+                                    <Text style={styles.loadingText}>Loading pending events...</Text>
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={pendingEvents}
+                                    renderItem={renderPendingEvent}
+                                    keyExtractor={(item) => item.id}
+                                    ListEmptyComponent={renderEmptyState}
+                                    showsVerticalScrollIndicator={false}
+                                    contentContainerStyle={styles.listContainer}
+                                />
+                            )}
+                        </View>
+                    </View>
+                </Animated.View>
+            </Animated.View>
         </Modal>
     );
 };
 
 const getStyles = (colors) => StyleSheet.create({
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+    },
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        justifyContent: 'center',
+        marginHorizontal: 20,
+        maxHeight: height * 0.9,
+        borderRadius: 24,
+        overflow: 'hidden',
+        ...SHADOWS.large,
+    },
+    gradientBackground: {
+        flex: 1,
+        // Removed gradient, using solid background color
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 60,
-        paddingBottom: 20,
+        padding: 20,
+        paddingTop: 24,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
     },
     headerContent: {
         flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    headerIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: colors.primary + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    headerText: {
+        flex: 1,
     },
     title: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         color: colors.text,
+        marginBottom: 4,
     },
     subtitle: {
         fontSize: 16,
         color: colors.textSecondary,
-        marginTop: 4,
     },
     closeButton: {
-        padding: 8,
-        borderRadius: RADII.rounded,
+        padding: 12,
+        borderRadius: 24,
         backgroundColor: colors.surface,
+    },
+    statsBar: {
+        flexDirection: 'row',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
+        backgroundColor: colors.surface + '80',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+    },
+    statItem: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    statNumber: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: colors.primary,
+        marginBottom: 4,
+    },
+    statLabel: {
+        fontSize: 14,
+        color: colors.textSecondary,
+        fontWeight: '500',
+    },
+    statDivider: {
+        width: 1,
+        backgroundColor: colors.border,
+        marginHorizontal: 20,
     },
     content: {
         flex: 1,
-        paddingHorizontal: 20,
     },
     listContainer: {
-        paddingVertical: 20,
+        padding: 20,
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 40,
+        paddingVertical: 60,
     },
     loadingText: {
         color: colors.textSecondary,
@@ -138,21 +277,55 @@ const getStyles = (colors) => StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        paddingVertical: 60,
+        paddingVertical: 40,
+    },
+    emptyGradient: {
+        padding: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        width: '100%',
+        // Removed gradient, using solid background color
+    },
+    emptyIconContainer: {
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: colors.primary + '20',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 24,
     },
     emptyTitle: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
         color: colors.text,
-        marginTop: 16,
-        marginBottom: 8,
+        marginBottom: 12,
+        textAlign: 'center',
     },
     emptyText: {
         fontSize: 16,
         color: colors.textSecondary,
         textAlign: 'center',
         lineHeight: 24,
-        paddingHorizontal: 40,
+        marginBottom: 32,
+    },
+    emptyActions: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    emptyActionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.primary + '20',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 24,
+        gap: 8,
+    },
+    emptyActionText: {
+        color: colors.primary,
+        fontSize: 16,
+        fontWeight: '600',
     },
 });
 

@@ -5,7 +5,9 @@ import {
     StyleSheet,
     TouchableOpacity,
     Alert,
-    Modal
+    Modal,
+    Animated,
+    Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -14,15 +16,43 @@ import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 import EventForm from '../EventConfirmation/EventForm';
 
+const { width } = Dimensions.get('window');
+
 const PendingEventItem = ({ event, circleId, onEventUpdated }) => {
     const { colors } = useTheme();
     const [isConfirming, setIsConfirming] = useState(false);
     const [isRejecting, setIsRejecting] = useState(false);
     const [showEventForm, setShowEventForm] = useState(false);
+    const [scaleAnim] = useState(new Animated.Value(1));
+    const [slideAnim] = useState(new Animated.Value(0));
     const styles = getStyles(colors);
 
+    React.useEffect(() => {
+        Animated.spring(slideAnim, {
+            toValue: 1,
+            tension: 100,
+            friction: 8,
+            useNativeDriver: true,
+        }).start();
+    }, []);
+
     const handleConfirmEvent = () => {
-        setShowEventForm(true);
+        setIsConfirming(true);
+        Animated.sequence([
+            Animated.timing(scaleAnim, {
+                toValue: 0.95,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 100,
+                useNativeDriver: true,
+            }),
+        ]).start(() => {
+            setShowEventForm(true);
+            setIsConfirming(false); // Re-enable button after animation
+        });
     };
 
     const handleRejectEvent = () => {
@@ -89,61 +119,144 @@ const PendingEventItem = ({ event, circleId, onEventUpdated }) => {
         }
     };
 
+    const getPriorityColor = () => {
+        switch (event.priority) {
+            case 'high': return colors.error;
+            case 'medium': return colors.warning;
+            default: return colors.primary;
+        }
+    };
+
+    const getTimeAgo = () => {
+        if (!event.createdAt) return 'Recently';
+
+        const now = new Date();
+        const created = event.createdAt.toDate ? event.createdAt.toDate() : new Date(event.createdAt);
+        const diffMs = now - created;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffDays > 0) return `${diffDays}d ago`;
+        if (diffHours > 0) return `${diffHours}h ago`;
+        return 'Just now';
+    };
+
     return (
         <>
-            <View style={styles.container}>
-                <View style={styles.header}>
-                    <View style={styles.iconContainer}>
-                        <Ionicons name="calendar-outline" size={24} color={colors.primary} />
+            <Animated.View
+                style={[
+                    styles.container,
+                    {
+                        transform: [
+                            { scale: scaleAnim },
+                            {
+                                translateX: slideAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [width, 0],
+                                })
+                            }
+                        ]
+                    }
+                ]}
+            >
+                <View
+                    style={[styles.gradientBackground, { backgroundColor: colors.surface }]}
+                >
+                    {/* Priority Indicator */}
+                    <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor() }]} />
+
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <View style={styles.iconContainer}>
+                            <View
+                                style={[styles.iconGradient, { backgroundColor: colors.primary }]}
+                            >
+                                <Ionicons name="calendar" size={24} color={colors.background} />
+                            </View>
+                        </View>
+
+                        <View style={styles.eventInfo}>
+                            <View style={styles.titleRow}>
+                                <Text style={styles.eventTitle} numberOfLines={2}>
+                                    {event.title}
+                                </Text>
+                                <View style={styles.statusBadge}>
+                                    <View style={styles.statusDot} />
+                                    <Text style={styles.statusText}>Pending</Text>
+                                </View>
+                            </View>
+
+                            <View style={styles.detailsContainer}>
+                                <View style={styles.detailsRow}>
+                                    <Ionicons name="location" size={16} color={colors.primary} />
+                                    <Text style={styles.eventLocation} numberOfLines={1}>
+                                        {event.location || 'Location TBD'}
+                                    </Text>
+                                </View>
+
+                                <View style={styles.detailsRow}>
+                                    <Ionicons name="time" size={16} color={colors.textSecondary} />
+                                    <Text style={styles.eventDate}>
+                                        {getTimeAgo()}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
                     </View>
-                    <View style={styles.eventInfo}>
-                        <Text style={styles.eventTitle}>{event.title}</Text>
-                        <View style={styles.detailsRow}>
-                            <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
-                            <Text style={styles.eventLocation}>
-                                {event.location || 'No location specified'}
+
+                    {/* Event Preview */}
+                    {event.description && (
+                        <View style={styles.descriptionContainer}>
+                            <Text style={styles.description} numberOfLines={2}>
+                                {event.description}
                             </Text>
                         </View>
-                        {event.createdAt && (
-                            <View style={styles.detailsRow}>
-                                <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
-                                <Text style={styles.eventDate}>
-                                    Created {formatDate(event.createdAt)}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                    <View style={styles.statusBadge}>
-                        <Text style={styles.statusText}>Pending</Text>
+                    )}
+
+                    {/* Actions */}
+                    <View style={styles.actions}>
+                        <TouchableOpacity
+                            style={[styles.actionButton, styles.rejectButton]}
+                            onPress={handleRejectEvent}
+                            disabled={isRejecting || isConfirming}
+                        >
+                            {isRejecting ? (
+                                <>
+                                    <View style={styles.loadingSpinner} />
+                                    <Text style={styles.rejectButtonText}>Rejecting...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Ionicons name="close-circle" size={20} color={colors.error} />
+                                    <Text style={styles.rejectButtonText}>Reject</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[
+                                styles.actionButton,
+                                styles.confirmButton,
+                                { backgroundColor: colors.primary } // Apply background color directly
+                            ]}
+                            onPress={handleConfirmEvent}
+                            disabled={isRejecting || isConfirming}
+                        >
+                            {isConfirming ? (
+                                <>
+                                    <View style={styles.loadingSpinner} />
+                                    <Text style={styles.confirmButtonText}>Confirming...</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Ionicons name="checkmark-circle" size={20} color={colors.background} />
+                                    <Text style={styles.confirmButtonText}>Confirm Event</Text>
+                                </>
+                            )}
+                        </TouchableOpacity>
                     </View>
                 </View>
-
-                <View style={styles.actions}>
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.rejectButton]}
-                        onPress={handleRejectEvent}
-                        disabled={isRejecting || isConfirming}
-                    >
-                        {isRejecting ? (
-                            <Text style={styles.rejectButtonText}>Rejecting...</Text>
-                        ) : (
-                            <>
-                                <Ionicons name="close-circle-outline" size={20} color="#FF6B6B" />
-                                <Text style={styles.rejectButtonText}>Reject</Text>
-                            </>
-                        )}
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={[styles.actionButton, styles.confirmButton]}
-                        onPress={handleConfirmEvent}
-                        disabled={isRejecting || isConfirming}
-                    >
-                        <Ionicons name="checkmark-circle-outline" size={20} color="white" />
-                        <Text style={styles.confirmButtonText}>Confirm Event</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+            </Animated.View>
 
             <Modal
                 animationType="slide"
@@ -170,13 +283,22 @@ const PendingEventItem = ({ event, circleId, onEventUpdated }) => {
 
 const getStyles = (colors) => StyleSheet.create({
     container: {
-        backgroundColor: colors.surface,
-        borderRadius: RADII.rounded,
-        padding: 16,
-        marginBottom: 12,
-        borderWidth: 1,
-        borderColor: colors.border,
-        ...SHADOWS.card,
+        borderRadius: RADII.large,
+        marginBottom: 16,
+        overflow: 'hidden',
+        ...SHADOWS.medium,
+        position: 'relative',
+    },
+    gradientBackground: {
+        padding: 20,
+        // Removed gradient, using solid background color
+    },
+    priorityIndicator: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
     },
     header: {
         flexDirection: 'row',
@@ -184,45 +306,82 @@ const getStyles = (colors) => StyleSheet.create({
         marginBottom: 16,
     },
     iconContainer: {
-        backgroundColor: colors.primary + '20',
-        borderRadius: RADII.rounded,
-        padding: 8,
-        marginRight: 12,
+        marginRight: 16,
+    },
+    iconGradient: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        // Removed gradient, using solid background color
     },
     eventInfo: {
         flex: 1,
     },
+    titleRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 12,
+    },
     eventTitle: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         color: colors.text,
-        marginBottom: 8,
-    },
-    detailsRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 4,
-    },
-    eventLocation: {
-        fontSize: 14,
-        color: colors.textSecondary,
-        marginLeft: 6,
-    },
-    eventDate: {
-        fontSize: 12,
-        color: colors.textSecondary,
-        marginLeft: 6,
+        flex: 1,
+        marginRight: 12,
+        lineHeight: 26,
     },
     statusBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: colors.warning + '20',
-        borderRadius: RADII.small,
-        paddingHorizontal: 8,
-        paddingVertical: 4,
+        borderRadius: 16,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        gap: 6,
+    },
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: colors.warning,
     },
     statusText: {
         fontSize: 12,
         fontWeight: '600',
         color: colors.warning,
+    },
+    detailsContainer: {
+        gap: 8,
+    },
+    detailsRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    eventLocation: {
+        fontSize: 16,
+        color: colors.text,
+        fontWeight: '500',
+        flex: 1,
+    },
+    eventDate: {
+        fontSize: 14,
+        color: colors.textSecondary,
+        fontWeight: '500',
+    },
+    descriptionContainer: {
+        backgroundColor: colors.surface + '80',
+        borderRadius: RADII.medium,
+        padding: 16,
+        marginBottom: 16,
+    },
+    description: {
+        fontSize: 14,
+        color: colors.textSecondary,
+        lineHeight: 20,
     },
     actions: {
         flexDirection: 'row',
@@ -230,52 +389,60 @@ const getStyles = (colors) => StyleSheet.create({
     },
     actionButton: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderRadius: RADII.rounded,
-        gap: 8,
+        borderRadius: RADII.medium,
+        overflow: 'hidden',
     },
     rejectButton: {
         backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: '#FF6B6B',
+        borderWidth: 2,
+        borderColor: colors.error + '40',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        gap: 8,
     },
     confirmButton: {
-        backgroundColor: colors.primary,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        gap: 8,
+        overflow: 'hidden', // Re-added overflow: 'hidden'
     },
     rejectButtonText: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
-        color: '#FF6B6B',
+        color: colors.error,
     },
     confirmButtonText: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
-        color: 'white',
+        color: colors.background,
+    },
+    loadingSpinner: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: colors.error + '40',
+        borderTopColor: colors.error,
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
     },
     modalView: {
         margin: 20,
         backgroundColor: colors.surface,
-        borderRadius: RADII.rounded,
-        padding: 35,
+        borderRadius: RADII.large,
+        padding: 24,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
+        ...SHADOWS.large,
         width: '90%',
         maxHeight: '80%',
     },
