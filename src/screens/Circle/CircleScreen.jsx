@@ -518,42 +518,40 @@ const CircleScreen = () => {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
             >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-                    <View style={styles.innerContainer}>
-                        <CircleHeader
-                            name={circle?.circleName || circle?.name}
-                            circleId={circleId}
-                            circle={circle}
+                <View style={styles.innerContainer}>
+                    <CircleHeader
+                        name={circle?.circleName || circle?.name}
+                        circleId={circleId}
+                        circle={circle}
+                    />
+                    {isPinVisible ? (
+                        <ContextualPin
+                            currentStage={currentStage}
+                            onStartPoll={handleStartPoll}
+                            activityPollData={poll?.activityPoll}
+                            placePollData={poll?.placePoll}
+                            onFinishVoting={handleFinishVoting}
+                            onVote={handleVote}
+                            onAddOption={handleAddOption}
+                            eventData={event}
+                            onRsvp={handleRsvp}
+                            onStartNewPoll={handleStartNewPoll}
+                            onPollNextStep={handlePollNextStep}
+                            onDismiss={handleDismiss}
                         />
-                        {isPinVisible ? (
-                            <ContextualPin
-                                currentStage={currentStage}
-                                onStartPoll={handleStartPoll}
-                                activityPollData={poll?.activityPoll}
-                                placePollData={poll?.placePoll}
-                                onFinishVoting={handleFinishVoting}
-                                onVote={handleVote}
-                                onAddOption={handleAddOption}
-                                eventData={event}
-                                onRsvp={handleRsvp}
-                                onStartNewPoll={handleStartNewPoll}
-                                onPollNextStep={handlePollNextStep}
-                                onDismiss={handleDismiss}
-                            />
-                        ) : (
-                            getShowPlanButtonText() && (
-                                <View style={styles.showPlanButtonContainer}>
-                                    <Pressable style={styles.showPlanButton} onPress={handleShow}>
-                                        <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
-                                    </Pressable>
-                                </View>
-                            )
-                        )}
-                        <View style={styles.chatFeedContainer}>
-                            <ChatFeed circleId={circleId} onReply={handleReply} />
-                        </View>
+                    ) : (
+                        getShowPlanButtonText() && (
+                            <View style={styles.showPlanButtonContainer}>
+                                <Pressable style={styles.showPlanButton} onPress={handleShow}>
+                                    <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
+                                </Pressable>
+                            </View>
+                        )
+                    )}
+                    <View style={styles.chatFeedContainer}>
+                        <ChatFeed circleId={circleId} onReply={handleReply} />
                     </View>
-                </TouchableWithoutFeedback>
+                </View>
                 <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} />
             </KeyboardAvoidingView>
             <Modal

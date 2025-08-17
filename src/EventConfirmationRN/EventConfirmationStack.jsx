@@ -32,9 +32,15 @@ export default function EventConfirmationStack({ circleId }) {
         return () => unsubscribe();
     }, [circleId]);
 
-    const renderItem = ({ item }) => (
-        <PendingEventCard event={item} />
-    );
+    const renderItem = ({ item }) => {
+        const eventDate = new Date(item.day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today's date to start of day
+
+        const isActive = eventDate.toDateString() === today.toDateString();
+
+        return <PendingEventCard event={item} isActive={isActive} />;
+    };
 
     const filteredEvents = pendingEvents.filter(
         (event) => isFuture(event.day) || event.status === "pending"

@@ -820,9 +820,7 @@ const ChatFeed = ({ circleId, onReply }) => {
         <View style={styles.chatFeedWrapper}>
             <ScrollView
                 style={styles.container}
-                ref={scrollViewRef}
-                onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-                onLayout={() => scrollViewRef.current.scrollToEnd({ animated: false })}>
+                ref={scrollViewRef}>
                 {renderMessages()}
             </ScrollView>
             {showEmojis && selectedMessage && (

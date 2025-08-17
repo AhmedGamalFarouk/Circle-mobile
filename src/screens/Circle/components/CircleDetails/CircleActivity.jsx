@@ -2,41 +2,25 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
+import useSystemMessages from '../../../../hooks/useSystemMessages';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 
 const CircleActivity = ({ circleId, recentActivity }) => {
     const { colors } = useTheme();
     const styles = getStyles(colors);
 
-    // Mock data if no recent activity
-    const mockActivity = [
-        {
-            id: '1',
-            type: 'message',
-            user: 'John Doe',
-            action: 'sent a message',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-            icon: 'chatbubble',
-        },
-        {
-            id: '2',
-            type: 'poll',
-            user: 'Jane Smith',
-            action: 'created a poll',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-            icon: 'bar-chart',
-        },
-        {
-            id: '3',
-            type: 'join',
-            user: 'Mike Johnson',
-            action: 'joined the circle',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-            icon: 'person-add',
-        },
-    ];
+    const { systemMessages } = useSystemMessages(circleId);
 
-    const activities = recentActivity.length > 0 ? recentActivity : mockActivity;
+    const activities = recentActivity.length > 0 ? recentActivity : systemMessages
+        .filter(msg => msg.type === 'new_member' || msg.type === 'new_event')
+        .map(msg => ({
+            id: msg.id,
+            type: msg.type,
+            user: msg.type === 'new_member' ? msg.memberName : msg.creatorName,
+            action: msg.type === 'new_member' ? 'joined the circle' : `created a new event: "${msg.eventName}"`,
+            timestamp: new Date(msg.timestamp),
+            icon: msg.type === 'new_member' ? 'person-add' : 'calendar',
+        }));
 
     const formatTimeAgo = (timestamp) => {
         const now = new Date();

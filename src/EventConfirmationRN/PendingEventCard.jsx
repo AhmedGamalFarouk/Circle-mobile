@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Modal, Linking } from "react-native";
 import { Clock, MapPin, Users, CalendarCheck2 } from "lucide-react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase-config";
 import EventForm from "./EventForm";
+import { COLORS, THEMES } from "../constants/constants";
+import { useTheme } from "../hooks/useTheme";
 
 const AVATAR_COLORS = ["#FF6B6B", "#4ECDC4", "#45B7D1"];
 
@@ -16,7 +19,7 @@ const getColorForUser = (userId) => {
     return AVATAR_COLORS[index];
 };
 
-export default function PendingEventCard({ event }) {
+export default function PendingEventCard({ event, isActive }) {
     const [comingUsers, setComingUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isPollModalVisible, setPollModalVisible] = useState(false);
@@ -62,18 +65,36 @@ export default function PendingEventCard({ event }) {
         fetchComingUsers();
     }, [event]);
 
+    const { theme } = useTheme();
+
     const handleLocationPress = () => {
         if (event.Location) {
-            Linking.openURL(event.Location);
+            const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+            const latLng = `${event.latitude},${event.longitude}`;
+            const label = event.place;
+            const url = Platform.select({
+                ios: `${scheme}${label}@${latLng}`,
+                android: `${scheme}${latLng}(${label})`
+            });
+            Linking.openURL(url);
         }
     };
 
     return (
         <>
             <TouchableOpacity
-                style={styles.card}
+                style={[
+                    styles.card,
+                    isActive && styles.activeCard,
+                    !isActive && styles.pastCard,
+                ]}
                 onPress={() => setPollModalVisible(true)}
             >
+                {isActive && (
+                    <View style={styles.activeIndicator}>
+                        <Text style={styles.activeIndicatorText}>Active Event</Text>
+                    </View>
+                )}
                 {/* Top Row: Event Details */}
                 <View style={styles.topRow}>
                     <View style={styles.iconContainer}>
@@ -188,12 +209,34 @@ export default function PendingEventCard({ event }) {
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: "#1A1A2E",
-        borderRadius: 16,
+        backgroundColor: THEMES.dark.card,
+        borderRadius: RADII.rounded,
         padding: 16,
         marginBottom: 10,
         borderWidth: 1,
-        borderColor: "#2A2A4E",
+        borderColor: THEMES.dark.border,
+        ...SHADOWS.medium,
+    },
+    activeCard: {
+        borderColor: COLORS.accent,
+        borderWidth: 2,
+        ...SHADOWS.softPrimary,
+    },
+    pastCard: {
+        opacity: 0.6,
+    },
+    activeIndicator: {
+        backgroundColor: COLORS.accent,
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        borderRadius: RADII.small,
+        alignSelf: "flex-start",
+        marginBottom: 8,
+    },
+    activeIndicatorText: {
+        color: THEMES.dark.text,
+        fontSize: 12,
+        fontWeight: "bold",
     },
     topRow: {
         flexDirection: "row",
@@ -201,8 +244,8 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     iconContainer: {
-        backgroundColor: "#45B7D1",
-        borderRadius: 999,
+        backgroundColor: theme.primary,
+        borderRadius: RADII.circle,
         padding: 8,
     },
     eventDetails: {
@@ -210,7 +253,7 @@ const styles = StyleSheet.create({
         marginLeft: 12,
     },
     eventName: {
-        color: "#FFFFFF",
+        color: theme.text,
         fontSize: 18,
         fontWeight: "bold",
     },
@@ -220,7 +263,7 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
     locationText: {
-        color: "#4ECDC4",
+        color: theme.accent,
         fontSize: 12,
         marginLeft: 4,
     },
@@ -230,7 +273,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
     },
     statusText: {
-        color: "#FFFFFF",
+        color: theme.text,
         fontSize: 12,
         fontWeight: "500",
     },
@@ -251,7 +294,7 @@ const styles = StyleSheet.create({
         height: 32,
         borderRadius: 16,
         borderWidth: 2,
-        borderColor: "#1A1A2E",
+        borderColor: theme.card,
         justifyContent: "center",
         alignItems: "center",
         marginLeft: -10,
@@ -262,19 +305,19 @@ const styles = StyleSheet.create({
         borderRadius: 16,
     },
     avatarInitial: {
-        color: "#FFFFFF",
+        color: theme.text,
         fontWeight: "bold",
     },
     moreAvatar: {
-        backgroundColor: "#2A2A4E",
+        backgroundColor: theme.surface,
     },
     moreText: {
-        color: "#4ECDC4",
+        color: theme.accent,
         fontWeight: "bold",
         fontSize: 12,
     },
     goingText: {
-        color: "#4ECDC4",
+        color: theme.accent,
         fontSize: 12,
         marginLeft: 8,
     },
@@ -283,7 +326,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     noRsvpText: {
-        color: "#FFFFFF",
+        color: theme.text,
         opacity: 0.7,
         marginLeft: 8,
         fontSize: 12,
@@ -293,7 +336,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     dateText: {
-        color: "rgba(255, 255, 255, 0.6)",
+        color: theme.textSecondary,
         fontSize: 10,
         marginRight: 4,
     },
@@ -305,8 +348,8 @@ const styles = StyleSheet.create({
     },
     modalView: {
         margin: 20,
-        backgroundColor: "#1A1A2E",
-        borderRadius: 20,
+        backgroundColor: theme.card,
+        borderRadius: RADII.largeRounded,
         padding: 35,
         alignItems: "center",
         shadowColor: "#000",
