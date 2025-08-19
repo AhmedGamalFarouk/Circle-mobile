@@ -69,7 +69,7 @@ const DefaultState = ({ onStartPoll }) => {
                 <View
                     style={[styles.illustrationGradient, { backgroundColor: colors.primary + '20' }]}
                 >
-                    <Ionicons name="people" size={48} color={colors.primary} />
+                    <Ionicons name="people" size={32} color={colors.primary} />
                 </View>
             </Animated.View>
 
@@ -111,55 +111,55 @@ const DefaultState = ({ onStartPoll }) => {
 const getStyles = (colors) => StyleSheet.create({
     container: {
         alignItems: 'center',
-        paddingVertical: 20,
+        paddingVertical: 8,
     },
     illustrationContainer: {
-        marginBottom: 24,
+        marginBottom: 16,
     },
     illustrationGradient: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
         justifyContent: 'center',
         alignItems: 'center',
     },
     content: {
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: 20,
         paddingHorizontal: 20,
     },
     title: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: 'bold',
         color: colors.text,
         textAlign: 'center',
-        marginBottom: 12,
-        lineHeight: 30,
+        marginBottom: 8,
+        lineHeight: 24,
     },
     subtitle: {
-        fontSize: 16,
+        fontSize: 14,
         color: colors.textSecondary,
         textAlign: 'center',
-        lineHeight: 22,
+        lineHeight: 18,
         maxWidth: 280,
     },
     button: {
         borderRadius: RADII.large,
         overflow: 'hidden',
-        marginBottom: 24,
+        marginBottom: 16,
         ...SHADOWS.medium,
     },
     buttonGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 32,
-        gap: 12,
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        gap: 8,
     },
     buttonText: {
         color: colors.background,
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
     },
     tipsContainer: {

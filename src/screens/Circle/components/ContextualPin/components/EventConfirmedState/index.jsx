@@ -57,19 +57,19 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
             <View style={styles.headerContainer}>
-                <Ionicons name="calendar-outline" size={32} color={COLORS.accent} />
+                <Ionicons name="calendar-outline" size={24} color={COLORS.accent} />
                 <Text style={styles.title}>Event Confirmed!</Text>
             </View>
 
             <View style={styles.eventDetailsContainer}>
                 <View style={styles.detailRow}>
-                    <Ionicons name="star" size={20} color={COLORS.primary} />
+                    <Ionicons name="star" size={16} color={COLORS.primary} />
                     <Text style={styles.detailLabel}>Activity:</Text>
                     <Text style={styles.detailValue}>{title}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
-                    <Ionicons name="location" size={20} color={COLORS.primary} />
+                    <Ionicons name="location" size={16} color={COLORS.primary} />
                     <Text style={styles.detailLabel}>Location:</Text>
                     <Text style={styles.detailValue}>{location}</Text>
                 </View>
@@ -165,66 +165,65 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.dark,
         borderBottomLeftRadius: RADII.largeRounded,
         borderBottomRightRadius: RADII.largeRounded,
-        padding: 25,
+        padding: 15,
         width: '100%',
-        maxHeight: 400,
     },
     headerContainer: {
         alignItems: 'center',
-        marginBottom: 25,
+        marginBottom: 12,
     },
     title: {
         color: COLORS.light,
         fontFamily: FONTS.heading,
-        fontSize: 24,
-        marginTop: 10,
+        fontSize: 18,
+        marginTop: 8,
         textAlign: 'center',
     },
     eventDetailsContainer: {
         backgroundColor: COLORS.darker,
         borderRadius: RADII.rounded,
-        padding: 20,
-        marginBottom: 25,
+        padding: 10,
+        marginBottom: 12,
     },
     detailRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 12,
+        marginBottom: 8,
     },
     detailLabel: {
         color: COLORS.text,
         fontFamily: FONTS.body,
-        fontSize: 16,
-        marginLeft: 10,
-        marginRight: 10,
+        fontSize: 14,
+        marginLeft: 8,
+        marginRight: 8,
         fontWeight: '600',
     },
     detailValue: {
         color: COLORS.light,
         fontFamily: FONTS.body,
-        fontSize: 16,
+        fontSize: 14,
         flex: 1,
     },
     rsvpSection: {
-        marginBottom: 25,
+        marginBottom: 12,
     },
     rsvpTitle: {
         color: COLORS.light,
         fontFamily: FONTS.heading,
-        fontSize: 20,
+        fontSize: 16,
         textAlign: 'center',
-        marginBottom: 20,
+        marginBottom: 12,
     },
     rsvpButtonsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        gap: 10,
+        gap: 8,
     },
     rsvpButton: {
         flex: 1,
         backgroundColor: COLORS.darker,
         borderRadius: RADII.rounded,
-        padding: 15,
+        padding: 10,
         alignItems: 'center',
         borderWidth: 2,
         borderColor: 'transparent',
@@ -245,41 +244,42 @@ const styles = StyleSheet.create({
     rsvpButtonText: {
         color: COLORS.text,
         fontFamily: FONTS.body,
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: '600',
-        marginTop: 5,
+        marginTop: 4,
     },
     selectedRsvpText: {
         color: COLORS.light,
     },
     countBadge: {
         position: 'absolute',
-        top: -5,
-        right: -5,
+        top: -3,
+        right: -3,
         backgroundColor: COLORS.accent,
-        borderRadius: 12,
-        minWidth: 24,
-        height: 24,
+        borderRadius: 10,
+        minWidth: 20,
+        height: 20,
         justifyContent: 'center',
         alignItems: 'center',
     },
     countText: {
         color: COLORS.darker,
         fontFamily: FONTS.body,
-        fontSize: 12,
+        fontSize: 10,
         fontWeight: 'bold',
     },
     summaryContainer: {
         backgroundColor: COLORS.darker,
         borderRadius: RADII.rounded,
-        padding: 20,
+        padding: 10,
+        marginBottom: 8,
     },
     summaryTitle: {
         color: COLORS.light,
         fontFamily: FONTS.heading,
-        fontSize: 18,
+        fontSize: 14,
         textAlign: 'center',
-        marginBottom: 15,
+        marginBottom: 10,
     },
     summaryStats: {
         flexDirection: 'row',
@@ -290,30 +290,30 @@ const styles = StyleSheet.create({
     },
     statNumber: {
         fontFamily: FONTS.heading,
-        fontSize: 24,
+        fontSize: 18,
         fontWeight: 'bold',
     },
     statLabel: {
         color: COLORS.text,
         fontFamily: FONTS.body,
-        fontSize: 14,
-        marginTop: 5,
+        fontSize: 12,
+        marginTop: 3,
     },
     newPollButton: {
         backgroundColor: COLORS.accent,
         borderRadius: RADII.pill,
-        padding: 15,
+        padding: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: 20,
+        marginTop: 8,
     },
     newPollButtonText: {
         color: COLORS.darker,
         fontFamily: FONTS.body,
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
-        marginLeft: 8,
+        marginLeft: 6,
     },
 });
 

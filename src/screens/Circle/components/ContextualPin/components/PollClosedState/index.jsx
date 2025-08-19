@@ -2,12 +2,16 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
+
 const PollClosedState = ({ data, onPollNextStep }) => {
     const { winningOption, nextStep } = data;
 
     const getButtonText = () => {
         if (nextStep === 'poll_venue') {
             return 'Poll the Venue';
+        }
+        if (nextStep === 'admin_confirmation') {
+            return 'Submit for Admin Review';
         }
         return 'Finalize Event & Get RSVPs';
     };

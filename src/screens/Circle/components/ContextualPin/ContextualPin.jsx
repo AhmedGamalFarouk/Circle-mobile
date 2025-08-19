@@ -18,6 +18,7 @@ import { RADII, SHADOWS } from '../../../../constants/constants';
 import DefaultState from './components/DefaultState';
 import ActivePollState from './components/ActivePollState';
 import PollClosedState from './components/PollClosedState';
+import AdminConfirmationState from './components/AdminConfirmationState';
 import EventConfirmedState from './components/EventConfirmedState';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -41,7 +42,8 @@ const ContextualPin = ({
     onRsvp,
     onStartNewPoll,
     onDismiss,
-    onPollNextStep
+    onPollNextStep,
+    onContactAdmin
 }) => {
     const { colors } = useTheme();
     const [isMinimized, setIsMinimized] = useState(false);
@@ -96,6 +98,20 @@ const ContextualPin = ({
                     subtitle: 'Ready to finalize the event',
                     icon: 'checkmark-circle',
                     color: colors.success
+                };
+            case 'Pending Confirmation':
+                return {
+                    title: 'Awaiting Confirmation',
+                    subtitle: 'Admin is reviewing the results',
+                    icon: 'hourglass-outline',
+                    color: colors.warning
+                };
+            case 'Awaiting Admin Confirmation':
+                return {
+                    title: 'Awaiting Confirmation',
+                    subtitle: 'Admin is reviewing the results',
+                    icon: 'hourglass-outline',
+                    color: colors.warning
                 };
             case 'Event Confirmed':
                 return {
@@ -154,10 +170,24 @@ const ContextualPin = ({
                     <PollClosedState
                         data={{
                             winningOption: { text: eventData?.winningPlace },
-                            nextStep: 'finalize_event',
+                            nextStep: 'admin_confirmation',
                             type: 'place'
                         }}
                         onPollNextStep={onPollNextStep}
+                    />
+                );
+            case 'Pending Confirmation':
+                return (
+                    <AdminConfirmationState
+                        eventData={eventData}
+                        onContactAdmin={onContactAdmin}
+                    />
+                );
+            case 'Awaiting Admin Confirmation':
+                return (
+                    <AdminConfirmationState
+                        eventData={eventData}
+                        onContactAdmin={onContactAdmin}
                     />
                 );
             case 'Event Confirmed':
@@ -224,10 +254,12 @@ const ContextualPin = ({
 const getProgressWidth = (stage) => {
     switch (stage) {
         case 'Idle': return '0%';
-        case 'Planning the Activity': return '20%';
-        case 'Activity Poll Closed': return '40%';
-        case 'Planning the Place': return '60%';
-        case 'Place Poll Closed': return '80%';
+        case 'Planning the Activity': return '16%';
+        case 'Activity Poll Closed': return '33%';
+        case 'Planning the Place': return '50%';
+        case 'Place Poll Closed': return '66%';
+        case 'Pending Confirmation':
+        case 'Awaiting Admin Confirmation': return '83%';
         case 'Event Confirmed': return '100%';
         default: return '0%';
     }
@@ -236,10 +268,12 @@ const getProgressWidth = (stage) => {
 const getProgressText = (stage) => {
     switch (stage) {
         case 'Idle': return 'Ready to start';
-        case 'Planning the Activity': return 'Step 1 of 3';
-        case 'Activity Poll Closed': return 'Step 2 of 3';
-        case 'Planning the Place': return 'Step 2 of 3';
-        case 'Place Poll Closed': return 'Step 3 of 3';
+        case 'Planning the Activity': return 'Step 1 of 4';
+        case 'Activity Poll Closed': return 'Step 2 of 4';
+        case 'Planning the Place': return 'Step 3 of 4';
+        case 'Place Poll Closed': return 'Step 4 of 4';
+        case 'Pending Confirmation':
+        case 'Awaiting Admin Confirmation': return 'Pending approval';
         case 'Event Confirmed': return 'Complete!';
         default: return '';
     }
@@ -338,6 +372,7 @@ const getStyles = (colors, isMinimized, HEADER_HEIGHT, MINIMIZED_BUTTON_TOP_OFFS
     },
     content: {
         paddingHorizontal: 20,
+        paddingBottom: 20,
     },
 });
 

@@ -43,6 +43,7 @@ export default function EventForm({ event, onClose, circleId }) {
         }
 
         try {
+            // Update the event status
             const eventRef = doc(db, "circles", circleId, "events", event.id);
             await updateDoc(eventRef, {
                 day: day.toISOString().split("T")[0],
@@ -50,6 +51,22 @@ export default function EventForm({ event, onClose, circleId }) {
                 status: "confirmed",
                 updatedAt: serverTimestamp(),
             });
+
+            // Update the poll stage to EVENT_CONFIRMED
+            const pollsQuery = query(
+                collection(db, "circles", circleId, "polls"),
+                where("archived", "!=", true)
+            );
+            const pollsSnapshot = await getDocs(pollsQuery);
+            
+            if (!pollsSnapshot.empty) {
+                const activePoll = pollsSnapshot.docs[0];
+                const pollRef = doc(db, "circles", circleId, "polls", activePoll.id);
+                await updateDoc(pollRef, {
+                    stage: "Event Confirmed",
+                });
+            }
+
             onClose();
         } catch (err) {
             console.error("Error updating event:", err);
