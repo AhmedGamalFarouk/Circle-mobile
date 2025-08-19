@@ -7,12 +7,25 @@ import InviteAndShare from '../screens/Circle Creation/InviteAndShare';
 import CircleDetailsScreen from '../screens/Circle/CircleDetailsScreen';
 import EditCircleScreen from '../screens/Circle/EditCircleScreen';
 import EventConfirmation from '../screens/Circle/components/EventConfirmation/EventConfirmation';
+import LandingScreen from '../screens/LandingScreen';
+import SignInScreen from '../screens/Auth Screens/Sign in/SignInScreen';
+import SignUpScreen from '../screens/Auth Screens/Sign up/SignUpScreen';
+import useAuth from '../hooks/useAuth';
 
 const Stack = createNativeStackNavigator();
 
 export default function DynamicNativeStack() {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return null; // Or a loading screen component
+    }
+
     return (
-        <Stack.Navigator initialRouteName="Main" screenOptions={{ headerShown: false }}>
+        <Stack.Navigator initialRouteName={user ? "Main" : "Landing"} screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="Landing" component={LandingScreen} />
+            <Stack.Screen name="SignIn" component={SignInScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
             <Stack.Screen name="Main" component={DynamicBottomTab} />
             <Stack.Screen name="Circle" component={CircleScreen} />
             <Stack.Screen name="CreationForm" component={CreationForm} />

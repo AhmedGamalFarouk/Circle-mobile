@@ -6,7 +6,6 @@ import CircleDetailsHeader from './components/CircleDetails/CircleDetailsHeader'
 import CircleMembers from './components/CircleDetails/CircleMembers';
 import CircleOptions from './components/CircleDetails/CircleOptions';
 import CircleActions from './components/CircleDetails/CircleActions';
-import CircleActivity from './components/CircleDetails/CircleActivity';
 import useCircleDetails from '../../hooks/useCircleDetails';
 import { getCircleImageUrl } from '../../utils/imageUtils';
 import StandardHeader from '../../components/StandardHeader';
@@ -83,11 +82,6 @@ const CircleDetailsScreen = () => {
 
                     <CircleMembers
                         circleId={circleId}
-                    />
-
-                    <CircleActivity
-                        circleId={circleId}
-                        recentActivity={circle.recentActivity || []}
                     />
 
                     <CircleOptions

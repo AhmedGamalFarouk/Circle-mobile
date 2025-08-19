@@ -9,6 +9,7 @@ import useCircleRequests from '../../../../hooks/useCircleRequests';
 import usePendingEvents from '../../../../hooks/usePendingEvents';
 import JoinRequestsModal from '../../../../components/JoinRequestsModal';
 import EventConfirmationModal from './EventConfirmationModal';
+import { circleMembersService } from '../../../../firebase/circleMembersService';
 
 
 const CircleActions = ({ circleId, circle, navigation }) => {
@@ -50,6 +51,12 @@ const CircleActions = ({ circleId, circle, navigation }) => {
             color: colors.secondary,
             onPress: () => navigation.navigate('EventConfirmation', { circleId }),
         },
+        {
+            title: 'Leave Circle',
+            icon: 'exit',
+            color: '#FF3B30',
+            onPress: handleLeaveCircle,
+        },
     ];
 
     // Additional actions for admins
@@ -73,6 +80,54 @@ const CircleActions = ({ circleId, circle, navigation }) => {
 
     const handleShareCircle = () => {
         // Implement share functionality
+    };
+
+    const handleLeaveCircle = () => {
+        if (!user?.uid) {
+            Alert.alert('Error', 'User not authenticated. Please try again.');
+            return;
+        }
+        if (!circleId) {
+            Alert.alert('Error', 'Circle not found. Please try again.');
+            return;
+        }
+
+        Alert.alert(
+            'Leave Circle',
+            `Are you sure you want to leave "${circle?.circleName || circle?.name || 'this circle'}"? You won't be able to see messages or participate in polls.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Leave',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const result = await circleMembersService.removeMemberFromCircle(circleId, user.uid);
+                            if (result.success) {
+                                // Show different message if circle was deleted
+                                if (result.circleDeleted) {
+                                    Alert.alert(
+                                        'Circle Deleted',
+                                        'You were the last member, so the circle has been deleted.',
+                                        [{ 
+                                            text: 'OK', 
+                                            onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
+                                        }]
+                                    );
+                                } else {
+                                    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+                                }
+                            } else {
+                                Alert.alert('Error', result.error || 'Failed to leave circle. Please try again.');
+                            }
+                        } catch (error) {
+                            console.error('Error leaving circle:', error);
+                            Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const handleViewProfile = (userId) => {

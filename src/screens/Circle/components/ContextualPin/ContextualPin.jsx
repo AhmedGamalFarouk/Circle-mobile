@@ -26,8 +26,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const { width, height } = Dimensions.get('window');
 
-const HEADER_HEIGHT = 60; // Based on paddingVertical: 10, height of elements, and borderBottomWidth in CircleHeader.jsx
-const MINIMIZED_BUTTON_TOP_OFFSET = 60; // Positioned at the bottom of the header
+const HEADER_HEIGHT = 50; // Based on paddingVertical: 10, height of elements, and borderBottomWidth in CircleHeader.jsx
+const MINIMIZED_BUTTON_TOP_OFFSET = 65; // Positioned at the bottom of the header
 
 const ContextualPin = ({
     currentStage,
@@ -45,11 +45,11 @@ const ContextualPin = ({
 }) => {
     const { colors } = useTheme();
     const [isMinimized, setIsMinimized] = useState(false);
-    const [slideAnim] = useState(new Animated.Value(height));
+    const [slideAnim] = useState(new Animated.Value(-height));
 
     useEffect(() => {
         Animated.spring(slideAnim, {
-            toValue: isMinimized ? height : 0,
+            toValue: isMinimized ? -height : 0,
             tension: 100,
             friction: 15,
             useNativeDriver: true,
@@ -174,7 +174,7 @@ const ContextualPin = ({
     };
 
     const stageInfo = getStageInfo();
-    const styles = getStyles(colors, isMinimized);
+    const styles = getStyles(colors, isMinimized, HEADER_HEIGHT, MINIMIZED_BUTTON_TOP_OFFSET);
 
     return (
         <>
@@ -260,7 +260,7 @@ const getStyles = (colors, isMinimized, HEADER_HEIGHT, MINIMIZED_BUTTON_TOP_OFFS
     },
     minimizedButton: {
         position: 'absolute',
-        top: MINIMIZED_BUTTON_TOP_OFFSET, // Starts at the bottom of the header
+        top: MINIMIZED_BUTTON_TOP_OFFSET, // Positioned at the bottom of the header
         left: '50%',
         transform: [{ translateX: -25 }],
         width: 50,

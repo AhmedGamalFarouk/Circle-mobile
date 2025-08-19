@@ -135,7 +135,25 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                         try {
                             const result = await circleMembersService.removeMemberByAdmin(circleId, member.userId, user.uid);
                             if (result.success) {
-                                Alert.alert('Success', `${member.userName || 'User'} has been removed from the circle.`);
+                                if (result.circleDeleted) {
+                                    Alert.alert(
+                                        'Circle Deleted',
+                                        `${member.userName || 'User'} was the last member, so the circle has been deleted.`,
+                                        [{ 
+                                            text: 'OK', 
+                                            onPress: () => {
+                                                onClose();
+                                                // Navigate back to home since circle no longer exists
+                                                navigation?.reset?.({
+                                                    index: 0,
+                                                    routes: [{ name: 'Home' }],
+                                                });
+                                            }
+                                        }]
+                                    );
+                                } else {
+                                    Alert.alert('Success', `${member.userName || 'User'} has been removed from the circle.`);
+                                }
                             } else {
                                 Alert.alert('Error', result.error);
                             }

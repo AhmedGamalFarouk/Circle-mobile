@@ -78,6 +78,44 @@ export const circleMembersService = {
         }
     },
 
+    // Delete entire circle and all its data
+    deleteCircle: async (circleId) => {
+        try {
+            // Delete all members
+            const membersRef = collection(db, 'circles', circleId, 'members');
+            const membersSnapshot = await getDocs(membersRef);
+            const memberDeletePromises = membersSnapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(memberDeletePromises);
+
+            // Delete all polls
+            const pollsRef = collection(db, 'circles', circleId, 'polls');
+            const pollsSnapshot = await getDocs(pollsRef);
+            const pollDeletePromises = pollsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(pollDeletePromises);
+
+            // Delete all messages
+            const messagesRef = collection(db, 'circles', circleId, 'messages');
+            const messagesSnapshot = await getDocs(messagesRef);
+            const messageDeletePromises = messagesSnapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(messageDeletePromises);
+
+            // Delete all join requests
+            const requestsRef = collection(db, 'circleRequests');
+            const requestsQuery = query(requestsRef, where('circleId', '==', circleId));
+            const requestsSnapshot = await getDocs(requestsQuery);
+            const requestDeletePromises = requestsSnapshot.docs.map(doc => deleteDoc(doc.ref));
+            await Promise.all(requestDeletePromises);
+
+            // Delete the circle document itself
+            await deleteDoc(doc(db, 'circles', circleId));
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting circle:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
     // Remove a user from a circle
     removeMemberFromCircle: async (circleId, userId) => {
         try {
@@ -104,6 +142,17 @@ export const circleMembersService = {
             const memberDoc = memberSnapshot.docs[0];
             await deleteDoc(memberDoc.ref);
 
+            // Check remaining member count after deletion
+            const remainingMembersSnapshot = await getDocs(membersRef);
+            const remainingMemberCount = remainingMembersSnapshot.size;
+
+            // If this was the last member, delete the entire circle
+            if (remainingMemberCount === 0) {
+                console.log(`Last member left circle ${circleId}, deleting circle...`);
+                await this.deleteCircle(circleId);
+                return { success: true, circleDeleted: true };
+            }
+
             // Remove the circle from the user's joinedCircles array (only if user document exists)
             if (userDoc.exists()) {
                 const userRef = doc(db, 'users', userId);
@@ -112,7 +161,7 @@ export const circleMembersService = {
                 });
             }
 
-            // Create system message for user leaving
+            // Create system message for user leaving (only if circle still exists)
             await systemMessagesService.createUserLeftMessage(circleId, userId, username);
 
             return { success: true };

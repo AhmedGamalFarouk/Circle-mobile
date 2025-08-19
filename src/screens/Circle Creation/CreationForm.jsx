@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, SafeAreaView, ScrollView, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, RADII, SHADOWS } from '../../constants/constants';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { db } from '../../firebase/config';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, arrayUnion, setDoc } from 'firebase/firestore';
@@ -13,6 +13,7 @@ import useUserProfile from '../../hooks/useUserProfile';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
 import StandardHeader from '../../components/StandardHeader';
+import InterestInputModal from '../Profile/components/InterestInputModal';
 
 const CreationForm = ({ navigation }) => {
     const { t } = useLocalization()
@@ -60,11 +61,15 @@ const CreationForm = ({ navigation }) => {
     const [expiresAt, setExpiresAt] = useState(null);
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [interests, setInterests] = useState([]);
-    const [interestInput, setInterestInput] = useState('');
+    const [showInterestModal, setShowInterestModal] = useState(false);
 
     const handleCreate = async () => {
         if (!user) {
             alert("Please log in to create a circle."); // Provide UI feedback
+            return;
+        }
+        if (interests.length === 0) {
+            Alert.alert('Interests required', 'Please add at least one interest to create your circle.');
             return;
         }
         try {
@@ -130,14 +135,16 @@ const CreationForm = ({ navigation }) => {
         }
     };
 
-    const addInterest = () => {
-        if (interestInput.trim() !== '') {
-            setInterests([...interests, interestInput.trim()]);
-            setInterestInput('');
-        }
+    // Interests handlers (match profile behavior)
+    const handleOpenInterests = () => setShowInterestModal(true);
+    const handleInterestAdded = (newInterest) => {
+        setInterests(prev => (prev.includes(newInterest) ? prev : [...prev, newInterest]));
+    };
+    const handleRemoveInterest = (indexToRemove) => {
+        setInterests(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
-    const isCreateDisabled = circleName.trim() === '';
+    const isCreateDisabled = circleName.trim() === '' || interests.length === 0;
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colorVars.background }]}>
@@ -159,7 +166,7 @@ const CreationForm = ({ navigation }) => {
                     {photoUrl ? (
                         <Image source={{ uri: photoUrl }} style={[styles.avatar, { borderColor: colorVars.borderActive }]} />
                     ) : (
-                        <View style={[styles.avatarPlaceholder, { borderColor: colorVars.borderActive, backgroundColor: colorVars.surface }]}>
+                        <View style={[styles.avatarPlaceholder, { borderColor: colorVars.borderActive, backgroundColor: colorVars.surface }]}> 
                             <Ionicons name="camera" size={40} color={colorVars.textSecondary} />
                             <Text style={[styles.addPhotoText, { color: colorVars.textSecondary }]}>{t('circleCreation.addPhoto')}</Text>
                         </View>
@@ -199,7 +206,7 @@ const CreationForm = ({ navigation }) => {
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
                     <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.privacy')}</Text>
-                    <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
+                    <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}> 
                         <TouchableOpacity
                             style={[
                                 styles.toggleButton,
@@ -231,7 +238,7 @@ const CreationForm = ({ navigation }) => {
 
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
                     <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.type')}</Text>
-                    <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}>
+                    <View style={[styles.toggleContainer, { borderColor: colorVars.border, backgroundColor: colorVars.surface }]}> 
                         <TouchableOpacity
                             style={[
                                 styles.toggleButton,
@@ -294,34 +301,23 @@ const CreationForm = ({ navigation }) => {
                     </View>
                 )}
 
+                {/* Interests section using modal like Profile */}
                 <View style={[styles.inputContainer, { backgroundColor: colorVars.background }]}>
-                    <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.interests')}</Text>
-                    <View style={[styles.interestInputContainer, {
-                        backgroundColor: colorVars.surface,
-                        borderColor: colorVars.border
-                    }]}>
-                        <TextInput
-                            style={[styles.input, {
-                                backgroundColor: colorVars.surface,
-                                color: colorVars.textPrimary
-                            }]}
-                            placeholder={t('circleCreation.addInterest')}
-                            placeholderTextColor={colorVars.textMuted}
-                            value={interestInput}
-                            onChangeText={setInterestInput}
-                        />
-                        <TouchableOpacity onPress={addInterest} style={[styles.addButton, { backgroundColor: colorVars.accent }]}>
-                            <Text style={[styles.addButtonText, { color: colorVars.background }]}>{t('circleCreation.add')}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Text style={[styles.label, { color: colorVars.textPrimary }]}>{t('circleCreation.interests')}</Text>
+                        <TouchableOpacity onPress={handleOpenInterests} style={{ padding: 6 }}>
+                            <MaterialIcons name="add" size={22} color={colorVars.primary} />
                         </TouchableOpacity>
                     </View>
-                    <View style={[styles.interestsContainer, { backgroundColor: colorVars.background }]}>
+
+                    <View style={[styles.interestsContainer, { backgroundColor: colorVars.background }]}> 
                         {interests.map((interest, index) => (
                             <View key={index} style={[styles.interestTag, {
                                 backgroundColor: colorVars.surface,
                                 borderColor: colorVars.border
-                            }]}>
+                            }]}> 
                                 <Text style={[styles.interestTagText, { color: colorVars.textPrimary }]}>{interest}</Text>
-                                <TouchableOpacity onPress={() => setInterests(interests.filter((_, i) => i !== index))} style={styles.removeInterestButton}>
+                                <TouchableOpacity onPress={() => handleRemoveInterest(index)} style={styles.removeInterestButton}>
                                     <Ionicons name="close-circle" size={16} color={colorVars.textSecondary} />
                                 </TouchableOpacity>
                             </View>
@@ -339,6 +335,14 @@ const CreationForm = ({ navigation }) => {
                 >
                     <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>{t('circleCreation.createCircle')}</Text>
                 </TouchableOpacity>
+
+                {/* Interest selection modal */}
+                <InterestInputModal
+                    visible={showInterestModal}
+                    onClose={() => setShowInterestModal(false)}
+                    onAddInterest={handleInterestAdded}
+                    existingInterests={interests}
+                />
 
             </ScrollView>
         </SafeAreaView>

@@ -45,11 +45,26 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                             const result = await circleMembersService.removeMemberFromCircle(circleId, user.uid);
 
                             if (result.success) {
-                                // Reset navigation stack and go to Home to prevent going back
-                                navigation.reset({
-                                    index: 0,
-                                    routes: [{ name: 'Home' }],
-                                });
+                                // Show different message if circle was deleted
+                                if (result.circleDeleted) {
+                                    Alert.alert(
+                                        "Circle Deleted",
+                                        "You were the last member, so the circle has been deleted.",
+                                        [{ 
+                                            text: "OK", 
+                                            onPress: () => navigation.reset({
+                                                index: 0,
+                                                routes: [{ name: 'Home' }],
+                                            })
+                                        }]
+                                    );
+                                } else {
+                                    // Reset navigation stack and go to Home to prevent going back
+                                    navigation.reset({
+                                        index: 0,
+                                        routes: [{ name: 'Home' }],
+                                    });
+                                }
                             } else {
                                 Alert.alert(
                                     "Error",
@@ -91,18 +106,6 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
         navigation.navigate('EditCircle', { circleId, circle });
     };
 
-    const handleReportCircle = () => {
-        Alert.alert(
-            "Report Circle",
-            "What would you like to report about this circle?",
-            [
-                { text: "Cancel", style: "cancel" },
-                { text: "Inappropriate Content", onPress: () => { /* Implement reporting logic */ } },
-                { text: "Spam", onPress: () => { /* Implement reporting logic */ } },
-                { text: "Other", onPress: () => { /* Implement reporting logic */ } },
-            ]
-        );
-    };
 
     const handleManageJoinRequests = () => {
         setShowJoinRequestsModal(true);
@@ -123,13 +126,6 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             onPress: handleClearChat,
             icon: 'trash',
             color: colors.textSecondary,
-        },
-        {
-            title: 'Report Circle',
-            subtitle: 'Report inappropriate content',
-            onPress: handleReportCircle,
-            icon: 'warning',
-            color: '#FF9500',
         },
         {
             title: 'Leave Circle',
