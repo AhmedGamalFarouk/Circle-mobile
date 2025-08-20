@@ -104,6 +104,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 text: replyingTo.text,
                 userName: replyingTo.user.userName,
             } : null,
+            seenBy: [],
         };
 
         try {
@@ -216,6 +217,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                     text: replyingTo.text || "Voice message",
                     userName: replyingTo.user.userName,
                 } : null,
+                seenBy: [],
             };
 
             await addDoc(collection(db, "circles", circleId, "chat"), messageData);
@@ -399,6 +401,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                     text: replyingTo.text || `${selectedMedia.type} message`,
                     userName: replyingTo.user.userName,
                 } : null,
+                seenBy: [],
             };
 
             // Add duration for videos

@@ -4,6 +4,7 @@ import { COLORS, FONTS, RADII } from "../../../constants/constants";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { getCircleImageUrl } from '../../../utils/imageUtils';
+import FlashCircleTimer from '../../../components/FlashCircleTimer';
 
 const CircleHeader = ({ name, circleId, circle }) => {
   const navigation = useNavigation();
@@ -19,7 +20,12 @@ const CircleHeader = ({ name, circleId, circle }) => {
         onPress={() => navigation.navigate('CircleDetails', { circleId })}
       >
         <Image source={{ uri: getCircleImageUrl(circle) }} style={styles.profilePic} />
-        <Text style={styles.groupName}>{name}</Text>
+        <View style={styles.nameAndTimer}>
+          <Text style={styles.groupName}>{name}</Text>
+          {circle?.circleType === 'flash' && circle?.expiresAt && (
+            <FlashCircleTimer expiresAt={circle.expiresAt} compact={true} style={styles.compactTimer} />
+          )}
+        </View>
       </TouchableOpacity>
 
       <View style={styles.iconContainer} />
@@ -45,6 +51,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    flex: 1,
+  },
+  nameAndTimer: {
+    flex: 1,
+    alignItems: "center",
+  },
+  compactTimer: {
+    marginTop: 4,
   },
   profilePic: {
     width: 40,

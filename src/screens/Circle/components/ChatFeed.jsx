@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Animated, Keyboard, Alert, TextInput, Vibration, BackHandler, Dimensions } from 'react-native';
-import { collection, query, onSnapshot, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { collection, query, onSnapshot, orderBy, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import useAuth from '../../../hooks/useAuth';
 import useUserProfile from '../../../hooks/useUserProfile';
@@ -141,7 +141,25 @@ const ChatFeed = ({ circleId, onReply }) => {
         return () => backHandler.remove();
     }, [showOptions, showEmojis]);
 
-
+    // Function to mark a message as seen
+    const markMessageAsSeen = async (messageId) => {
+        if (!user || !userProfile) return;
+        
+        try {
+            const messageRef = doc(db, 'circles', circleId, 'chat', messageId);
+            const seenByEntry = {
+                seenAt: new Date(),
+                userId: user.uid,
+                userName: userProfile.username
+            };
+            
+            await updateDoc(messageRef, {
+                seenBy: arrayUnion(seenByEntry)
+            });
+        } catch (error) {
+            console.error('Error marking message as seen:', error);
+        }
+    };
 
     const handleLongPress = (message, event) => {
         setSelectedMessage(message);
@@ -149,7 +167,7 @@ const ChatFeed = ({ circleId, onReply }) => {
         // Enhanced haptic feedback pattern
         Vibration.vibrate([0, 100, 50, 100]);
 
-        const isCurrentUser = message.user.userId === user.uid;
+        const isCurrentUser = message.user?.userId === user.uid;
 
         if (isCurrentUser) {
             // For current user messages: show options menu
@@ -181,7 +199,7 @@ const ChatFeed = ({ circleId, onReply }) => {
 
     const handleShowOptions = (message, event) => {
         setSelectedMessage(message);
-        const isCurrentUser = message.user.userId === user.uid;
+        const isCurrentUser = message.user?.userId === user.uid;
 
         // Get touch coordinates and measure ScrollView to get relative position
         const { pageX, pageY } = event.nativeEvent;
@@ -586,6 +604,22 @@ const ChatFeed = ({ circleId, onReply }) => {
 
 
 
+    // Mark messages as seen when they are rendered
+    useEffect(() => {
+        if (messages.length > 0 && user?.uid) {
+            messages
+                .filter(message => 
+                    !message.hiddenBy?.includes(user.uid) && // Not hidden by current user
+                    message.user?.userId && message.user.userId !== user.uid && // Not sent by current user (with null check)
+                    message.messageType !== 'system' && // Not a system message
+                    (!message.seenBy || !message.seenBy.some(seen => seen.userId === user.uid)) // Not already seen by current user
+                )
+                .forEach(message => {
+                    markMessageAsSeen(message.id);
+                });
+        }
+    }, [messages, user?.uid]);
+
     const renderMessages = () => {
         let lastSender = null;
         return messages
@@ -599,9 +633,9 @@ const ChatFeed = ({ circleId, onReply }) => {
                     );
                 }
 
-                const isCurrentUser = message.user.userId === user.uid;
-                const showSenderInfo = message.user.userId !== lastSender;
-                lastSender = message.user.userId;
+                const isCurrentUser = message.user?.userId === user.uid;
+                const showSenderInfo = message.user?.userId !== lastSender;
+                lastSender = message.user?.userId;
 
                 const renderLeftActions = (progress, dragX) => {
                     const opacity = dragX.interpolate({
@@ -891,7 +925,7 @@ const ChatFeed = ({ circleId, onReply }) => {
                 const messageTime = selectedMessage.timeStamp.toDate();
                 const diffInMinutes = (now - messageTime) / (1000 * 60);
                 const isEditable = diffInMinutes <= 15;
-                const isCurrentUser = selectedMessage.user.userId === user.uid;
+                const isCurrentUser = selectedMessage.user?.userId === user.uid;
 
                 return (
                     <TouchableOpacity

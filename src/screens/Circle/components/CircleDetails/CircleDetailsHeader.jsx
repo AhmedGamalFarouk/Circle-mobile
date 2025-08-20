@@ -4,11 +4,12 @@ import { useTheme } from '../../../../context/ThemeContext';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 import { getCircleImageUrl } from '../../../../utils/imageUtils';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
+import FlashCircleTimer from '../../../../components/FlashCircleTimer';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HEADER_HEIGHT = 300;
 
-const CircleDetailsHeader = ({ name, description, image, createdAt, circleId }) => {
+const CircleDetailsHeader = ({ name, description, image, createdAt, circleId, circle }) => {
     const { colors } = useTheme();
     const { memberCount, loading } = useCircleMembers(circleId);
     const styles = getStyles(colors);
@@ -53,6 +54,11 @@ const CircleDetailsHeader = ({ name, description, image, createdAt, circleId }) 
                             </Text>
                         )}
                     </View>
+                    {circle?.circleType === 'flash' && circle?.expiresAt && (
+                        <View style={styles.timerContainer}>
+                            <FlashCircleTimer expiresAt={circle.expiresAt} />
+                        </View>
+                    )}
                 </View>
 
                 {description && (
@@ -131,6 +137,10 @@ const getStyles = (colors) => StyleSheet.create({
         textShadowColor: 'rgba(0,0,0,0.6)',
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 2,
+    },
+    timerContainer: {
+        marginTop: 12,
+        alignSelf: 'flex-start',
     },
     descriptionContainer: {
         backgroundColor: 'rgba(0,0,0,0.3)',

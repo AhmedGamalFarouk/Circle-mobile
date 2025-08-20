@@ -72,6 +72,22 @@ const CreationForm = ({ navigation }) => {
             Alert.alert('Interests required', 'Please add at least one interest to create your circle.');
             return;
         }
+        
+        // Validate Flash circle expiration date
+        if (circleType === 'flash') {
+            if (!expiresAt) {
+                Alert.alert('Expiration Date Required', 'Please select an expiration date for your Flash circle.');
+                return;
+            }
+            
+            const now = new Date();
+            const minDate = new Date(now.getTime() + 60 * 60 * 1000); // At least 1 hour from now
+            
+            if (expiresAt <= minDate) {
+                Alert.alert('Invalid Expiration Date', 'Flash circles must expire at least 1 hour from now.');
+                return;
+            }
+        }
         try {
             const circleRef = await addDoc(collection(db, 'circles'), {
                 circleName,
@@ -144,7 +160,7 @@ const CreationForm = ({ navigation }) => {
         setInterests(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
-    const isCreateDisabled = circleName.trim() === '' || interests.length === 0;
+    const isCreateDisabled = circleName.trim() === '' || interests.length === 0 || (circleType === 'flash' && !expiresAt);
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colorVars.background }]}>
@@ -287,9 +303,18 @@ const CreationForm = ({ navigation }) => {
                                 value={expiresAt || new Date()}
                                 mode="date"
                                 display="default"
-                                minimumDate={new Date()}
+                                minimumDate={new Date(Date.now() + 60 * 60 * 1000)} // Minimum 1 hour from now
                                 onChange={(event, date) => {
                                     if (event.type === 'set') {
+                                        const now = new Date();
+                                        const minDate = new Date(now.getTime() + 60 * 60 * 1000);
+                                        
+                                        if (date && date <= minDate) {
+                                            Alert.alert('Invalid Date', 'Flash circles must expire at least 1 hour from now.');
+                                            setShowDatePicker(false);
+                                            return;
+                                        }
+                                        
                                         setExpiresAt(date);
                                         setShowDatePicker(false); // Close the picker after a date is selected
                                     } else if (event.type === 'dismissed') {

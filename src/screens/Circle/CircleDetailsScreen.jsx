@@ -71,6 +71,7 @@ const CircleDetailsScreen = () => {
                     image={getCircleImageUrl(circle)}
                     createdAt={circle?.createdAt}
                     circleId={circleId}
+                    circle={circle}
                 />
 
                 <View style={styles.contentContainer}>

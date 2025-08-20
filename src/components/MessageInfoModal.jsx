@@ -83,11 +83,49 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
         return 'Message';
     };
 
-    // For now, we'll show all members as "seen by" since we don't have read receipts implemented
-    // In a real app, you'd track when each user last read messages
+    // Get actual seenBy data from the message
     const getSeenByMembers = () => {
-        // Filter out the sender from the seen list
-        return circleMembers.filter(member => member.userId !== message?.user?.userId);
+        if (!message?.seenBy || message.seenBy.length === 0) {
+            return [];
+        }
+        
+        // Return the seenBy array with user information
+        return message.seenBy.map(seenEntry => ({
+            ...seenEntry,
+            // Find matching circle member for avatar if available
+            ...circleMembers.find(member => member.userId === seenEntry.userId)
+        }));
+    };
+
+    const formatSeenTimestamp = (timestamp) => {
+        if (!timestamp) return '';
+        
+        const seenDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const now = new Date();
+        const isToday = seenDate.toDateString() === now.toDateString();
+        const isYesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString() === seenDate.toDateString();
+        
+        if (isToday) {
+            return `Today at ${seenDate.toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })}`;
+        } else if (isYesterday) {
+            return `Yesterday at ${seenDate.toLocaleTimeString([], {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            })}`;
+        } else {
+            return seenDate.toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
     };
 
     if (!message) {
@@ -130,13 +168,13 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                             <Text style={styles.sectionTitle}>Message</Text>
                             <View style={styles.messagePreview}>
                                 <View style={styles.senderInfo}>
-                                    {message.user.imageurl && (
+                                    {message.user?.imageurl && (
                                         <Image
                                             source={{ uri: message.user.imageurl }}
                                             style={styles.senderAvatar}
                                         />
                                     )}
-                                    <Text style={styles.senderName}>{message.user.userName}</Text>
+                                    <Text style={styles.senderName}>{message.user?.userName || 'Unknown User'}</Text>
                                 </View>
                                 <Text style={styles.messageText}>{getMessagePreview()}</Text>
                                 {message.editedAt && (
@@ -178,7 +216,14 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                                                         </Text>
                                                     </View>
                                                 )}
-                                                <Text style={styles.memberName}>{member.userName}</Text>
+                                                <View style={styles.memberInfo}>
+                                                    <Text style={styles.memberName}>{member.userName}</Text>
+                                                    {member.seenAt && (
+                                                        <Text style={styles.seenTimestamp}>
+                                                            {formatSeenTimestamp(member.seenAt)}
+                                                        </Text>
+                                                    )}
+                                                </View>
                                             </View>
                                         ))
                                     )}
@@ -334,9 +379,17 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: COLORS.light,
     },
+    memberInfo: {
+        flex: 1,
+    },
     memberName: {
         fontSize: 16,
         color: COLORS.light,
+    },
+    seenTimestamp: {
+        fontSize: 12,
+        color: COLORS.text,
+        marginTop: 2,
     },
     reactionsContainer: {
         gap: 8,
