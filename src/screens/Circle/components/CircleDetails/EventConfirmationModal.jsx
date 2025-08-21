@@ -134,13 +134,6 @@ const EventConfirmationModal = ({ visible, onClose, circleId, circleName }) => {
                                 <Text style={styles.statNumber}>{pendingEvents.length}</Text>
                                 <Text style={styles.statLabel}>Pending</Text>
                             </View>
-                            <View style={styles.statDivider} />
-                            <View style={styles.statItem}>
-                                <Text style={styles.statNumber}>
-                                    {pendingEvents.filter(e => e.priority === 'high').length}
-                                </Text>
-                                <Text style={styles.statLabel}>Urgent</Text>
-                            </View>
                         </View>
 
                         {/* Content */}

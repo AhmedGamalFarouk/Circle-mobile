@@ -11,6 +11,7 @@ import {
     Alert
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import useAuth from '../hooks/useAuth';
 import useCircleMembers from '../hooks/useCircleMembers';
 import { circleMembersService } from '../firebase/circleMembersService';
@@ -21,6 +22,7 @@ import MemberContextMenu from './MemberContextMenu';
 
 const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
     const { colors } = useTheme();
+    const { currentLanguage } = useLanguage();
     const { user } = useAuth();
     const { members, loading, memberCount, owner, isOwner: currentUserIsOwner, isAdmin: currentUserIsAdmin } = useCircleMembers(circleId);
     const [actionLoading, setActionLoading] = useState(null);
@@ -60,7 +62,8 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
     const handleOpenProfile = (member) => {
         if (navigation) {
             onClose();
-            navigation.navigate('Profile', { userId: member.userId });
+            const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+            navigation.navigate(profileTabName, { userId: member.userId });
         }
     };
 

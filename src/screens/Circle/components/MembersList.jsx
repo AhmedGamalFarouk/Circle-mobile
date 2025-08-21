@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Modal, FlatList, Image, TouchableOpacity, Activ
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useTheme } from '../../../context/ThemeContext';
+import { useLanguage } from '../../../context/LanguageContext';
 import useAuth from '../../../hooks/useAuth';
 import { RADII } from '../../../constants/constants';
 import { getUserAvatarUrl } from '../../../utils/imageUtils';
@@ -10,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 const MembersList = ({ visible, onClose, circleId, navigation }) => {
     const { colors } = useTheme();
+    const { currentLanguage } = useLanguage();
     const { user } = useAuth();
     const [members, setMembers] = useState([]);
     const [totalMembersCount, setTotalMembersCount] = useState(0);
@@ -67,7 +69,8 @@ const MembersList = ({ visible, onClose, circleId, navigation }) => {
             onPress={() => {
                 onClose();
                 if (navigation) {
-                    navigation.navigate('Profile', { userId: item.id });
+                    const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+                    navigation.navigate(profileTabName, { userId: item.id });
                 }
             }}
             activeOpacity={0.7}

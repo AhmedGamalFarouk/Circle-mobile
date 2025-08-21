@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useLocalization } from '../../hooks/useLocalization';
 import { RADII, SHADOWS } from '../../constants/constants';
 import useCircleRequests from '../../hooks/useCircleRequests';
 import useAuth from '../../hooks/useAuth';
@@ -20,6 +22,8 @@ import JoinRequestCard from '../../components/JoinRequest/JoinRequestCard';
 const JoinRequestsScreen = ({ route, navigation }) => {
     const { circleId, circleName } = route.params;
     const { colors } = useTheme();
+    const { currentLanguage } = useLanguage();
+    const { t } = useLocalization();
     const { user } = useAuth();
     const {
         requests,
@@ -150,7 +154,8 @@ const JoinRequestsScreen = ({ route, navigation }) => {
     };
 
     const handleViewProfile = (userId) => {
-        navigation.navigate('Profile', { userId });
+        const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+        navigation.navigate(profileTabName, { userId });
     };
 
 

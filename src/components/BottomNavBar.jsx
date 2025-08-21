@@ -2,9 +2,13 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { COLORS } from '../constants/constants';
 
 const BottomNavBar = () => {
+  const { colors } = useTheme();
+  const { currentLanguage } = useLanguage();
   const navigation = useNavigation();
   const route = useRoute();
 
@@ -30,7 +34,10 @@ const BottomNavBar = () => {
           color={getIconColor('Notifications')}
         />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+      <TouchableOpacity onPress={() => {
+        const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+        navigation.navigate(profileTabName);
+      }}>
         <Ionicons name="person" size={24} color={getIconColor('Profile')} />
       </TouchableOpacity>
     </View>

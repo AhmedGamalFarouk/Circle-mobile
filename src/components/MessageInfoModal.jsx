@@ -149,20 +149,6 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                     </View>
 
                     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                        {/* Debug info */}
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Debug Info</Text>
-                            <Text style={styles.timestampText}>
-                                Message ID: {message?.id || 'No ID'}
-                            </Text>
-                            <Text style={styles.timestampText}>
-                                Circle ID: {circleId || 'No Circle ID'}
-                            </Text>
-                            <Text style={styles.timestampText}>
-                                User: {message?.user?.userName || 'No User'}
-                            </Text>
-                        </View>
-
                         {/* Message Preview */}
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Message</Text>
@@ -202,30 +188,30 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                                     {getSeenByMembers().length === 0 ? (
                                         <Text style={styles.noSeenText}>No one has seen this message yet</Text>
                                     ) : (
-                                        getSeenByMembers().map((member) => (
-                                            <View key={member.id} style={styles.memberItem}>
-                                                {member.userAvatar ? (
-                                                    <Image
-                                                        source={{ uri: member.userAvatar }}
-                                                        style={styles.memberAvatar}
-                                                    />
-                                                ) : (
-                                                    <View style={styles.defaultAvatar}>
-                                                        <Text style={styles.avatarText}>
-                                                            {member.userName?.charAt(0)?.toUpperCase() || '?'}
-                                                        </Text>
-                                                    </View>
-                                                )}
-                                                <View style={styles.memberInfo}>
-                                                    <Text style={styles.memberName}>{member.userName}</Text>
-                                                    {member.seenAt && (
-                                                        <Text style={styles.seenTimestamp}>
-                                                            {formatSeenTimestamp(member.seenAt)}
-                                                        </Text>
-                                                    )}
-                                                </View>
-                                            </View>
-                                        ))
+                                        getSeenByMembers().map((member, index) => (
+                                            <View key={member?.userId || member?.id || index} style={styles.memberItem}>
+                                                 {member.userAvatar ? (
+                                                     <Image
+                                                         source={{ uri: member.userAvatar }}
+                                                         style={styles.memberAvatar}
+                                                     />
+                                                 ) : (
+                                                     <View style={styles.defaultAvatar}>
+                                                         <Text style={styles.avatarText}>
+                                                             {member.userName?.charAt(0)?.toUpperCase() || '?'}
+                                                         </Text>
+                                                     </View>
+                                                 )}
+                                                 <View style={styles.memberInfo}>
+                                                     <Text style={styles.memberName}>{member.userName}</Text>
+                                                     {member.seenAt && (
+                                                         <Text style={styles.seenTimestamp}>
+                                                             {formatSeenTimestamp(member.seenAt)}
+                                                         </Text>
+                                                     )}
+                                                 </View>
+                                             </View>
+                                         ))
                                     )}
                                 </View>
                             )}
@@ -265,7 +251,7 @@ const styles = StyleSheet.create({
         borderRadius: RADII.large,
         width: '100%',
         maxWidth: 400,
-        maxHeight: '80%',
+        height: '80%',
         overflow: 'hidden',
         borderWidth: 2,
         borderColor: COLORS.primary,
@@ -288,6 +274,7 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        flexGrow: 1,
     },
     section: {
         padding: 20,

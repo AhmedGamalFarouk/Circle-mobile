@@ -8,7 +8,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import DynamicNativeStack from './src/navigation/DynamicNativeStack';
 
 // Import localization
-import './src/localization/i18n';
+import i18n from './src/localization/i18n'; // Import the i18n instance
+import { I18nextProvider } from 'react-i18next'; // Import I18nextProvider
 import { LanguageProvider } from './src/context/LanguageContext';
 
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -31,12 +32,14 @@ const AppContent = () => {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <AppStripeProvider>
-          <AppContent />
-        </AppStripeProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <I18nextProvider i18n={i18n}>
+      <ThemeProvider>
+        <LanguageProvider>
+          <AppStripeProvider>
+            <AppContent />
+          </AppStripeProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </I18nextProvider>
   );
 }

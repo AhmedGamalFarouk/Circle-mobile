@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
-import { RADII, SHADOWS } from '../../../../constants/constants';
+import { useLanguage } from '../../../../context/LanguageContext';
 import useAuth from '../../../../hooks/useAuth';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
 import useCircleRequests from '../../../../hooks/useCircleRequests';
 import usePendingEvents from '../../../../hooks/usePendingEvents';
 import JoinRequestsModal from '../../../../components/JoinRequestsModal';
 import EventConfirmationModal from './EventConfirmationModal';
+import { useNavigation } from '@react-navigation/native';
+import { RADII, SHADOWS } from '../../../../constants/constants';
+import { COLORS } from '../../../../constants/constants';
+import { circleRequestsService } from '../../../../firebase/circleRequestsService';
 import { circleMembersService } from '../../../../firebase/circleMembersService';
+import { useTranslation } from 'react-i18next';
 
 
-const CircleActions = ({ circleId, circle, navigation }) => {
+const CircleActions = ({ circleId, circle }) => {
     const { colors } = useTheme();
+    const { currentLanguage } = useLanguage();
+    const { t } = useTranslation();
     const { user } = useAuth();
+    const navigation = useNavigation();
     const { isMember, isAdmin, getAdmins } = useCircleMembers(circleId);
     const { requestCount, createJoinRequest, hasPendingRequest } = useCircleRequests(circleId);
     const { pendingCount } = usePendingEvents(circleId);
@@ -132,7 +140,10 @@ const CircleActions = ({ circleId, circle, navigation }) => {
 
     const handleViewProfile = (userId) => {
         setShowJoinRequestsModal(false);
-        navigation.navigate('Profile', { userId });
+        if (userId) {
+            const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+            navigation.navigate(profileTabName, { userId });
+        }
     };
 
     const handleJoinRequest = async () => {

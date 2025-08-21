@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
+import { useLanguage } from '../../../../context/LanguageContext';
+import { useLocalization } from '../../../../hooks/useLocalization';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 import useAuth from '../../../../hooks/useAuth';
 import useCircleMembers from '../../../../hooks/useCircleMembers';
@@ -12,6 +14,8 @@ import { circleMembersService } from '../../../../firebase/circleMembersService'
 
 const CircleOptions = ({ circleId, circle, navigation }) => {
     const { colors } = useTheme();
+    const { currentLanguage } = useLanguage();
+    const { t } = useLocalization();
     const { user } = useAuth();
     const { isAdmin } = useCircleMembers(circleId);
     const { requestCount } = useCircleRequests(circleId);
@@ -50,8 +54,8 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                                     Alert.alert(
                                         "Circle Deleted",
                                         "You were the last member, so the circle has been deleted.",
-                                        [{ 
-                                            text: "OK", 
+                                        [{
+                                            text: "OK",
                                             onPress: () => navigation.reset({
                                                 index: 0,
                                                 routes: [{ name: 'Home' }],
@@ -113,7 +117,8 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
 
     const handleViewProfile = (userId) => {
         setShowJoinRequestsModal(false);
-        navigation.navigate('Profile', { userId });
+        const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+        navigation.navigate(profileTabName, { userId });
     };
 
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../../../context/ThemeContext';
+import { useLanguage } from '../../../../context/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, RADII, SHADOWS } from '../../../../constants/constants';
 import { getUserAvatarUrl } from '../../../../utils/imageUtils';
@@ -9,6 +10,7 @@ import useCircleMembers from '../../../../hooks/useCircleMembers';
 
 const CircleMembers = ({ circleId }) => {
     const { colors } = useTheme();
+    const { currentLanguage } = useLanguage();
     const navigation = useNavigation();
     const [showMembersList, setShowMembersList] = useState(false);
     const { members, loading, memberCount } = useCircleMembers(circleId);
@@ -20,7 +22,10 @@ const CircleMembers = ({ circleId }) => {
     const renderMember = ({ item, showName = true }) => (
         <TouchableOpacity
             style={[styles.memberItem, !showName && styles.memberItemCompact]}
-            onPress={() => navigation.navigate('Profile', { userId: item.userId })}
+            onPress={() => {
+                const profileTabName = currentLanguage === 'ar' ? 'الملف الشخصي' : 'Profile';
+                navigation.navigate(profileTabName, { userId: item.userId });
+            }}
             activeOpacity={0.7}
         >
             <View style={styles.avatarContainer}>

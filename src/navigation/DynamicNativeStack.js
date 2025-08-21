@@ -12,6 +12,7 @@ import LandingScreen from '../screens/LandingScreen';
 import SignInScreen from '../screens/Auth Screens/Sign in/SignInScreen';
 import SignUpScreen from '../screens/Auth Screens/Sign up/SignUpScreen';
 import useAuth from '../hooks/useAuth';
+import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,7 @@ export default function DynamicNativeStack() {
             <Stack.Screen name="EditCircle" component={EditCircleScreen} />
             <Stack.Screen name="EventConfirmation" component={EventConfirmation} />
             <Stack.Screen name="InviteMembers" component={InviteMembers} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
         </Stack.Navigator>
     );
 }

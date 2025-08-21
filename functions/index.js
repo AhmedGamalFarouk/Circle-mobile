@@ -4,9 +4,9 @@ admin.initializeApp();
 
 const cloudinary = require("cloudinary").v2;
 cloudinary.config({
-  cloud_name: "dwh8jhaot",
-  api_key: "861252578513848",
-  api_secret: "CV8rI-ZMEMqmMoDV4koumd4GDIs",
+  cloud_name: functions.config().cloudinary.cloud_name,
+  api_key: functions.config().cloudinary.api_key,
+  api_secret: functions.config().cloudinary.api_secret,
 });
 
 exports.deleteExpiredFlashCircles = functions.pubsub
@@ -166,13 +166,13 @@ exports.processExpiredPolls = functions.pubsub
               // Tie-breaker: choose randomly
               winningOptionText =
                 winningOptions[
-                  Math.floor(Math.random() * winningOptions.length)
+                Math.floor(Math.random() * winningOptions.length)
                 ];
             }
 
             console.log(
               `Poll ${pollDoc.id} ${pollType} expired. ` +
-                `Winning option: ${winningOptionText}`
+              `Winning option: ${winningOptionText}`
             );
 
             const updateData = {
@@ -246,10 +246,10 @@ exports.uploadProfileImage = functions.https.onCall(async (data, context) => {
       {
         [imageType === "avatar" ? "avatarPhoto" : "coverPhoto"]: imageUrl,
       },
-      {merge: true}
+      { merge: true }
     );
 
-    return {success: true, imageUrl: imageUrl};
+    return { success: true, imageUrl: imageUrl };
   } catch (error) {
     console.error("Error uploading image or updating Firestore:", error);
     throw new functions.https.HttpsError(
@@ -296,7 +296,7 @@ exports.deleteProfileImage = functions.https.onCall(async (data, context) => {
         admin.firestore.FieldValue.delete(),
     });
 
-    return {success: true};
+    return { success: true };
   } catch (error) {
     console.error("Error deleting image or updating Firestore:", error);
     throw new functions.https.HttpsError(
@@ -317,7 +317,7 @@ exports.submitJoinRequest = functions.https.onCall(async (data, context) => {
   }
 
   const userId = context.auth.uid;
-  const {circleId} = data;
+  const { circleId } = data;
 
   if (!circleId) {
     throw new functions.https.HttpsError(
@@ -378,7 +378,7 @@ exports.submitJoinRequest = functions.https.onCall(async (data, context) => {
       status: "pending",
     });
 
-    return {success: true, message: "Join request submitted successfully."};
+    return { success: true, message: "Join request submitted successfully." };
   } catch (error) {
     console.error("Error submitting join request:", error);
     if (error instanceof functions.https.HttpsError) {
@@ -401,7 +401,7 @@ exports.handleJoinRequest = functions.https.onCall(async (data, context) => {
   }
 
   const adminUserId = context.auth.uid;
-  const {circleId, requestUserId, action} = data;
+  const { circleId, requestUserId, action } = data;
 
   if (!circleId || !requestUserId || !action) {
     throw new functions.https.HttpsError(
@@ -476,7 +476,7 @@ exports.handleJoinRequest = functions.https.onCall(async (data, context) => {
         handledAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      return {success: true, message: "Join request approved successfully."};
+      return { success: true, message: "Join request approved successfully." };
     } else {
       // Update request status to denied
       await requestRef.update({
@@ -485,7 +485,7 @@ exports.handleJoinRequest = functions.https.onCall(async (data, context) => {
         handledAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      return {success: true, message: "Join request denied successfully."};
+      return { success: true, message: "Join request denied successfully." };
     }
   } catch (error) {
     console.error("Error handling join request:", error);
@@ -510,7 +510,7 @@ exports.bulkHandleJoinRequests = functions.https.onCall(
     }
 
     const adminUserId = context.auth.uid;
-    const {circleId, action} = data;
+    const { circleId, action } = data;
 
     if (!circleId || !action) {
       throw new functions.https.HttpsError(
