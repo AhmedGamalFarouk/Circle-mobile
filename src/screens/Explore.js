@@ -1,55 +1,134 @@
-import React from 'react';
-import { View, Text, StyleSheet, Button, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, Linking, Modal, TouchableOpacity } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import useCurrentLocation from '../hooks/useCurrentLocation';
 import { COLORS } from '../constants/constants';
 import { useTheme } from '../context/ThemeContext';
 import StandardHeader from '../components/StandardHeader';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import useAuth from '../hooks/useAuth';
+import * as Location from 'expo-location';
 
-const circles = [
-  {
-    id: 1,
-    name: "cairo dogs club",
-    lat: 30.06263,
-    lng: 31.24967,
-  },
-  {
-    id: 2,
-    name: "cairo developers hub",
-    lat: 30.36166,
-    lng: 31.35255,
-  },
-  {
-    id: 3,
-    name: "cairo cats lovers",
-    lat: 30.13333,
-    lng: 31.25,
-  },
-  {
-    id: 4,
-    name: "motorbike group",
-    lat: 30.1,
-    lng: 31.7,
-  },
-  {
-    id: 5,
-    name: "cairo developers hub",
-    lat: 30,
-    lng: 31,
-  },
-];
+// Extract address from a Google Maps search URL like
+// https://www.google.com/maps/search/?api=1&query=o's%20pasta
+const extractAddressFromMapsUrl = (mapsUrl) => {
+  try {
+    const url = new URL(mapsUrl);
+    const queryParam = url.searchParams.get('query');
+    return queryParam ? decodeURIComponent(queryParam) : null;
+  } catch (e) {
+    return null;
+  }
+};
 
-const CircleCallout = React.memo(({ circle, onJoin }) => (
-  <View style={styles.calloutContent} accessible accessibilityLabel={`Circle: ${circle.name}`}>
-    <Text style={styles.calloutTitle}>{circle.name}</Text>
-    <Text style={styles.calloutText}>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</Text>
-    <Button title="Join" onPress={onJoin} />
+const EventCallout = React.memo(({ marker, onOpen }) => (
+  <View style={styles.calloutContent} accessible accessibilityLabel={`Event: ${marker.title}`}>
+    <Text style={styles.calloutTitle}>{marker.title}</Text>
+    {marker.address ? (
+      <Text style={styles.calloutText} numberOfLines={2}>{marker.address}</Text>
+    ) : null}
+    <TouchableOpacity style={styles.calloutButton} onPress={onOpen}>
+      <Text style={styles.calloutButtonText}>View details</Text>
+    </TouchableOpacity>
   </View>
 ));
 
 const Explore = ({ navigation }) => {
   const { location, error } = useCurrentLocation();
   const { colors } = useTheme()
+  const { user } = useAuth();
+  const [eventMarkers, setEventMarkers] = useState([]);
+  const geocodeCacheRef = useRef(new Map());
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+
+  useEffect(() => {
+    let unsubscribers = [];
+
+    const subscribeToJoinedCirclesEvents = async () => {
+      if (!user?.uid) {
+        setEventMarkers([]);
+        return;
+      }
+
+      try {
+        const userDocSnap = await getDoc(doc(db, 'users', user.uid));
+        const joinedCircleIds = userDocSnap.exists() ? (userDocSnap.data().joinedCircles || []) : [];
+
+        if (!Array.isArray(joinedCircleIds) || joinedCircleIds.length === 0) {
+          setEventMarkers([]);
+          return;
+        }
+
+        joinedCircleIds.forEach((circleId) => {
+          const eventsRef = collection(db, 'circles', circleId, 'events');
+          const unsubscribe = onSnapshot(eventsRef, async (snapshot) => {
+            const eventsWithLocation = [];
+            snapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              if (data && data.Location) {
+                eventsWithLocation.push({ id: docSnap.id, circleId, ...data });
+              }
+            });
+
+            const markers = await Promise.all(eventsWithLocation.map(async (evt) => {
+              const address = extractAddressFromMapsUrl(evt.Location) || evt.place || '';
+              if (!address) return null;
+
+              let coords = geocodeCacheRef.current.get(address);
+              if (!coords) {
+                try {
+                  const results = await Location.geocodeAsync(address);
+                  if (results && results.length > 0) {
+                    coords = { latitude: results[0].latitude, longitude: results[0].longitude };
+                    geocodeCacheRef.current.set(address, coords);
+                  } else {
+                    return null;
+                  }
+                } catch (e) {
+                  return null;
+                }
+              }
+
+              return {
+                id: `${circleId}_${evt.id}`,
+                circleId,
+                title: evt.place || evt.activity || 'Event',
+                address,
+                locationUrl: evt.Location,
+                activity: evt.activity || null,
+                place: evt.place || null,
+                day: evt.day || null,
+                status: evt.status || null,
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              };
+            }));
+
+            setEventMarkers((prev) => {
+              const others = prev.filter((m) => m.circleId !== circleId);
+              const newOnes = markers.filter(Boolean);
+              return [...others, ...newOnes];
+            });
+          });
+
+          unsubscribers.push(unsubscribe);
+        });
+      } catch (e) {
+        console.error('Failed to subscribe to events for joined circles:', e);
+        setEventMarkers([]);
+      }
+    };
+
+    subscribeToJoinedCirclesEvents();
+
+    return () => {
+      unsubscribers.forEach((u) => {
+        try { if (typeof u === 'function') u(); } catch (_) {}
+      });
+    };
+  }, [user?.uid]);
 
   if (error) {
     return (
@@ -95,22 +174,69 @@ const Explore = ({ navigation }) => {
           longitudeDelta: 0.05,
         }}
       >
-        {circles.map((circle) => (
+        {eventMarkers.map((marker) => (
           <Marker
-            key={circle.id}
+            key={marker.id}
             coordinate={{
-              latitude: circle.lat,
-              longitude: circle.lng,
+              latitude: marker.latitude,
+              longitude: marker.longitude,
             }}
             image={require('../../assets/circle.gif')}
-            accessibilityLabel={`Marker for ${circle.name}`}
+            accessibilityLabel={`Marker for ${marker.title}`}
+            onPress={() => { setSelectedEvent(marker); setIsDetailsVisible(true); }}
           >
-            <Callout style={[styles.calloutContainer, { backgroundColor: colors.background }]} tooltip={false}>
-              <CircleCallout circle={circle} onJoin={() => { /* handle join */ }} />
-            </Callout>
+
           </Marker>
         ))}
       </MapView>
+
+      <Modal
+        visible={isDetailsVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsDetailsVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={() => setIsDetailsVisible(false)}>
+          <TouchableOpacity activeOpacity={1} style={[styles.modalCard, { backgroundColor: colors.background, }]}>
+            {selectedEvent ? (
+              <>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedEvent.title}</Text>
+                {selectedEvent.activity ? (
+                  <Text style={[styles.modalRow, { color: colors.textSecondary }]}>Activity: {selectedEvent.activity}</Text>
+                ) : null}
+                {selectedEvent.place ? (
+                  <TouchableOpacity onPress={() => { if (selectedEvent.locationUrl) Linking.openURL(selectedEvent.locationUrl); }}>
+                    <Text style={[styles.modalRow, { color: colors.primary }]}>Place: {selectedEvent.place} (open in Maps)</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {selectedEvent.day ? (
+                  <Text style={[styles.modalRow, { color: colors.textSecondary }]}>Day: {selectedEvent.day}</Text>
+                ) : null}
+                {selectedEvent.status ? (
+                  <Text style={[styles.modalRow, { color: colors.textSecondary }]}>Status: {selectedEvent.status}</Text>
+                ) : null}
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: colors.primary }]}
+                    onPress={() => { if (selectedEvent?.locationUrl) Linking.openURL(selectedEvent.locationUrl); }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.modalButtonText, { color: '#FFFFFF' }]}>Open in Maps</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: colors.surface }]}
+                    onPress={() => setIsDetailsVisible(false)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.modalButtonText, { color: colors.text }]}>Close</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : null}
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -165,5 +291,52 @@ const styles = StyleSheet.create({
     fontWeight: 'normal',
     marginBottom: 8,
     textAlign: 'center',
+  },
+  calloutButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  calloutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    padding: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  modalRow: {
+    fontSize: 14,
+    marginBottom: 6,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  modalButton: {
+    flex: 1,
+    marginHorizontal: 4,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
