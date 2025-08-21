@@ -807,15 +807,6 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         loading={loading}
                     />
 
-                    {/* User Interests */}
-                    <UserInterests
-                        interests={isEditing ? editingInterests : profile?.interests}
-                        isEditing={isEditing}
-                        onAddInterest={handleAddInterest}
-                        onRemoveInterest={handleRemoveInterest}
-                        isOwnProfile={isOwnProfile}
-                    />
-
                     {/* Enhanced Profile Actions */}
                     {!isOwnProfile && (
                         <ProfileActions
@@ -825,6 +816,15 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                             buttonScale={buttonScale}
                         />
                     )}
+
+                    {/* User Interests */}
+                    <UserInterests
+                        interests={isEditing ? editingInterests : profile?.interests}
+                        isEditing={isEditing}
+                        onAddInterest={handleAddInterest}
+                        onRemoveInterest={handleRemoveInterest}
+                        isOwnProfile={isOwnProfile}
+                    />
 
                     {/* Enhanced Sections */}
                     <MySquad

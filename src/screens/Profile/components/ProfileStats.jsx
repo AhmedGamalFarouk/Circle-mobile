@@ -7,7 +7,7 @@ import { useTheme } from '../../../context/ThemeContext';
 const ProfileStats = ({
     connections,
     circles,
-    location = "Obour, Cairo",
+    location,
     shimmerAnimation,
     loading,
     onConnectionsPress,
@@ -107,7 +107,7 @@ const ProfileStats = ({
                     />
                 </View>
                 <Text style={[styles.locationText, dynamicStyles.locationText]}>
-                    {location}
+                    {location || 'Location not set'}
                 </Text>
             </View>
 

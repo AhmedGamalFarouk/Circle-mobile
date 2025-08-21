@@ -5,7 +5,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
 import { auth } from '../../firebase/config';
 import SettingsSection from './components/SettingsSection';
-import ToggleOption from './components/ToggleOption';
 import SelectOption from './components/SelectOption';
 import ActionButton from './components/ActionButton';
 import MyPlan from './components/MyPlan';
@@ -14,7 +13,6 @@ import StandardHeader from '../../components/StandardHeader';
 const SettingsScreen = ({ navigation }) => {
     const { theme, toggleTheme, colors } = useTheme();
     const { t, currentLanguage, switchLanguage, getLanguageOptions } = useLocalization();
-    const [isPrivateProfile, setIsPrivateProfile] = useState(false);
 
     const languageOptions = getLanguageOptions();
     const themeOptions = [
@@ -58,15 +56,6 @@ const SettingsScreen = ({ navigation }) => {
             />
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                <SettingsSection title={t('settings.privacy')}>
-                    <ToggleOption
-                        title={t('settings.privateProfile')}
-                        description={t('settings.privateProfileDescription')}
-                        value={isPrivateProfile}
-                        onToggle={setIsPrivateProfile}
-                    />
-                </SettingsSection>
-
                 <SettingsSection title={t('settings.language')}>
                     <SelectOption
                         title={t('settings.appLanguage')}

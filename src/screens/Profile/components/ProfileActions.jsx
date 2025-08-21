@@ -53,42 +53,7 @@ const ProfileActions = ({
                 </TouchableOpacity>
             </Animated.View>
 
-            {/* Message Button */}
-            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                <TouchableOpacity
-                    style={[styles.messageButton, styles.glassmorphicButton]}
-                    activeOpacity={0.8}
-                >
-                    <MaterialIcons
-                        name="message"
-                        size={isLandscape ? 18 : 20}
-                        color={colors.primary}
-                        style={styles.buttonIcon}
-                    />
-                    <Text
-                        style={[
-                            styles.messageButtonText,
-                            isLandscape && styles.buttonTextLandscape,
-                        ]}
-                    >
-                        Message
-                    </Text>
-                </TouchableOpacity>
-            </Animated.View>
 
-            {/* More Options Button */}
-            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                <TouchableOpacity
-                    style={[styles.moreButton, styles.glassmorphicButton]}
-                    activeOpacity={0.8}
-                >
-                    <MaterialIcons
-                        name="more-horiz"
-                        size={isLandscape ? 20 : 24}
-                        color={colors.text}
-                    />
-                </TouchableOpacity>
-            </Animated.View>
         </View>
     );
 };
@@ -97,22 +62,25 @@ const getStyles = (width, isLandscape, colors) =>
     StyleSheet.create({
         buttonsContainer: {
             flexDirection: "row",
-            width: width * 0.9,
-            justifyContent: "space-between",
+            width: width * 0.85,
+            justifyContent: "center",
             alignItems: "center",
-            marginBottom: isLandscape ? 15 : 20,
-            paddingHorizontal: 20,
+            marginBottom: isLandscape ? 20 : 25,
+            marginTop: isLandscape ? 10 : 15,
+            paddingHorizontal: 15,
+            alignSelf: "center",
         },
         followButton: {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            paddingVertical: isLandscape ? 10 : 12,
-            paddingHorizontal: isLandscape ? 16 : 20,
+            paddingVertical: isLandscape ? 12 : 15,
+            paddingHorizontal: isLandscape ? 24 : 32,
             borderRadius: RADII.pill,
             flex: 1,
-            marginRight: 10,
+            marginRight: 12,
             borderWidth: 2,
+            minHeight: isLandscape ? 44 : 50,
         },
         unfollowedButton: {
             backgroundColor: colors.primary,
@@ -124,24 +92,15 @@ const getStyles = (width, isLandscape, colors) =>
             borderColor: colors.secondary,
             ...SHADOWS.btnSecondaryHover,
         },
-        messageButton: {
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            paddingVertical: isLandscape ? 10 : 12,
-            paddingHorizontal: isLandscape ? 16 : 20,
-            borderRadius: RADII.pill,
-            flex: 1,
-            marginRight: 10,
-        },
+
         moreButton: {
             alignItems: "center",
             justifyContent: "center",
-            paddingVertical: isLandscape ? 10 : 12,
+            paddingVertical: isLandscape ? 12 : 15,
             paddingHorizontal: isLandscape ? 12 : 14,
             borderRadius: RADII.circle,
-            width: isLandscape ? 44 : 48,
-            height: isLandscape ? 44 : 48,
+            width: isLandscape ? 48 : 52,
+            height: isLandscape ? 48 : 52,
         },
         glassmorphicButton: {
             backgroundColor: colors.glassmorphic,
@@ -154,21 +113,15 @@ const getStyles = (width, isLandscape, colors) =>
         },
         buttonText: {
             color: colors.text,
-            fontSize: isLandscape ? 14 : 16,
+            fontSize: isLandscape ? 15 : 17,
             fontFamily: FONTS.body,
-            fontWeight: "600",
+            fontWeight: "700",
             letterSpacing: 0.5,
         },
         buttonTextLandscape: {
             fontSize: 14,
         },
-        messageButtonText: {
-            color: colors.primary,
-            fontSize: isLandscape ? 14 : 16,
-            fontFamily: FONTS.body,
-            fontWeight: "600",
-            letterSpacing: 0.5,
-        },
+
     });
 
 export default ProfileActions;
