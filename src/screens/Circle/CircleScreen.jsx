@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, KeyboardAvoidingView, Platform, LayoutAnimation, Pressable, Text, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, onSnapshot, addDoc, updateDoc, serverTimestamp, Timestamp, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import ContextualPin from './components/ContextualPin/ContextualPin';
 import ChatFeed from './components/ChatFeed';
@@ -12,6 +12,7 @@ import { COLORS } from '../../constants/constants';
 import SimplePollCreation from './components/PollCreation/SimplePollCreation';
 import useAuth from '../../hooks/useAuth';
 import useUserProfile from '../../hooks/useUserProfile';
+import useCircleMembers from '../../hooks/useCircleMembers';
 
 const PLANNING_STAGES = {
     IDLE: 'Idle',
@@ -29,6 +30,7 @@ const CircleScreen = () => {
     const { circleId, openPollModal } = route.params;
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
+    const { memberCount } = useCircleMembers(circleId);
     const [circle, setCircle] = useState(null);
     const [poll, setPoll] = useState(null);
     const [event, setEvent] = useState(null);
@@ -138,14 +140,28 @@ const CircleScreen = () => {
 
         const eventsQuery = query(collection(db, 'circles', circleId, 'events'), where('status', '==', 'confirmed'));
         const unsubscribeEvents = onSnapshot(eventsQuery, (snapshot) => {
-            if (!snapshot.empty) {
-                const confirmedEvent = snapshot.docs[0];
+            // Only consider upcoming confirmed events
+            const todayStr = new Date().toISOString().split('T')[0];
+            const upcomingConfirmed = snapshot.docs
+                .filter((doc) => {
+                    const data = doc.data();
+                    return typeof data.day === 'string' && data.day >= todayStr;
+                })
+                .sort((a, b) => {
+                    const dayA = a.data().day || '';
+                    const dayB = b.data().day || '';
+                    return dayA.localeCompare(dayB);
+                });
+
+            if (upcomingConfirmed.length > 0) {
+                const confirmedEvent = upcomingConfirmed[0];
                 setEvent({ id: confirmedEvent.id, ...confirmedEvent.data() });
-                if (poll?.stage !== PLANNING_STAGES.EVENT_CONFIRMED) {
-                    setCurrentStage(PLANNING_STAGES.EVENT_CONFIRMED);
-                }
+                // If there is an upcoming confirmed event, show Event Confirmed state
+                setCurrentStage(PLANNING_STAGES.EVENT_CONFIRMED);
             } else {
+                // No upcoming confirmed events; clear event reference
                 setEvent(null);
+                // Do not override currentStage here; poll listener will set to Idle when appropriate
             }
         });
 
@@ -448,6 +464,17 @@ const CircleScreen = () => {
 
     const handleStartNewPoll = async () => {
         try {
+            // Delete past events from database
+            const eventsQuery = query(collection(db, 'circles', circleId, 'events'));
+            const eventsSnapshot = await getDocs(eventsQuery);
+            
+            const deletePromises = eventsSnapshot.docs.map(eventDoc => {
+                return deleteDoc(eventDoc.ref);
+            });
+            
+            await Promise.all(deletePromises);
+            console.log('Past events deleted successfully');
+
             // Archive the current poll and start fresh
             if (poll?.id) {
                 const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
@@ -469,6 +496,7 @@ const CircleScreen = () => {
             setCurrentStage(PLANNING_STAGES.IDLE);
             setPoll(null);
             setPollType(null);
+            setEvent(null); // Clear the current event
         } catch (error) {
             console.error('Error starting new poll:', error);
         }
@@ -534,6 +562,7 @@ const CircleScreen = () => {
                             onVote={handleVote}
                             onAddOption={handleAddOption}
                             eventData={event}
+                            pollData={poll ? { ...poll, memberCount } : null}
                             onRsvp={handleRsvp}
                             onStartNewPoll={handleStartNewPoll}
                             onPollNextStep={handlePollNextStep}

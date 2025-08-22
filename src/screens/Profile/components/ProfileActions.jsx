@@ -93,15 +93,6 @@ const getStyles = (width, isLandscape, colors) =>
             ...SHADOWS.btnSecondaryHover,
         },
 
-        moreButton: {
-            alignItems: "center",
-            justifyContent: "center",
-            paddingVertical: isLandscape ? 12 : 15,
-            paddingHorizontal: isLandscape ? 12 : 14,
-            borderRadius: RADII.circle,
-            width: isLandscape ? 48 : 52,
-            height: isLandscape ? 48 : 52,
-        },
         glassmorphicButton: {
             backgroundColor: colors.glassmorphic,
             borderWidth: 1,

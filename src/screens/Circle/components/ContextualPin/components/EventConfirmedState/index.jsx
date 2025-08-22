@@ -1,9 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
 
 const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
+    // Handle case when eventData is null (after deletion)
+    if (!eventData) {
+        return null;
+    }
+    
     const { title, location, rsvps, currentUser } = eventData;
 
     const getRsvpCounts = () => {
@@ -12,6 +17,29 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
             if (counts[rsvp] !== undefined) counts[rsvp]++;
         });
         return counts;
+    };
+
+    const openInGoogleMaps = () => {
+        if (!location) {
+            Alert.alert('No Location', 'No location information available for this event.');
+            return;
+        }
+
+        const encodedLocation = encodeURIComponent(location);
+        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+        
+        Linking.canOpenURL(googleMapsUrl)
+            .then((supported) => {
+                if (supported) {
+                    return Linking.openURL(googleMapsUrl);
+                } else {
+                    Alert.alert('Error', 'Unable to open Google Maps');
+                }
+            })
+            .catch((err) => {
+                console.error('Error opening Google Maps:', err);
+                Alert.alert('Error', 'Failed to open Google Maps');
+            });
     };
 
     const rsvpCounts = getRsvpCounts();
@@ -73,6 +101,11 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                     <Text style={styles.detailLabel}>Location:</Text>
                     <Text style={styles.detailValue}>{location}</Text>
                 </View>
+                
+                <TouchableOpacity style={styles.mapsButton} onPress={openInGoogleMaps}>
+                    <Ionicons name="navigate" size={16} color={COLORS.light} />
+                    <Text style={styles.mapsButtonText}>Open in Google Maps</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.rsvpSection}>
@@ -203,6 +236,22 @@ const styles = StyleSheet.create({
         fontFamily: FONTS.body,
         fontSize: 14,
         flex: 1,
+    },
+    mapsButton: {
+        backgroundColor: COLORS.primary,
+        borderRadius: RADII.rounded,
+        padding: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 8,
+    },
+    mapsButtonText: {
+        color: COLORS.light,
+        fontFamily: FONTS.body,
+        fontSize: 12,
+        fontWeight: '600',
+        marginLeft: 6,
     },
     rsvpSection: {
         marginBottom: 12,

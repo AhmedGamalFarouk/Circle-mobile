@@ -4,22 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../../../constants/constants';
 
-const AdminConfirmationState = ({ eventData, onContactAdmin }) => {
+const AdminConfirmationState = ({ eventData }) => {
     const { colors } = useTheme();
-    const { winningActivity, winningPlace, votingResults, memberCount } = eventData || {};
+    const { winningActivity, winningPlace } = eventData || {};
 
-    const getParticipationStats = () => {
-        if (!votingResults || !memberCount) return { totalVotes: 0, participationRate: 0 };
 
-        const activityVotes = Object.values(votingResults.activity || {}).reduce((sum, votes) => sum + votes, 0);
-        const placeVotes = Object.values(votingResults.place || {}).reduce((sum, votes) => sum + votes, 0);
-        const totalVotes = Math.max(activityVotes, placeVotes);
-        const participationRate = Math.round((totalVotes / memberCount) * 100);
-
-        return { totalVotes, participationRate };
-    };
-
-    const { totalVotes, participationRate } = getParticipationStats();
     const styles = getStyles(colors);
 
     return (
@@ -58,21 +47,7 @@ const AdminConfirmationState = ({ eventData, onContactAdmin }) => {
                 </View>
             </View>
 
-            <View style={styles.statsContainer}>
-                <Text style={styles.sectionTitle}>Participation Stats</Text>
 
-                <View style={styles.statsCard}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{totalVotes}</Text>
-                        <Text style={styles.statLabel}>Total Votes</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statNumber}>{participationRate}%</Text>
-                        <Text style={styles.statLabel}>Participation</Text>
-                    </View>
-                </View>
-            </View>
 
             <View style={styles.infoContainer}>
                 <View style={styles.infoCard}>
@@ -87,10 +62,7 @@ const AdminConfirmationState = ({ eventData, onContactAdmin }) => {
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.contactButton} onPress={onContactAdmin}>
-                <Ionicons name="chatbubble-outline" size={20} color={colors.surface} />
-                <Text style={styles.contactButtonText}>Contact Admin</Text>
-            </TouchableOpacity>
+
         </ScrollView>
     );
 };
@@ -173,39 +145,7 @@ const getStyles = (colors) => StyleSheet.create({
         fontWeight: '600',
         color: colors.text,
     },
-    statsContainer: {
-        paddingHorizontal: 15,
-        paddingBottom: 12,
-    },
-    statsCard: {
-        backgroundColor: colors.card,
-        borderRadius: RADII.medium,
-        padding: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-        ...SHADOWS.medium,
-    },
-    statItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    statNumber: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: colors.primary,
-        marginBottom: 2,
-    },
-    statLabel: {
-        fontSize: 10,
-        color: colors.textSecondary,
-    },
-    statDivider: {
-        width: 1,
-        height: 30,
-        backgroundColor: colors.border,
-        marginHorizontal: 15,
-    },
+
     infoContainer: {
         paddingHorizontal: 15,
         paddingBottom: 12,
@@ -232,24 +172,7 @@ const getStyles = (colors) => StyleSheet.create({
         color: colors.textSecondary,
         lineHeight: 14,
     },
-    contactButton: {
-        backgroundColor: colors.warning,
-        marginHorizontal: 20,
-        marginBottom: 20,
-        paddingVertical: 16,
-        paddingHorizontal: 24,
-        borderRadius: RADII.medium,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        ...SHADOWS.medium,
-    },
-    contactButtonText: {
-        color: colors.surface,
-        fontSize: 16,
-        fontWeight: '600',
-        marginLeft: 8,
-    },
+
 });
 
 export default AdminConfirmationState;

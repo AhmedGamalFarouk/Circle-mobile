@@ -12,7 +12,6 @@ import {
     Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../constants/constants';
 import DefaultState from './components/DefaultState';
@@ -39,11 +38,11 @@ const ContextualPin = ({
     onVote,
     onAddOption,
     eventData,
+    pollData,
     onRsvp,
     onStartNewPoll,
     onDismiss,
-    onPollNextStep,
-    onContactAdmin
+    onPollNextStep
 }) => {
     const { colors } = useTheme();
     const [isMinimized, setIsMinimized] = useState(false);
@@ -179,15 +178,21 @@ const ContextualPin = ({
             case 'Pending Confirmation':
                 return (
                     <AdminConfirmationState
-                        eventData={eventData}
-                        onContactAdmin={onContactAdmin}
+                        eventData={{
+                            ...eventData,
+                            winningActivity: pollData?.winningActivity,
+                            winningPlace: pollData?.winningPlace
+                        }}
                     />
                 );
             case 'Awaiting Admin Confirmation':
                 return (
                     <AdminConfirmationState
-                        eventData={eventData}
-                        onContactAdmin={onContactAdmin}
+                        eventData={{
+                            ...eventData,
+                            winningActivity: pollData?.winningActivity,
+                            winningPlace: pollData?.winningPlace
+                        }}
                     />
                 );
             case 'Event Confirmed':

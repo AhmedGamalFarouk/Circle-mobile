@@ -10,18 +10,21 @@ import {
     ScrollView,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, query, collection, where, getDocs } from "firebase/firestore";
 import { db } from "../../../../firebase/config";
 import { useRoute } from "@react-navigation/native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { useTheme } from "../../../../context/ThemeContext";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function EventForm({ event, onClose, circleId }) {
     const { t } = useTranslation();
     const { colors } = useTheme();
     const [day, setDay] = useState(event.day ? new Date(event.day) : new Date());
     const [location, setLocation] = useState(event.location || "");
+    const [coordinates, setCoordinates] = useState(event.coordinates || null);
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+    // const [isMapVisible, setMapVisible] = useState(false); // Removed - MapPinSelector doesn't exist
 
     const showDatePicker = () => {
         setDatePickerVisibility(true);
@@ -45,12 +48,19 @@ export default function EventForm({ event, onClose, circleId }) {
         try {
             // Update the event status
             const eventRef = doc(db, "circles", circleId, "events", event.id);
-            await updateDoc(eventRef, {
+            const updateData = {
                 day: day.toISOString().split("T")[0],
                 Location: location.trim(),
                 status: "confirmed",
                 updatedAt: serverTimestamp(),
-            });
+            };
+            
+            // Add coordinates if they exist
+            if (coordinates) {
+                updateData.coordinates = coordinates;
+            }
+            
+            await updateDoc(eventRef, updateData);
 
             // Update the poll stage to EVENT_CONFIRMED
             const pollsQuery = query(
@@ -75,14 +85,25 @@ export default function EventForm({ event, onClose, circleId }) {
     };
 
     const openInMaps = () => {
-        if (!location.trim()) {
+        if (coordinates) {
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${coordinates.latitude},${coordinates.longitude}`;
+            Linking.openURL(mapsUrl);
+        } else if (location.trim()) {
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                location
+            )}`;
+            Linking.openURL(mapsUrl);
+        } else {
             Alert.alert(t("Input Error"), t("Please enter a place first."));
-            return;
         }
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-            location
-        )}`;
-        Linking.openURL(mapsUrl);
+    };
+
+    const handleLocationSelect = (selectedCoordinates) => {
+        setCoordinates(selectedCoordinates);
+    };
+
+    const showMapSelector = () => {
+        setMapVisible(true);
     };
 
     const styles = getStyles(colors);
@@ -110,6 +131,7 @@ export default function EventForm({ event, onClose, circleId }) {
                         <Text style={styles.mapsButtonText}>{t("Open in Maps")}</Text>
                     </TouchableOpacity>
                 </View>
+                
             </View>
 
             <View style={styles.inputGroup}>
@@ -139,7 +161,7 @@ export default function EventForm({ event, onClose, circleId }) {
                     <Text style={styles.submitButtonText}>{t("Cancel")}</Text>
                 </TouchableOpacity>
             </View>
-        </ScrollView>
+                    </ScrollView>
     );
 }
 
