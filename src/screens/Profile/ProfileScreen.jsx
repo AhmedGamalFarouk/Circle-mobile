@@ -32,8 +32,7 @@ import ProfileStats from "./components/ProfileStats";
 import ProfileActions from "./components/ProfileActions";
 import MediaGrid from "./components/MediaGrid";
 import DraggableCard from "./components/DraggableCard";
-import MySquad from "./components/MySquad";
-import JoinedCircles from "./components/JoinedCircles";
+
 import LoadingSkeleton from "./components/LoadingSkeleton";
 import UserInterests from "./components/UserInterests";
 import InterestInputModal from "./components/InterestInputModal";
@@ -54,6 +53,7 @@ import {
     getOptimizedImageUrl,
 } from "../../utils/cloudinaryUpload";
 import useUserProfile from "../../hooks/useUserProfile";
+import useCurrentLocation from "../../hooks/useCurrentLocation";
 import { useTheme } from "../../context/ThemeContext";
 
 //TODO: add Placeholder image URLs
@@ -89,6 +89,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         setEditingProfileImage(null);
         setEditingCoverImage(null);
         setEditingInterests([]);
+        setEditingLocation("");
     }, [userId]);
 
     // Handle tab press to reset to own profile
@@ -124,6 +125,10 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const [currentImageType, setCurrentImageType] = useState(null);
     const [editingInterests, setEditingInterests] = useState([]);
     const [showInterestModal, setShowInterestModal] = useState(false);
+    const [editingLocation, setEditingLocation] = useState("");
+    
+    // Location detection hook
+    const { locationName, isLoading: locationLoading, getCurrentLocation } = useCurrentLocation();
 
     // Animation values
     const scrollY = useRef(new Animated.Value(0)).current;
@@ -238,6 +243,8 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                 username: editingUserName,
                 bio: editingUserBio,
                 interests: editingInterests,
+                location: editingLocation,
+                updatedAt: serverTimestamp(),
             };
 
             // Upload profile image if changed
@@ -320,9 +327,10 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
 
             // Only write to Firestore if there are changes
             if (
-                Object.keys(updatedData).length > 3 ||
+                Object.keys(updatedData).length > 4 ||
                 updatedData.username !== profile?.username ||
                 updatedData.bio !== profile?.bio ||
+                updatedData.location !== profile?.location ||
                 false
             ) {
                 await setDoc(doc(db, "users", currentUser.uid), updatedData, {
@@ -345,6 +353,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
         editingProfileImage,
         editingCoverImage,
         editingInterests,
+        editingLocation,
         profile,
         navigation,
     ]);
@@ -371,6 +380,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                 : { uri: PLACEHOLDER_COVER_URL }
         );
         setEditingInterests(profile?.interests || []);
+        setEditingLocation(profile?.location || "");
     }, [profile]);
 
     // Interest handling functions
@@ -385,6 +395,26 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
     const handleRemoveInterest = useCallback((index) => {
         setEditingInterests(prev => prev.filter((_, i) => i !== index));
     }, []);
+
+    // Location handling functions
+    const handleLocationRedetect = useCallback(async () => {
+        try {
+            await getCurrentLocation();
+            if (locationName) {
+                setEditingLocation(locationName);
+            }
+        } catch (error) {
+            console.error('Error re-detecting location:', error);
+            Alert.alert('Error', 'Failed to detect location. Please try again.');
+        }
+    }, [getCurrentLocation, locationName]);
+
+    // Update editing location when locationName changes
+    useEffect(() => {
+        if (isEditing && locationName) {
+            setEditingLocation(locationName);
+        }
+    }, [locationName, isEditing]);
 
     const handleImagePress = useCallback(
         (imageUri, imageType) => {
@@ -803,6 +833,12 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         connections={connectionsCount}
                         circles={circlesCount}
                         events={eventsCount}
+                        location={isEditing ? editingLocation : profile?.location}
+                        isEditing={isEditing}
+                        isOwnProfile={isOwnProfile}
+                        onLocationChange={setEditingLocation}
+                        onLocationRedetect={handleLocationRedetect}
+                        locationLoading={locationLoading}
                         shimmerAnimation={shimmerAnimation}
                         loading={loading}
                     />
@@ -826,19 +862,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
                         isOwnProfile={isOwnProfile}
                     />
 
-                    {/* Enhanced Sections */}
-                    <MySquad
-                        shimmerAnimation={shimmerAnimation}
-                        loading={loading}
-                        isOwnProfile={isOwnProfile}
-                        userId={profileId}
-                    />
-                    <JoinedCircles
-                        shimmerAnimation={shimmerAnimation}
-                        loading={loading}
-                        isOwnProfile={isOwnProfile}
-                        userId={profileId}
-                    />
+
                 </DraggableCard>
             </ScrollView>
             <ImageOptionsModal

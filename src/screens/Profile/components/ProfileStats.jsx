@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, Animated, TouchableOpacity, useWindowDimensions, TextInput, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { FONTS, RADII, SHADOWS } from '../../../constants/constants';
 import { useTheme } from '../../../context/ThemeContext';
@@ -7,7 +7,13 @@ import { useTheme } from '../../../context/ThemeContext';
 const ProfileStats = ({
     connections,
     circles,
+    events,
     location,
+    isEditing,
+    isOwnProfile,
+    onLocationChange,
+    onLocationRedetect,
+    locationLoading,
     shimmerAnimation,
     loading,
     onConnectionsPress,
@@ -106,9 +112,38 @@ const ProfileStats = ({
                         color={colors.primary}
                     />
                 </View>
-                <Text style={[styles.locationText, dynamicStyles.locationText]}>
-                    {location || 'Location not set'}
-                </Text>
+                {isEditing && isOwnProfile ? (
+                    <View style={styles.locationEditContainer}>
+                        <TextInput
+                            style={[styles.locationInput, dynamicStyles.locationInput]}
+                            value={location}
+                            onChangeText={onLocationChange}
+                            placeholder="Enter your location"
+                            placeholderTextColor={colors.textSecondary}
+                            selectionColor={colors.primary}
+                        />
+                        <TouchableOpacity
+                            style={[styles.redetectButton, { backgroundColor: colors.primary }]}
+                            onPress={onLocationRedetect}
+                            disabled={locationLoading}
+                            activeOpacity={0.8}
+                        >
+                            {locationLoading ? (
+                                <ActivityIndicator size="small" color={colors.surface} />
+                            ) : (
+                                <MaterialIcons
+                                    name="my-location"
+                                    size={16}
+                                    color={colors.surface}
+                                />
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <Text style={[styles.locationText, dynamicStyles.locationText]}>
+                        {location || 'Location not set'}
+                    </Text>
+                )}
             </View>
 
 
@@ -130,6 +165,9 @@ const getResponsiveStyles = (isLandscape) => ({
         marginBottom: isLandscape ? 8 : 12,
     },
     locationText: {
+        fontSize: isLandscape ? 14 : 16,
+    },
+    locationInput: {
         fontSize: isLandscape ? 14 : 16,
     },
 
@@ -228,6 +266,33 @@ const getStyles = (colors) => StyleSheet.create({
         fontFamily: FONTS.body,
         fontWeight: '500',
         opacity: 0.9,
+    },
+    locationEditContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        gap: 8,
+    },
+    locationInput: {
+        flex: 1,
+        color: colors.textPrimary,
+        fontFamily: FONTS.body,
+        fontWeight: '500',
+        fontSize: 14,
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: RADII.small,
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    redetectButton: {
+        padding: 8,
+        borderRadius: RADII.small,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: 32,
+        minHeight: 32,
     },
 
     // Skeleton styles
