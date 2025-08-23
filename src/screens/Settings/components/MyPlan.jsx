@@ -75,7 +75,7 @@ const MyPlan = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.title, { color: colors.text }]}>My Plan</Text>
+            <Text style={[styles.title, { color: colors.primary }]}>My Plan</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Choose the plan that fits your needs</Text>
             {plans.map((plan, index) => (
                 <TouchableOpacity
@@ -151,25 +151,26 @@ const MyPlan = () => {
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 20,
-        marginBottom: 20,
+        marginTop: 8,
+        marginBottom: 24,
     },
     title: {
-        fontSize: 22,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '600',
         marginBottom: 8,
+        marginLeft: 4,
     },
     subtitle: {
         fontSize: 14,
-        marginBottom: 20,
+        marginBottom: 16,
         opacity: 0.8,
+        marginLeft: 4,
     },
     planContainer: {
         borderWidth: 1,
         borderRadius: RADII.rounded,
-        padding: 20,
-        marginBottom: 15,
-        // ...SHADOWS.card,
+        padding: 16,
+        marginBottom: 12,
     },
     selectedPlan: {
         borderWidth: 2,

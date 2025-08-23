@@ -68,17 +68,20 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
 
     return (
         <>
-            <TouchableOpacity
-                style={styles.container}
+            <TouchableOpacity 
                 onPress={() => setIsModalVisible(true)}
+                style={[styles.optionContainer, { backgroundColor: colors.surface }]}
+                activeOpacity={0.7}
             >
-                <View style={styles.textContainer}>
-                    <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
-                    <Text style={[styles.selectedValue, { color: colors.textSecondary }]}>
-                        {getDisplayValue(selectedValue)}
-                    </Text>
+                <View style={styles.optionContent}>
+                    <View style={styles.textContainer}>
+                        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+                        <Text style={[styles.selectedValue, { color: colors.textSecondary }]}>
+                            {getDisplayValue(selectedValue)}
+                        </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
 
             <Modal
@@ -87,7 +90,7 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
                 presentationStyle="pageSheet"
                 onRequestClose={() => setIsModalVisible(false)}
             >
-                <View style={styles.container}>
+                <View style={styles.modalContainer}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                             <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
@@ -112,11 +115,16 @@ const SelectOption = ({ title, options, selectedValue, onSelect }) => {
 };
 
 const styles = StyleSheet.create({
-    container: {
+    optionContainer: {
+        borderRadius: RADII.medium,
+        marginVertical: 4,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+    },
+    optionContent: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 10,
     },
     textContainer: {
         flex: 1,
@@ -131,7 +139,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontFamily: FONTS.body,
     },
-    container: {
+    modalContainer: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.1)',
         justifyContent: 'center',

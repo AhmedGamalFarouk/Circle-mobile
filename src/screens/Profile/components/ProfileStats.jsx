@@ -7,7 +7,6 @@ import { useTheme } from '../../../context/ThemeContext';
 const ProfileStats = ({
     connections,
     circles,
-    events,
     location,
     isEditing,
     isOwnProfile,

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Linking, Modal, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Linking, Modal, TouchableOpacity, Alert } from 'react-native';
 import MapView, { Marker, Callout } from 'react-native-maps';
 import useCurrentLocation from '../hooks/useCurrentLocation';
 import { COLORS } from '../constants/constants';
@@ -35,13 +35,22 @@ const EventCallout = React.memo(({ marker, onOpen }) => (
 ));
 
 const Explore = ({ navigation }) => {
-  const { location, error } = useCurrentLocation();
+  const { location, error, retryLocation, isLoading } = useCurrentLocation();
   const { colors } = useTheme()
   const { user } = useAuth();
   const [eventMarkers, setEventMarkers] = useState([]);
   const geocodeCacheRef = useRef(new Map());
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isDetailsVisible, setIsDetailsVisible] = useState(false);
+  const [showLocationError, setShowLocationError] = useState(false);
+
+  // Default location (Cairo, Egypt) for fallback
+  const defaultLocation = {
+    coords: {
+      latitude: 30.06263,
+      longitude: 31.24967
+    }
+  };
 
   useEffect(() => {
     let unsubscribers = [];
@@ -105,14 +114,10 @@ const Explore = ({ navigation }) => {
               
               // Fallback to user's current location or default Cairo location
               if (!coords) {
-                if (location?.coords) {
-                  coords = {
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude
-                  };
-                } else {
-                  coords = { latitude: 30.06263, longitude: 31.24967 }; // Default Cairo
-                }
+                coords = {
+                  latitude: mapLocation.coords.latitude,
+                  longitude: mapLocation.coords.longitude
+                };
               }
 
               return {
@@ -156,21 +161,8 @@ const Explore = ({ navigation }) => {
     };
   }, [user?.uid]);
 
-  if (error) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <StandardHeader
-          title="Explore"
-          navigation={navigation}
-        />
-        <View style={[styles.loading, { backgroundColor: colors.background }]}>
-          <Text style={[styles.loadingText, { color: colors.text }]}>Error: {error.message || 'Failed to get location.'}</Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (!location) {
+  // Show loading only when initially loading and no error
+  if (isLoading && !location && !error) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <StandardHeader
@@ -179,11 +171,15 @@ const Explore = ({ navigation }) => {
         />
         <View style={[styles.loading, { backgroundColor: colors.background }]}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+          <Text style={[styles.loadingText, { color: colors.text }]}>Getting your location...</Text>
         </View>
       </View>
     );
   }
+
+  // Use current location if available, otherwise use default location
+  const mapLocation = location || defaultLocation;
+  const hasLocationError = !!error;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -191,11 +187,30 @@ const Explore = ({ navigation }) => {
         title="Explore"
         navigation={navigation}
       />
+      
+      {/* Location Error Banner */}
+      {hasLocationError && (
+        <View style={[styles.errorBanner, { backgroundColor: colors.error || '#ff6b6b' }]}>
+          <Text style={[styles.errorText, { color: '#ffffff' }]} numberOfLines={2}>
+            {error.message}
+          </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+            onPress={retryLocation}
+            disabled={isLoading}
+          >
+            <Text style={[styles.retryButtonText, { color: '#ffffff' }]}>
+              {isLoading ? 'Retrying...' : 'Retry'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <MapView
         style={[styles.map, { backgroundColor: colors.background }]}
         initialRegion={{
-          latitude: location.coords.latitude || 30.06263,
-          longitude: location.coords.longitude || 31.25,
+          latitude: mapLocation.coords.latitude,
+          longitude: mapLocation.coords.longitude,
           latitudeDelta: 0.05,
           longitudeDelta: 0.05,
         }}
@@ -287,6 +302,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.text,
     marginTop: 10,
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
+    marginRight: 12,
+  },
+  retryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   calloutContainer: {
     width: 180,

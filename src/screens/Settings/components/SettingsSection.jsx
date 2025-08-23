@@ -18,18 +18,20 @@ const SettingsSection = ({ title, children }) => {
 
 const styles = StyleSheet.create({
     section: {
-        marginBottom: 30,
+        marginBottom: 24,
     },
     sectionTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: '600',
         fontFamily: FONTS.heading,
-        marginBottom: 15,
+        marginBottom: 12,
+        marginLeft: 4,
     },
     sectionContent: {
         borderRadius: RADII.rounded,
-        padding: 20,
-        // ...SHADOWS.glassCard,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
     },
 });
 

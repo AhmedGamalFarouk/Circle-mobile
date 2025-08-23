@@ -41,14 +41,18 @@ const ActionButton = ({ title, description, icon, onPress, variant = 'default', 
     };
 
     return (
-        <TouchableOpacity onPress={handlePress} style={styles.container}>
+        <TouchableOpacity 
+            onPress={handlePress} 
+            style={[styles.container, { backgroundColor: colors.surface }]}
+            activeOpacity={0.7}
+        >
             <View style={styles.content}>
                 <View style={styles.textContainer}>
                     <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
                     {description && <Text style={[styles.description, { color: colors.textSecondary }]}>{description}</Text>}
                 </View>
                 <View style={[styles.button, getButtonStyle()]}>
-                    {icon && <Ionicons name={icon} size={20} color={getTextColor()} />}
+                    {icon && <Ionicons name={icon} size={18} color={getTextColor()} />}
                 </View>
             </View>
         </TouchableOpacity>
@@ -57,7 +61,10 @@ const ActionButton = ({ title, description, icon, onPress, variant = 'default', 
 
 const styles = StyleSheet.create({
     container: {
-        paddingVertical: 5,
+        borderRadius: RADII.medium,
+        marginVertical: 4,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
     },
     content: {
         flexDirection: 'row',
@@ -66,7 +73,7 @@ const styles = StyleSheet.create({
     },
     textContainer: {
         flex: 1,
-        marginRight: 15,
+        marginRight: 12,
     },
     title: {
         fontSize: 16,
@@ -80,8 +87,8 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
     button: {
-        width: 44,
-        height: 44,
+        width: 36,
+        height: 36,
         borderRadius: RADII.circle,
         justifyContent: 'center',
         alignItems: 'center',
