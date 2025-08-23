@@ -67,36 +67,60 @@ const Explore = ({ navigation }) => {
             const eventsWithLocation = [];
             snapshot.forEach((docSnap) => {
               const data = docSnap.data();
-              if (data && data.Location) {
+              // Include ALL events from joined circles
+              if (data) {
                 eventsWithLocation.push({ id: docSnap.id, circleId, ...data });
               }
             });
 
             const markers = await Promise.all(eventsWithLocation.map(async (evt) => {
-              const address = extractAddressFromMapsUrl(evt.Location) || evt.place || '';
-              if (!address) return null;
-
-              let coords = geocodeCacheRef.current.get(address);
-              if (!coords) {
-                try {
-                  const results = await Location.geocodeAsync(address);
-                  if (results && results.length > 0) {
-                    coords = { latitude: results[0].latitude, longitude: results[0].longitude };
-                    geocodeCacheRef.current.set(address, coords);
-                  } else {
-                    return null;
+              // Try different location fields in order of preference
+              let address = '';
+              if (evt.Location) {
+                address = extractAddressFromMapsUrl(evt.Location) || evt.place || evt.location || '';
+              } else if (evt.place) {
+                address = evt.place;
+              } else if (evt.location) {
+                address = evt.location;
+              }
+              
+              let coords = null;
+              
+              if (address) {
+                coords = geocodeCacheRef.current.get(address);
+                if (!coords) {
+                  try {
+                    const results = await Location.geocodeAsync(address);
+                    if (results && results.length > 0) {
+                      coords = { latitude: results[0].latitude, longitude: results[0].longitude };
+                      geocodeCacheRef.current.set(address, coords);
+                    } else {
+                      // Geocoding failed, will use fallback
+                    }
+                  } catch (e) {
+                    // Geocoding error, will use fallback
                   }
-                } catch (e) {
-                  return null;
+                }
+              }
+              
+              // Fallback to user's current location or default Cairo location
+              if (!coords) {
+                if (location?.coords) {
+                  coords = {
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude
+                  };
+                } else {
+                  coords = { latitude: 30.06263, longitude: 31.24967 }; // Default Cairo
                 }
               }
 
               return {
                 id: `${circleId}_${evt.id}`,
                 circleId,
-                title: evt.place || evt.activity || 'Event',
-                address,
-                locationUrl: evt.Location,
+                title: evt.place || evt.activity || evt.title || 'Event',
+                address: address || 'Location TBD',
+                locationUrl: evt.Location || null,
                 activity: evt.activity || null,
                 place: evt.place || null,
                 day: evt.day || null,
@@ -106,9 +130,11 @@ const Explore = ({ navigation }) => {
               };
             }));
 
+            const validMarkers = markers.filter(Boolean);
+
             setEventMarkers((prev) => {
               const others = prev.filter((m) => m.circleId !== circleId);
-              const newOnes = markers.filter(Boolean);
+              const newOnes = validMarkers;
               return [...others, ...newOnes];
             });
           });
