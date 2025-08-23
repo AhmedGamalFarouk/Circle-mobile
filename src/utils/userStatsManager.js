@@ -51,7 +51,7 @@ export const decrementUserStat = async (userId, statType, amount = 1) => {
 };
 
 /**
- * Gets current user stats
+ * Gets current user stats from the single source of truth (stats map in Firebase)
  * @param {string} userId - The user's ID
  * @returns {Object} User stats object
  */
@@ -62,34 +62,27 @@ export const getUserStats = async (userId) => {
 
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            const circles = userData.joinedCircles ? userData.joinedCircles.length : 0;
-            const connections = userData.friends ? userData.friends.length : 0;
-
-            // Construct the stats object
+            
+            // Use only the stored stats as single source of truth
             const stats = {
-                circles,
-                connections,
+                circles: userData.stats?.circles || 0,
+                connections: userData.stats?.connections || 0,
+                events: userData.stats?.events || 0
             };
-
-            // Here you might want to update the stats field in Firestore
-            // to correct any drift over time.
-            // This is an optional step and depends on your app's logic.
-            // For example:
-            // await updateDoc(userRef, { stats });
 
             return stats;
         } else {
             // User document doesn't exist
-            return { circles: 0, connections: 0 };
+            return { circles: 0, connections: 0, events: 0 };
         }
     } catch (error) {
         console.error('Error getting user stats:', error);
-        throw error; // Rethrowing the error is important for the caller to handle
+        throw error;
     }
 };
 
 /**
- * Adds a friend to user's friends list and updates stats
+ * Adds a friend and updates stats (single source of truth)
  * @param {string} userId - The user's ID
  * @param {string} friendId - The friend's ID to add
  */
@@ -98,14 +91,12 @@ export const addFriend = async (userId, friendId) => {
         const userRef = doc(db, 'users', userId);
         const friendRef = doc(db, 'users', friendId);
 
-        // Add friend to both users' friends arrays and update stats
+        // Only update stats counters as single source of truth
         await updateDoc(userRef, {
-            friends: arrayUnion(friendId),
             'stats.connections': increment(1)
         });
 
         await updateDoc(friendRef, {
-            friends: arrayUnion(userId),
             'stats.connections': increment(1)
         });
 
@@ -116,7 +107,7 @@ export const addFriend = async (userId, friendId) => {
 };
 
 /**
- * Removes a friend from user's friends list and updates stats
+ * Removes a friend and updates stats (single source of truth)
  * @param {string} userId - The user's ID
  * @param {string} friendId - The friend's ID to remove
  */
@@ -125,14 +116,12 @@ export const removeFriend = async (userId, friendId) => {
         const userRef = doc(db, 'users', userId);
         const friendRef = doc(db, 'users', friendId);
 
-        // Remove friend from both users' friends arrays and update stats
+        // Only update stats counters as single source of truth
         await updateDoc(userRef, {
-            friends: arrayRemove(friendId),
             'stats.connections': increment(-1)
         });
 
         await updateDoc(friendRef, {
-            friends: arrayRemove(userId),
             'stats.connections': increment(-1)
         });
 
@@ -168,7 +157,7 @@ export const sendFriendRequest = async (senderId, receiverId) => {
 };
 
 /**
- * Accepts a friend request
+ * Accepts a friend request (single source of truth)
  * @param {string} userId - The user accepting the request
  * @param {string} requesterId - The user who sent the request
  */
@@ -177,16 +166,14 @@ export const acceptFriendRequest = async (userId, requesterId) => {
         const userRef = doc(db, 'users', userId);
         const requesterRef = doc(db, 'users', requesterId);
 
-        // Remove from friend requests and add to friends
+        // Remove from friend requests and update stats counters only
         await updateDoc(userRef, {
             'friendRequests.received': arrayRemove(requesterId),
-            friends: arrayUnion(requesterId),
             'stats.connections': increment(1)
         });
 
         await updateDoc(requesterRef, {
             'friendRequests.sent': arrayRemove(userId),
-            friends: arrayUnion(userId),
             'stats.connections': increment(1)
         });
 
@@ -222,7 +209,7 @@ export const rejectFriendRequest = async (userId, requesterId) => {
 };
 
 /**
- * Joins a circle and updates user stats
+ * Joins a circle and updates user stats (single source of truth)
  * @param {string} userId - The user's ID
  * @param {string} circleId - The circle's ID
  */
@@ -230,8 +217,8 @@ export const joinCircle = async (userId, circleId) => {
     try {
         const userRef = doc(db, 'users', userId);
 
+        // Only update stats counter as single source of truth
         await updateDoc(userRef, {
-            joinedCircles: arrayUnion(circleId),
             'stats.circles': increment(1)
         });
 
@@ -242,7 +229,7 @@ export const joinCircle = async (userId, circleId) => {
 };
 
 /**
- * Leaves a circle and updates user stats
+ * Leaves a circle and updates user stats (single source of truth)
  * @param {string} userId - The user's ID
  * @param {string} circleId - The circle's ID
  */
@@ -250,8 +237,8 @@ export const leaveCircle = async (userId, circleId) => {
     try {
         const userRef = doc(db, 'users', userId);
 
+        // Only update stats counter as single source of truth
         await updateDoc(userRef, {
-            joinedCircles: arrayRemove(circleId),
             'stats.circles': increment(-1)
         });
 

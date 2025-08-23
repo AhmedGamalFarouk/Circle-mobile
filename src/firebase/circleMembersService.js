@@ -46,11 +46,9 @@ export const circleMembersService = {
 
             await addDoc(membersRef, memberData);
 
-            // Also add the circle to the user's joinedCircles array
-            const userRef = doc(db, 'users', userId);
-            await updateDoc(userRef, {
-                joinedCircles: arrayUnion(circleId)
-            });
+            // Update user stats using single source of truth
+            const { joinCircle } = await import('../utils/userStatsManager');
+            await joinCircle(userId, circleId);
 
             // Create system message for user joining
             const username = userData.displayName || userData.username || userData.name || 'Unknown User';
@@ -153,12 +151,11 @@ export const circleMembersService = {
                 return { success: true, circleDeleted: true };
             }
 
-            // Remove the circle from the user's joinedCircles array (only if user document exists)
+            // Update user stats using single source of truth (only if user document exists)
             if (userDoc.exists()) {
-                const userRef = doc(db, 'users', userId);
-                await updateDoc(userRef, {
-                    joinedCircles: arrayRemove(circleId)
-                });
+                // Import and use leaveCircle function to maintain single source of truth
+                const { leaveCircle } = await import('../utils/userStatsManager');
+                await leaveCircle(userId, circleId);
             }
 
             // Create system message for user leaving (only if circle still exists)
@@ -348,11 +345,9 @@ export const circleMembersService = {
 
             await addDoc(collection(db, 'circles', circleId, 'members'), memberData);
 
-            // Also add the circle to the user's joinedCircles array
-            const userRef = doc(db, 'users', userId);
-            await updateDoc(userRef, {
-                joinedCircles: arrayUnion(circleId)
-            });
+            // Update user stats using single source of truth
+            const { joinCircle } = await import('../utils/userStatsManager');
+            await joinCircle(userId, circleId);
 
             return { success: true };
         } catch (error) {

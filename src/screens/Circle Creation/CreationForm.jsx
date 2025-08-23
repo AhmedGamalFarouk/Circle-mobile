@@ -112,10 +112,9 @@ const CreationForm = ({ navigation }) => {
                 });
             }
 
-            // Add the creator to their own joinedCircles array
-            await updateDoc(doc(db, 'users', user.uid), {
-                joinedCircles: arrayUnion(circleRef.id)
-            });
+            // Add the creator to their own circle stats using single source of truth
+            const { joinCircle } = await import('../../utils/userStatsManager');
+            await joinCircle(user.uid, circleRef.id);
 
             // Create members subcollection and add creator as first member (owner)
             const memberRef = doc(db, 'circles', circleRef.id, 'members', user.uid);
