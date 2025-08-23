@@ -183,12 +183,45 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                 </View>
             </View>
 
-            {onStartNewPoll && (
-                <TouchableOpacity style={styles.newPollButton} onPress={onStartNewPoll}>
-                    <Ionicons name="add-circle-outline" size={20} color={COLORS.darker} />
-                    <Text style={styles.newPollButtonText}>Plan New Event</Text>
-                </TouchableOpacity>
-            )}
+            {onStartNewPoll && (() => {
+                const eventDate = new Date(eventData?.day);
+                const nextAvailableDate = new Date(eventDate.getTime() + 24 * 60 * 60 * 1000);
+                const currentDate = new Date();
+                const isEventActive = eventData?.day && currentDate < nextAvailableDate;
+                
+                return (
+                    <View>
+                        <TouchableOpacity 
+                            style={[
+                                styles.newPollButton,
+                                isEventActive && styles.disabledButton
+                            ]} 
+                            onPress={isEventActive ? null : onStartNewPoll}
+                            disabled={isEventActive}
+                        >
+                            <Ionicons 
+                                name="add-circle-outline" 
+                                size={20} 
+                                color={isEventActive ? COLORS.textSecondary : COLORS.darker} 
+                            />
+                            <Text style={[
+                                styles.newPollButtonText,
+                                isEventActive && styles.disabledButtonText
+                            ]}>
+                                {isEventActive ? 'Event In Progress' : 'Plan New Event'}
+                            </Text>
+                        </TouchableOpacity>
+                        {isEventActive && (
+                            <Text style={styles.disabledButtonHint}>
+                                New events can be planned after {nextAvailableDate.toLocaleDateString('en-US', {
+                                    month: 'short', 
+                                    day: 'numeric'
+                                })}
+                            </Text>
+                        )}
+                    </View>
+                );
+            })()}
         </ScrollView>
     );
 };
@@ -363,6 +396,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         marginLeft: 6,
+    },
+
+    disabledButton: {
+        backgroundColor: COLORS.darker,
+        opacity: 0.6,
+    },
+    disabledButtonText: {
+        color: COLORS.textSecondary,
+    },
+    disabledButtonHint: {
+        color: COLORS.textSecondary,
+        fontFamily: FONTS.body,
+        fontSize: 12,
+        textAlign: 'center',
+        marginTop: 8,
     },
 });
 
