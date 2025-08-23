@@ -51,13 +51,13 @@ const useUserStats = (userId) => {
     }, [userId]);
 
     const getStats = useCallback(async () => {
-        if (!userId) return { circles: 0, connections: 0, events: 0 };
+        if (!userId) return { circles: 0, connections: 0 };
 
         try {
             return await getUserStats(userId);
         } catch (error) {
             console.error('Error getting stats:', error);
-            return { circles: 0, connections: 0, events: 0 };
+            return { circles: 0, connections: 0 };
         }
     }, [userId]);
 

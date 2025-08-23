@@ -14,7 +14,7 @@ export const updateUserStats = async (userId, statsUpdate) => {
         const updateData = {};
 
         Object.keys(statsUpdate).forEach(statKey => {
-            if (['circles', 'connections', 'events'].includes(statKey)) {
+            if (['circles', 'connections'].includes(statKey)) {
                 updateData[`stats.${statKey}`] = increment(statsUpdate[statKey]);
             }
         });
@@ -62,13 +62,29 @@ export const getUserStats = async (userId) => {
 
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            return userData.stats || { circles: 0, connections: 0, events: 0 };
+            const circles = userData.joinedCircles ? userData.joinedCircles.length : 0;
+            const connections = userData.friends ? userData.friends.length : 0;
+
+            // Construct the stats object
+            const stats = {
+                circles,
+                connections,
+            };
+
+            // Here you might want to update the stats field in Firestore
+            // to correct any drift over time.
+            // This is an optional step and depends on your app's logic.
+            // For example:
+            // await updateDoc(userRef, { stats });
+
+            return stats;
         } else {
-            return { circles: 0, connections: 0, events: 0 };
+            // User document doesn't exist
+            return { circles: 0, connections: 0 };
         }
     } catch (error) {
         console.error('Error getting user stats:', error);
-        throw error;
+        throw error; // Rethrowing the error is important for the caller to handle
     }
 };
 
@@ -255,8 +271,7 @@ export const joinEvent = async (userId, eventId) => {
         const userRef = doc(db, 'users', userId);
 
         await updateDoc(userRef, {
-            joinedEvents: arrayUnion(eventId),
-            'stats.events': increment(1)
+            joinedEvents: arrayUnion(eventId)
         });
 
     } catch (error) {
@@ -275,8 +290,7 @@ export const leaveEvent = async (userId, eventId) => {
         const userRef = doc(db, 'users', userId);
 
         await updateDoc(userRef, {
-            joinedEvents: arrayRemove(eventId),
-            'stats.events': increment(-1)
+            joinedEvents: arrayRemove(eventId)
         });
 
     } catch (error) {

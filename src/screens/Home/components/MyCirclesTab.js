@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList, View, Text, StyleSheet, RefreshControl } from 'react-native';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import useAuth from '../../../hooks/useAuth';
 import CircleCard from './CircleCard';
 import EmptyState from './EmptyState';
 import { useTheme } from '../../../context/ThemeContext';
+import useExpiredCircleCleanup from '../../../hooks/useExpiredCircleCleanup';
 
 const MyCirclesTab = ({ navigation, onCirclePress }) => {
     const [myCircles, setMyCircles] = useState([]);
@@ -13,6 +14,7 @@ const MyCirclesTab = ({ navigation, onCirclePress }) => {
     const [refreshing, setRefreshing] = useState(false);
     const { user } = useAuth();
     const { colors } = useTheme();
+    const { cleanupExpiredCircles } = useExpiredCircleCleanup();
 
     const fetchMyCircles = async () => {
         if (!user?.uid) {
@@ -48,14 +50,34 @@ const MyCirclesTab = ({ navigation, onCirclePress }) => {
             const circles = await Promise.all(circlePromises);
             const validCircles = circles.filter(circle => circle !== null);
 
+            // Filter out expired flash circles
+            const now = Timestamp.now();
+            const activeCircles = validCircles.filter(circle => {
+                // Keep all non-flash circles
+                if (circle.circleType !== 'flash') {
+                    return true;
+                }
+                // For flash circles, check if they haven't expired
+                if (circle.expiresAt && circle.expiresAt.toDate() <= now.toDate()) {
+                    console.log(`Filtering out expired flash circle: ${circle.circleName || 'Unknown'} (${circle.id})`);
+                    return false;
+                }
+                return true;
+            });
+
             // Sort by most recently joined or created
-            validCircles.sort((a, b) => {
+            activeCircles.sort((a, b) => {
                 const aTime = a.createdAt?.toDate() || new Date(0);
                 const bTime = b.createdAt?.toDate() || new Date(0);
                 return bTime - aTime;
             });
 
-            setMyCircles(validCircles);
+            setMyCircles(activeCircles);
+            
+            // Trigger cleanup of expired circles in the background
+            if (validCircles.length !== activeCircles.length) {
+                cleanupExpiredCircles();
+            }
         } catch (error) {
             console.error('Error fetching my circles:', error);
         } finally {

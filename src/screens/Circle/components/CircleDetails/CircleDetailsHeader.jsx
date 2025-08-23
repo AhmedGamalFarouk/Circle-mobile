@@ -59,6 +59,7 @@ const CircleDetailsHeader = ({ name, description, image, createdAt, circleId, ci
                             <FlashCircleTimer expiresAt={circle.expiresAt} />
                         </View>
                     )}
+
                 </View>
 
                 {description && (

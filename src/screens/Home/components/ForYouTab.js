@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { FlatList, View, Text, StyleSheet, RefreshControl } from 'react-native';
-import { collection, query, where, getDocs, doc, getDoc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import useAuth from '../../../hooks/useAuth';
 import CircleCard from './CircleCard';
 import EmptyState from './EmptyState';
 import { useTheme } from '../../../context/ThemeContext';
+import useExpiredCircleCleanup from '../../../hooks/useExpiredCircleCleanup';
 
 const ForYouTab = ({ navigation, onCirclePress }) => {
     const [forYouCircles, setForYouCircles] = useState([]);
@@ -13,6 +14,7 @@ const ForYouTab = ({ navigation, onCirclePress }) => {
     const [refreshing, setRefreshing] = useState(false);
     const { user } = useAuth();
     const { colors } = useTheme();
+    const { cleanupExpiredCircles } = useExpiredCircleCleanup();
 
     const fetchForYouCircles = async () => {
         try {
@@ -27,9 +29,9 @@ const ForYouTab = ({ navigation, onCirclePress }) => {
                 ...doc.data()
             }));
 
-            // Filter to only show public circles (default to public if field doesn't exist)
+            // Filter to only show public circles (exclude private circles)
             allPublicCircles = allPublicCircles.filter(circle =>
-                circle.isPublic !== false
+                circle.circlePrivacy !== 'private'
             );
 
             // Get user's interests and joined circles
@@ -47,6 +49,27 @@ const ForYouTab = ({ navigation, onCirclePress }) => {
             allPublicCircles = allPublicCircles.filter(circle =>
                 !joinedCircleIds.includes(circle.id)
             );
+
+            // Filter out expired flash circles
+            const now = Timestamp.now();
+            const beforeFilterCount = allPublicCircles.length;
+            allPublicCircles = allPublicCircles.filter(circle => {
+                // Keep all non-flash circles
+                if (circle.circleType !== 'flash') {
+                    return true;
+                }
+                // For flash circles, check if they haven't expired
+                if (circle.expiresAt && circle.expiresAt.toDate() <= now.toDate()) {
+                    console.log(`Filtering out expired flash circle: ${circle.circleName || 'Unknown'} (${circle.id})`);
+                    return false;
+                }
+                return true;
+            });
+
+            // Trigger cleanup if expired circles were found
+            if (beforeFilterCount !== allPublicCircles.length) {
+                cleanupExpiredCircles();
+            }
 
             // Sort circles by interest alignment
             const sortedCircles = allPublicCircles.sort((a, b) => {
