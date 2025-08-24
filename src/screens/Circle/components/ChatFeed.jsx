@@ -697,7 +697,7 @@ const ChatFeed = ({ circleId, onReply }) => {
                             {!isCurrentUser && showSenderInfo && (
                                 <View style={styles.senderInfoContainer}>
                                     {message.user.imageurl && <Image source={{ uri: message.user.imageurl }} style={styles.avatar} />}
-                                    <Text style={styles.senderName}>{message.user.userName}</Text>
+                                    <Text style={styles.senderName}>{message.user.username}</Text>
                                 </View>
                             )}
                             <TouchableOpacity onLongPress={(event) => handleLongPress(message, event)} delayLongPress={200}>

@@ -35,9 +35,9 @@ export const circleMembersService = {
             // Add member to circle's members subcollection
             const memberData = {
                 userId,
-                userName: userData.displayName || userData.username || userData.name || 'Unknown User',
-                userEmail: userData.email || '',
-                userAvatar: userData.photoURL || userData.avatar || '',
+                username: userData.displayName || userData.username || userData.name || 'Unknown User',
+                email: userData.email || '',
+                photoURL: userData.photoURL || userData.avatar || '',
                 isAdmin: false,
                 isOwner: false,
                 joinedAt: serverTimestamp(),
@@ -79,9 +79,29 @@ export const circleMembersService = {
     // Delete entire circle and all its data
     deleteCircle: async (circleId) => {
         try {
-            // Delete all members
+            // Get all members before deleting to update their joinedCircles arrays
             const membersRef = collection(db, 'circles', circleId, 'members');
             const membersSnapshot = await getDocs(membersRef);
+            
+            // Remove circle from all members' joinedCircles arrays
+            const userUpdatePromises = membersSnapshot.docs.map(async (memberDoc) => {
+                const memberData = memberDoc.data();
+                if (memberData.userId) {
+                    const userRef = doc(db, 'users', memberData.userId);
+                    try {
+                        await updateDoc(userRef, {
+                            joinedCircles: arrayRemove(circleId),
+                            'stats.circles': increment(-1)
+                        });
+                    } catch (error) {
+                        console.error(`Error updating user ${memberData.userId}:`, error);
+                    }
+                }
+            });
+            
+            await Promise.all(userUpdatePromises);
+
+            // Delete all members
             const memberDeletePromises = membersSnapshot.docs.map(doc => deleteDoc(doc.ref));
             await Promise.all(memberDeletePromises);
 
@@ -147,7 +167,7 @@ export const circleMembersService = {
             // If this was the last member, delete the entire circle
             if (remainingMemberCount === 0) {
                 console.log(`Last member left circle ${circleId}, deleting circle...`);
-                await this.deleteCircle(circleId);
+                await circleMembersService.deleteCircle(circleId);
                 return { success: true, circleDeleted: true };
             }
 
@@ -334,9 +354,9 @@ export const circleMembersService = {
             // Add owner to circle's members subcollection
             const memberData = {
                 userId,
-                userName: userData.displayName || userData.username || userData.name || 'Unknown User',
-                userEmail: userData.email || '',
-                userAvatar: userData.photoURL || userData.avatar || '',
+                username: userData.displayName || userData.username || userData.name || 'Unknown User',
+                email: userData.email || '',
+                photoURL: userData.photoURL || userData.avatar || '',
                 isAdmin: true,
                 isOwner: true,
                 joinedAt: serverTimestamp(),
@@ -352,6 +372,44 @@ export const circleMembersService = {
             return { success: true };
         } catch (error) {
             console.error('Error adding owner to circle:', error);
+            return { success: false, error: error.message };
+        }
+    },
+
+    // Ensure circle creator is added as admin member if missing
+    // This helps fix circles created on web that might not have members subcollection
+    ensureCreatorAsAdmin: async (circleId, creatorId) => {
+        try {
+            // Check if creator is already in members subcollection
+            const membersRef = collection(db, 'circles', circleId, 'members');
+            const q = query(membersRef, where('userId', '==', creatorId));
+            const existingMember = await getDocs(q);
+
+            if (!existingMember.empty) {
+                return { success: true, message: 'Creator already exists as member' };
+            }
+
+            // Get user information
+            const userDoc = await getDoc(doc(db, 'users', creatorId));
+            const userData = userDoc.exists() ? userDoc.data() : {};
+
+            // Add creator as admin member
+            const memberData = {
+                userId: creatorId,
+                username: userData.displayName || userData.username || userData.name || 'Unknown User',
+                email: userData.email || '',
+                photoURL: userData.photoURL || userData.avatar || '',
+                isAdmin: true,
+                isOwner: true,
+                joinedAt: serverTimestamp(),
+                addedBy: 'auto_fix'
+            };
+
+            await addDoc(membersRef, memberData);
+
+            return { success: true, message: 'Creator added as admin member' };
+        } catch (error) {
+            console.error('Error ensuring creator as admin:', error);
             return { success: false, error: error.message };
         }
     }

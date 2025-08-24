@@ -68,6 +68,10 @@ const CreationForm = ({ navigation }) => {
             alert("Please log in to create a circle."); // Provide UI feedback
             return;
         }
+        if (description.trim() === '') {
+            Alert.alert('Description required', 'Please add a description for your circle.');
+            return;
+        }
         if (interests.length === 0) {
             Alert.alert('Interests required', 'Please add at least one interest to create your circle.');
             return;
@@ -119,11 +123,11 @@ const CreationForm = ({ navigation }) => {
             // Create members subcollection and add creator as first member (owner)
             const memberRef = doc(db, 'circles', circleRef.id, 'members', user.uid);
             await setDoc(memberRef, {
-                userEmail: userProfile?.email || user.email || '',
+                email: userProfile?.email || user.email || '',
                 isAdmin: true,
                 isOwner: true,
-                userAvatar: userProfile?.avatarPhoto || user.photoURL || '',
-                userName: userProfile?.username || user.displayName || user.email?.split('@')[0] || 'Unknown User',
+                photoURL: userProfile?.avatarPhoto || user.photoURL || '',
+                username: userProfile?.username || user.displayName || user.email?.split('@')[0] || 'Unknown User',
                 joinedAt: serverTimestamp(),
                 userId: user.uid
             });
@@ -131,7 +135,7 @@ const CreationForm = ({ navigation }) => {
             // Update user's circles stat
             await incrementUserStat(user.uid, 'circles');
 
-            navigation.navigate('InviteAndShare', { circleName, circleId: circleRef.id });
+            navigation.replace('Circle', { circleId: circleRef.id });
         } catch (error) {
             console.error("Error creating circle: ", error);
         }
@@ -159,7 +163,7 @@ const CreationForm = ({ navigation }) => {
         setInterests(prev => prev.filter((_, index) => index !== indexToRemove));
     };
 
-    const isCreateDisabled = circleName.trim() === '' || interests.length === 0 || (circleType === 'flash' && !expiresAt);
+    const isCreateDisabled = circleName.trim() === '' || description.trim() === '' || interests.length === 0 || (circleType === 'flash' && !expiresAt);
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: colorVars.background }]}>
@@ -171,11 +175,7 @@ const CreationForm = ({ navigation }) => {
                 onRightPress={handleCreate}
             />
             <ScrollView style={styles.container} contentContainerStyle={{ backgroundColor: colorVars.background }}>
-                <View style={[styles.createButtonContainer, { backgroundColor: colorVars.background }]}>
-                    <TouchableOpacity onPress={handleCreate} disabled={isCreateDisabled} style={[styles.createButton, { backgroundColor: isCreateDisabled ? colorVars.disabled : colorVars.primary }]}>
-                        <Text style={[styles.createButtonText, { color: colorVars.background }]}>{t('circleCreation.create')}</Text>
-                    </TouchableOpacity>
-                </View>
+
 
                 <TouchableOpacity style={[styles.avatarUploader, { backgroundColor: colorVars.background }]} onPress={pickImage}>
                     {photoUrl ? (
@@ -383,20 +383,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingTop: 20,
     },
-    createButtonContainer: {
-        marginBottom: 20,
-        paddingHorizontal: 20,
-    },
-    createButton: {
-        paddingVertical: 12,
-        paddingHorizontal: 20,
-        borderRadius: RADII.rounded,
-        alignItems: 'center',
-    },
-    createButtonText: {
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
+
     avatarUploader: {
         alignItems: 'center',
         marginBottom: 30,

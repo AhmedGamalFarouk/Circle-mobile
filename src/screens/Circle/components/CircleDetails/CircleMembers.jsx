@@ -41,7 +41,7 @@ const CircleMembers = ({ circleId }) => {
             </View>
             {showName && (
                 <Text style={styles.memberName} numberOfLines={1}>
-                    {item.userName || item.username || 'Unknown User'}
+                    {item.username || 'Unknown User'}
                 </Text>
             )}
         </TouchableOpacity>

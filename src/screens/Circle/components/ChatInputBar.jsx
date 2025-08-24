@@ -102,7 +102,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
             replyTo: replyingTo ? {
                 messageId: replyingTo.id,
                 text: replyingTo.text,
-                userName: replyingTo.user.userName,
+                username: replyingTo.user.username,
             } : null,
             seenBy: [],
         };
@@ -215,7 +215,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 replyTo: replyingTo ? {
                     messageId: replyingTo.id,
                     text: replyingTo.text || "Voice message",
-                    userName: replyingTo.user.userName,
+                    username: replyingTo.user.username,
                 } : null,
                 seenBy: [],
             };
@@ -399,7 +399,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 replyTo: replyingTo ? {
                     messageId: replyingTo.id,
                     text: replyingTo.text || `${selectedMedia.type} message`,
-                    userName: replyingTo.user.userName,
+                    username: replyingTo.user.username,
                 } : null,
                 seenBy: [],
             };

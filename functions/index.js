@@ -658,8 +658,8 @@ exports.onCircleCreated = functions.firestore
       await memberRef.set({
         email: userData.email || "",
         isAdmin: true,
-        photoURL: userData.avatarPhoto || "",
-        username: userData.username || "Unknown User",
+        photoURL: userData.profilePicture || "",
+        username: userData.displayName || "Unknown User",
         joinedAt: admin.firestore.FieldValue.serverTimestamp(),
         userId: creatorId,
       });

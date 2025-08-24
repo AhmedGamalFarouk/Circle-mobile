@@ -10,6 +10,7 @@ import { getCircleImageUrl } from '../../../utils/imageUtils'
 import useAuth from '../../../hooks/useAuth'
 import useCircleMembers from '../../../hooks/useCircleMembers'
 import useCircleRequests from '../../../hooks/useCircleRequests'
+import { circleMembersService } from '../../../firebase/circleMembersService'
 
 
 const CircleCard = ({ circle, onPress }) => {
@@ -63,12 +64,27 @@ const CircleCard = ({ circle, onPress }) => {
             }
 
             const admins = getAdmins();
+            let adminId;
+            
             if (admins.length === 0) {
-                Alert.alert('Error', 'No admin found for this circle');
-                return;
+                // Fallback to circle creator if no admins found in members subcollection
+                // This handles circles created on web that might not have members subcollection populated
+                if (circle.createdBy) {
+                    adminId = circle.createdBy;
+                    
+                    // Automatically fix the missing admin issue by adding creator to members subcollection
+                    try {
+                        await circleMembersService.ensureCreatorAsAdmin(circle.id, circle.createdBy);
+                    } catch (error) {
+                        console.warn('Failed to auto-fix missing admin:', error);
+                    }
+                } else {
+                    Alert.alert('Error', 'No admin found for this circle');
+                    return;
+                }
+            } else {
+                adminId = admins[0].userId;
             }
-
-            const adminId = admins[0].userId;
             const result = await createJoinRequest(
                 circle.id,
                 user.uid,

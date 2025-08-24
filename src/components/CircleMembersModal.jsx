@@ -70,7 +70,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
     const handleMakeAdmin = async (member) => {
         Alert.alert(
             'Make Admin',
-            `Are you sure you want to make ${member.userName || 'this user'} an admin?`,
+            `Are you sure you want to make ${member.username || 'this user'} an admin?`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -80,7 +80,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                         try {
                             const result = await circleMembersService.makeAdmin(circleId, member.userId, user.uid);
                             if (result.success) {
-                                Alert.alert('Success', `${member.userName || 'User'} is now an admin.`);
+                                Alert.alert('Success', `${member.username || 'User'} is now an admin.`);
                             } else {
                                 Alert.alert('Error', result.error);
                             }
@@ -98,7 +98,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
     const handleRemoveAdmin = async (member) => {
         Alert.alert(
             'Remove Admin Status',
-            `Are you sure you want to remove admin status from ${member.userName || 'this user'}?`,
+            `Are you sure you want to remove admin status from ${member.username || 'this user'}?`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -109,7 +109,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                         try {
                             const result = await circleMembersService.removeAdmin(circleId, member.userId, user.uid);
                             if (result.success) {
-                                Alert.alert('Success', `${member.userName || 'User'} is no longer an admin.`);
+                                Alert.alert('Success', `${member.username || 'User'} is no longer an admin.`);
                             } else {
                                 Alert.alert('Error', result.error);
                             }
@@ -127,7 +127,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
     const handleRemoveMember = async (member) => {
         Alert.alert(
             'Remove Member',
-            `Are you sure you want to remove ${member.userName || 'this user'} from the circle?`,
+            `Are you sure you want to remove ${member.username || 'this user'} from the circle?`,
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -139,9 +139,10 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                             const result = await circleMembersService.removeMemberByAdmin(circleId, member.userId, user.uid);
                             if (result.success) {
                                 if (result.circleDeleted) {
+                                    const homeTabName = currentLanguage === 'ar' ? 'الرئيسية' : 'Home';
                                     Alert.alert(
                                         'Circle Deleted',
-                                        `${member.userName || 'User'} was the last member, so the circle has been deleted.`,
+                                        `${member.username || 'User'} was the last member, so the circle has been deleted.`,
                                         [{ 
                                             text: 'OK', 
                                             onPress: () => {
@@ -149,13 +150,13 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                                                 // Navigate back to home since circle no longer exists
                                                 navigation?.reset?.({
                                                     index: 0,
-                                                    routes: [{ name: 'Home' }],
+                                                    routes: [{ name: homeTabName }],
                                                 });
                                             }
                                         }]
                                     );
                                 } else {
-                                    Alert.alert('Success', `${member.userName || 'User'} has been removed from the circle.`);
+                                    Alert.alert('Success', `${member.username || 'User'} has been removed from the circle.`);
                                 }
                             } else {
                                 Alert.alert('Error', result.error);
@@ -182,8 +183,8 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
         if (__DEV__) {
             console.log('Member data:', {
                 userId: item.userId,
-                userName: item.userName,
-                userAvatar: item.userAvatar,
+                username: item.username,
+            photoURL: item.photoURL,
                 photoURL: item.photoURL,
                 avatar: item.avatar
             });
@@ -205,19 +206,19 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                         style={styles.memberAvatar}
                         onError={(error) => {
                             if (__DEV__) {
-                                console.log('Avatar load error for user:', item.userName, error);
+                                console.log('Avatar load error for user:', item.username, error);
                             }
                         }}
                         onLoad={() => {
                             if (__DEV__) {
-                                console.log('Avatar loaded successfully for user:', item.userName);
+                                console.log('Avatar loaded successfully for user:', item.username);
                             }
                         }}
                     />
                     <View style={styles.memberInfo}>
                         <View style={styles.memberNameContainer}>
                             <Text style={styles.memberName}>
-                                {item.userName || item.username || 'Unknown User'}
+                                {item.username || 'Unknown User'}
                                 {isCurrentUser && <Text style={styles.youText}> (You)</Text>}
                             </Text>
                             <View style={styles.badges}>
@@ -235,9 +236,9 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                                 )}
                             </View>
                         </View>
-                        {item.userEmail && (
-                            <Text style={styles.memberEmail}>{item.userEmail}</Text>
-                        )}
+                        {item.email && (
+            <Text style={styles.memberEmail}>{item.email}</Text>
+        )}
                     </View>
                     {actionLoading === item.userId && (
                         <ActivityIndicator size="small" color={colors.primary} />
@@ -256,7 +257,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
         if (b.isOwner) return 1;
         if (a.isAdmin && !b.isAdmin) return -1;
         if (b.isAdmin && !a.isAdmin) return 1;
-        return (a.userName || '').localeCompare(b.userName || '');
+        return (a.username || '').localeCompare(b.username || '');
     });
 
     return (

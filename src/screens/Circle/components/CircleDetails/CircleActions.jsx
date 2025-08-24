@@ -44,26 +44,10 @@ const CircleActions = ({ circleId, circle }) => {
             onPress: () => handleShareCircle(),
         },
         {
-            title: 'Invite Members',
-            icon: 'person-add',
-            color: colors.primary,
-            onPress: () => navigation.navigate('InviteMembers', {
-                circleId,
-                circleName: circle.circleName || circle.name,
-                ownerId: circle.createdBy
-            }),
-        },
-        {
             title: 'View Events',
             icon: 'eye',
             color: colors.secondary,
             onPress: () => navigation.navigate('EventConfirmation', { circleId }),
-        },
-        {
-            title: 'Leave Circle',
-            icon: 'exit',
-            color: '#FF3B30',
-            onPress: handleLeaveCircle,
         },
     ];
 
@@ -86,8 +70,17 @@ const CircleActions = ({ circleId, circle }) => {
         },
     ];
 
-    const handleShareCircle = () => {
-        // Implement share functionality
+    const handleShareCircle = async () => {
+        try {
+            const inviteLink = `https://circle-beta-nine.vercel.app/circles/${circleId}`;
+            await Share.share({
+                message: `Join my circle "${circle.circleName || circle.name}" on Circle: ${inviteLink}`,
+                title: `Join ${circle.circleName || circle.name}`,
+            });
+        } catch (error) {
+            console.error('Error sharing circle:', error);
+            Alert.alert('Error', 'Failed to share circle. Please try again.');
+        }
     };
 
     const handleLeaveCircle = () => {
@@ -112,6 +105,7 @@ const CircleActions = ({ circleId, circle }) => {
                         try {
                             const result = await circleMembersService.removeMemberFromCircle(circleId, user.uid);
                             if (result.success) {
+                                const homeTabName = currentLanguage === 'ar' ? 'الرئيسية' : 'Home';
                                 // Show different message if circle was deleted
                                 if (result.circleDeleted) {
                                     Alert.alert(
@@ -119,11 +113,11 @@ const CircleActions = ({ circleId, circle }) => {
                                         'You were the last member, so the circle has been deleted.',
                                         [{ 
                                             text: 'OK', 
-                                            onPress: () => navigation.reset({ index: 0, routes: [{ name: 'Home' }] })
+                                            onPress: () => navigation.navigate(homeTabName)
                                         }]
                                     );
                                 } else {
-                                    navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+                                    navigation.navigate(homeTabName);
                                 }
                             } else {
                                 Alert.alert('Error', result.error || 'Failed to leave circle. Please try again.');

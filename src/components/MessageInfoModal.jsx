@@ -160,7 +160,7 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                                             style={styles.senderAvatar}
                                         />
                                     )}
-                                    <Text style={styles.senderName}>{message.user?.userName || 'Unknown User'}</Text>
+                                    <Text style={styles.senderName}>{message.user?.username || 'Unknown User'}</Text>
                                 </View>
                                 <Text style={styles.messageText}>{getMessagePreview()}</Text>
                                 {message.editedAt && (
@@ -190,20 +190,20 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                                     ) : (
                                         getSeenByMembers().map((member, index) => (
                                             <View key={member?.userId || member?.id || index} style={styles.memberItem}>
-                                                 {member.userAvatar ? (
+                                                 {member.photoURL ? (
                                                      <Image
-                                                         source={{ uri: member.userAvatar }}
+                                                         source={{ uri: member.photoURL }}
                                                          style={styles.memberAvatar}
                                                      />
                                                  ) : (
                                                      <View style={styles.defaultAvatar}>
                                                          <Text style={styles.avatarText}>
-                                                             {member.userName?.charAt(0)?.toUpperCase() || '?'}
+                                                             {member.username?.charAt(0)?.toUpperCase() || '?'}
                                                          </Text>
                                                      </View>
                                                  )}
                                                  <View style={styles.memberInfo}>
-                                                     <Text style={styles.memberName}>{member.userName}</Text>
+                                                     <Text style={styles.memberName}>{member.username}</Text>
                                                      {member.seenAt && (
                                                          <Text style={styles.seenTimestamp}>
                                                              {formatSeenTimestamp(member.seenAt)}
@@ -225,7 +225,7 @@ const MessageInfoModal = ({ visible, onClose, message, circleId }) => {
                                     {message.reactions.map((reaction, index) => (
                                         <View key={index} style={styles.reactionItem}>
                                             <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
-                                            <Text style={styles.reactionUser}>{reaction.userName}</Text>
+                                            <Text style={styles.reactionUser}>{reaction.username}</Text>
                                         </View>
                                     ))}
                                 </View>
