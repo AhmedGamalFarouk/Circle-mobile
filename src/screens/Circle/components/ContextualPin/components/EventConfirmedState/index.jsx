@@ -103,6 +103,12 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                     <Text style={[styles.detailLabel, { color: colors.text }]}>Location:</Text>
                     <Text style={[styles.detailValue, { color: colors.text }]}>{location}</Text>
                 </View>
+
+                <View style={styles.detailRow}>
+                    <Ionicons name="time" size={16} color={COLORS.primary} />
+                    <Text style={styles.detailLabel}>Time:</Text>
+                    <Text style={styles.detailValue}>{eventData?.day ? new Date(eventData.day).toLocaleDateString() : 'TBD'}</Text>
+                </View>
                 
                 <TouchableOpacity style={[styles.mapsButton, { backgroundColor: colors.background }]} onPress={openInGoogleMaps}>
                     <Ionicons name="navigate" size={16} color={colors.primary} />

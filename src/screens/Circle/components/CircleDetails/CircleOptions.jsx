@@ -49,6 +49,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                             const result = await circleMembersService.removeMemberFromCircle(circleId, user.uid);
 
                             if (result.success) {
+                                const homeTabName = currentLanguage === 'ar' ? 'الرئيسية' : 'Home';
                                 // Show different message if circle was deleted
                                 if (result.circleDeleted) {
                                     Alert.alert(
@@ -58,7 +59,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                                             text: "OK",
                                             onPress: () => navigation.reset({
                                                 index: 0,
-                                                routes: [{ name: 'Home' }],
+                                                routes: [{ name: homeTabName }],
                                             })
                                         }]
                                     );
@@ -66,7 +67,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
                                     // Reset navigation stack and go to Home to prevent going back
                                     navigation.reset({
                                         index: 0,
-                                        routes: [{ name: 'Home' }],
+                                        routes: [{ name: homeTabName }],
                                     });
                                 }
                             } else {
@@ -150,25 +151,7 @@ const CircleOptions = ({ circleId, circle, navigation }) => {
             icon: 'create',
             color: colors.text,
         },
-        {
-            title: 'Invite Members',
-            subtitle: 'Search and invite users to join this circle',
-            onPress: () => navigation.navigate('InviteMembers', {
-                circleId,
-                circleName: circle.name,
-                ownerId: circle.createdBy
-            }),
-            icon: 'person-add',
-            color: colors.primary,
-        },
-        {
-            title: `Manage Join Requests${requestCount > 0 ? ` (${requestCount})` : ''}`,
-            subtitle: requestCount > 0 ? `${requestCount} pending requests` : 'View and manage join requests',
-            onPress: handleManageJoinRequests,
-            icon: 'people',
-            color: requestCount > 0 ? colors.warning : colors.text,
-            badge: requestCount > 0 ? requestCount : null,
-        },
+        {            title: 'Invite Members',            subtitle: 'Search and invite users to join this circle',            onPress: () => navigation.navigate('InviteMembers', {                circleId,                circleName: circle.name,                ownerId: circle.createdBy            }),            icon: 'person-add',            color: colors.text,        },
     ];
 
     // Combine options based on user role

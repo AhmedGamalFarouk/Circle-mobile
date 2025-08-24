@@ -8,9 +8,9 @@ import {
     TouchableOpacity,
     Image,
     ActivityIndicator,
-    Alert,
-    SafeAreaView
+    Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { RADII, SHADOWS } from '../constants/constants';
@@ -227,7 +227,6 @@ const getStyles = (colors) => StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingVertical: 16,
-        paddingTop: 20,
         borderBottomWidth: 1,
         borderBottomColor: colors.border,
     },

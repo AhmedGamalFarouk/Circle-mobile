@@ -4,7 +4,7 @@ import * as Clipboard from 'expo-clipboard';
 
 const InviteAndShare = ({ navigation, route }) => {
     const { circleName, circleId } = route.params;
-    const inviteLink = `circle.app/join/${circleId}`;
+    const inviteLink = `https://circle-beta-nine.vercel.app/circles/${circleId}`;
 
     const copyToClipboard = () => {
         Clipboard.setString(inviteLink);
@@ -25,7 +25,10 @@ const InviteAndShare = ({ navigation, route }) => {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.title}>Success!</Text>
-                <TouchableOpacity onPress={() => navigation.navigate('HomeScreen')}>
+                <TouchableOpacity onPress={() => navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'Main' }],
+                })}>
                     <Text style={styles.doneButton}>Done</Text>
                 </TouchableOpacity>
             </View>

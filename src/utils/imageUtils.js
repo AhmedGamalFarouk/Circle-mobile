@@ -74,8 +74,8 @@ export const getUserAvatarUrl = (user, size = 60) => {
         return generateAvatarUrl('User', size);
     }
 
-    // Check for direct avatar URLs first
-    const directAvatarUrl = user.userAvatar || user.photoURL || user.avatar || user.profilePicture || user.avatarPhoto;
+    // Check for direct avatar URLs first, prioritizing photoURL
+    const directAvatarUrl = user.photoURL || user.userAvatar || user.avatar || user.profilePicture || user.avatarPhoto;
     if (directAvatarUrl && typeof directAvatarUrl === 'string' && directAvatarUrl.trim() !== '') {
         return directAvatarUrl.trim();
     }
@@ -87,6 +87,6 @@ export const getUserAvatarUrl = (user, size = 60) => {
     }
 
     // Generate placeholder avatar based on user name
-    const name = user?.userName || user?.name || user?.username || user?.displayName || 'User';
+    const name = user?.username || user?.userName || user?.name || user?.displayName || 'User';
     return generateAvatarUrl(name, size);
 };

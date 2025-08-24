@@ -217,9 +217,10 @@ export const joinCircle = async (userId, circleId) => {
     try {
         const userRef = doc(db, 'users', userId);
 
-        // Only update stats counter as single source of truth
+        // Update stats counter and add to joinedCircles array
         await updateDoc(userRef, {
-            'stats.circles': increment(1)
+            'stats.circles': increment(1),
+            joinedCircles: arrayUnion(circleId)
         });
 
     } catch (error) {
@@ -237,9 +238,10 @@ export const leaveCircle = async (userId, circleId) => {
     try {
         const userRef = doc(db, 'users', userId);
 
-        // Only update stats counter as single source of truth
+        // Update stats counter and remove from joinedCircles array
         await updateDoc(userRef, {
-            'stats.circles': increment(-1)
+            'stats.circles': increment(-1),
+            joinedCircles: arrayRemove(circleId)
         });
 
     } catch (error) {

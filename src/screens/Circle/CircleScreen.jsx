@@ -14,6 +14,7 @@ import useAuth from '../../hooks/useAuth';
 import useUserProfile from '../../hooks/useUserProfile';
 import useCircleMembers from '../../hooks/useCircleMembers';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 const PLANNING_STAGES = {
     IDLE: 'Idle',
@@ -33,6 +34,7 @@ const CircleScreen = () => {
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
     const { memberCount } = useCircleMembers(circleId);
+    const { currentLanguage } = useLanguage();
     const [circle, setCircle] = useState(null);
     const [poll, setPoll] = useState(null);
     const [event, setEvent] = useState(null);
@@ -104,6 +106,7 @@ const CircleScreen = () => {
                 setIsMember(isUserMember);
 
                 if (membershipChecked && !isUserMember) {
+                    const homeTabName = currentLanguage === 'ar' ? 'الرئيسية' : 'Home';
                     Alert.alert(
                         "Removed from Circle",
                         "You have been removed from this circle.",
@@ -112,7 +115,7 @@ const CircleScreen = () => {
                                 text: "OK",
                                 onPress: () => navigation.reset({
                                     index: 0,
-                                    routes: [{ name: 'Home' }],
+                                    routes: [{ name: homeTabName }],
                                 })
                             }
                         ]

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../../../constants/constants';
 
