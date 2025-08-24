@@ -2,8 +2,10 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS, RADII } from '../../../../../../constants/constants';
+import { useTheme } from '../../../../../../context/ThemeContext';
 
 const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
+    const { colors } = useTheme();
     // Handle case when eventData is null (after deletion)
     if (!eventData) {
         return null;
@@ -84,36 +86,36 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
 
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <View style={styles.headerContainer}>
-                <Ionicons name="calendar-outline" size={24} color={COLORS.accent} />
-                <Text style={styles.title}>Event Confirmed!</Text>
+            <View style={[styles.headerContainer, { backgroundColor: colors.background }]}>
+                <Ionicons name="calendar-outline" size={24} color={colors.primary} />
+                <Text style={[styles.title, { color: colors.text }]}>Event Confirmed!</Text>
             </View>
 
-            <View style={styles.eventDetailsContainer}>
-                <View style={styles.detailRow}>
-                    <Ionicons name="star" size={16} color={COLORS.primary} />
-                    <Text style={styles.detailLabel}>Activity:</Text>
-                    <Text style={styles.detailValue}>{title}</Text>
+            <View style={[styles.eventDetailsContainer, { backgroundColor: colors.background }]}>
+                <View style={[styles.detailRow, { backgroundColor: colors.background }]}>
+                    <Ionicons name="star" size={16} color={colors.primary} />
+                    <Text style={[styles.detailLabel, { color: colors.text }]}>Activity:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{title}</Text>
                 </View>
 
-                <View style={styles.detailRow}>
-                    <Ionicons name="location" size={16} color={COLORS.primary} />
-                    <Text style={styles.detailLabel}>Location:</Text>
-                    <Text style={styles.detailValue}>{location}</Text>
+                <View style={[styles.detailRow, { backgroundColor: colors.background }]}>
+                    <Ionicons name="location" size={16} color={colors.primary} />
+                    <Text style={[styles.detailLabel, { color: colors.text }]}>Location:</Text>
+                    <Text style={[styles.detailValue, { color: colors.text }]}>{location}</Text>
                 </View>
                 
-                <TouchableOpacity style={styles.mapsButton} onPress={openInGoogleMaps}>
-                    <Ionicons name="navigate" size={16} color={COLORS.light} />
-                    <Text style={styles.mapsButtonText}>Open in Google Maps</Text>
+                <TouchableOpacity style={[styles.mapsButton, { backgroundColor: colors.background }]} onPress={openInGoogleMaps}>
+                    <Ionicons name="navigate" size={16} color={colors.primary} />
+                    <Text style={[styles.mapsButtonText, { color: colors.primary }]}>Open in Google Maps</Text>
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.rsvpSection}>
-                <Text style={styles.rsvpTitle}>Will you be joining us?</Text>
+            <View style={[styles.rsvpSection, { backgroundColor: colors.background, borderColor: colors.primary }]}>
+                <Text style={[styles.rsvpTitle, { color: colors.text }]}>Will you be joining us?</Text>
 
-                <View style={styles.rsvpButtonsContainer}>
+                <View style={[styles.rsvpButtonsContainer, { backgroundColor: colors.background }]}>
                     <TouchableOpacity
-                        style={getRsvpButtonStyle('yes')}
+                        style={[getRsvpButtonStyle('yes'), { backgroundColor: colors.background }]}
                         onPress={() => onRsvp('yes')}
                     >
                         <Ionicons
@@ -121,14 +123,14 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                             size={24}
                             color={userRsvp === 'yes' ? COLORS.light : getRsvpColor('yes')}
                         />
-                        <Text style={getRsvpTextStyle('yes')}>Yes</Text>
-                        <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{rsvpCounts.yes}</Text>
+                        <Text style={[getRsvpTextStyle('yes'), { color: colors.text }]}>Yes</Text>
+                        <View style={[styles.countBadge, { backgroundColor: colors.background }]}>
+                            <Text style={[styles.countText, { color: colors.text }]}>{rsvpCounts.yes}</Text>
                         </View>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={getRsvpButtonStyle('maybe')}
+                        style={[getRsvpButtonStyle('maybe'), { backgroundColor: colors.background }]}
                         onPress={() => onRsvp('maybe')}
                     >
                         <Ionicons
@@ -136,14 +138,14 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                             size={24}
                             color={userRsvp === 'maybe' ? COLORS.light : getRsvpColor('maybe')}
                         />
-                        <Text style={getRsvpTextStyle('maybe')}>Maybe</Text>
-                        <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{rsvpCounts.maybe}</Text>
+                        <Text style={[getRsvpTextStyle('maybe'), { color: colors.text }]}>Maybe</Text>
+                        <View style={[styles.countBadge, { backgroundColor: colors.background }]}>
+                            <Text style={[styles.countText, { color: colors.text }]}>{rsvpCounts.maybe}</Text>
                         </View>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={getRsvpButtonStyle('no')}
+                        style={[getRsvpButtonStyle('no'), { backgroundColor: colors.background }]}
                         onPress={() => onRsvp('no')}
                     >
                         <Ionicons
@@ -151,34 +153,34 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                             size={24}
                             color={userRsvp === 'no' ? COLORS.light : getRsvpColor('no')}
                         />
-                        <Text style={getRsvpTextStyle('no')}>No</Text>
-                        <View style={styles.countBadge}>
-                            <Text style={styles.countText}>{rsvpCounts.no}</Text>
+                        <Text style={[getRsvpTextStyle('no'), { color: colors.text }]}>No</Text>
+                        <View style={[styles.countBadge, { backgroundColor: colors.background }]}>
+                            <Text style={[styles.countText, { color: colors.text }]}>{rsvpCounts.no}</Text>
                         </View>
                     </TouchableOpacity>
                 </View>
             </View>
 
-            <View style={styles.summaryContainer}>
-                <Text style={styles.summaryTitle}>RSVP Summary</Text>
-                <View style={styles.summaryStats}>
-                    <View style={styles.statItem}>
+            <View style={[styles.summaryContainer, { backgroundColor: colors.background }]}>
+                <Text style={[styles.summaryTitle, { color: colors.text }]}>RSVP Summary</Text>
+                <View style={[styles.summaryStats, { backgroundColor: colors.background }]}>
+                    <View style={[styles.statItem, { backgroundColor: colors.background }]}>
                         <Text style={[styles.statNumber, { color: getRsvpColor('yes') }]}>
                             {rsvpCounts.yes}
                         </Text>
-                        <Text style={styles.statLabel}>Going</Text>
+                        <Text style={[styles.statLabel, { color: colors.text }]}>Going</Text>
                     </View>
-                    <View style={styles.statItem}>
+                    <View style={[styles.statItem, { backgroundColor: colors.background }]}>
                         <Text style={[styles.statNumber, { color: getRsvpColor('maybe') }]}>
                             {rsvpCounts.maybe}
                         </Text>
-                        <Text style={styles.statLabel}>Maybe</Text>
+                            <Text style={[styles.statLabel, { color: colors.text }]}>Maybe</Text>
                     </View>
-                    <View style={styles.statItem}>
+                    <View style={[styles.statItem, { backgroundColor: colors.background }]}>
                         <Text style={[styles.statNumber, { color: getRsvpColor('no') }]}>
                             {rsvpCounts.no}
                         </Text>
-                        <Text style={styles.statLabel}>Not Going</Text>
+                        <Text style={[styles.statLabel, { color: colors.text }]}>Not Going</Text>
                     </View>
                 </View>
             </View>
@@ -190,11 +192,12 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                 const isEventActive = eventData?.day && currentDate < nextAvailableDate;
                 
                 return (
-                    <View>
+                    <View style={[styles.newPollContainer, { backgroundColor: colors.background }]}>
                         <TouchableOpacity 
                             style={[
                                 styles.newPollButton,
-                                isEventActive && styles.disabledButton
+                                isEventActive && styles.disabledButton,
+                                { backgroundColor: colors.background }
                             ]} 
                             onPress={isEventActive ? null : onStartNewPoll}
                             disabled={isEventActive}
@@ -202,17 +205,18 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
                             <Ionicons 
                                 name="add-circle-outline" 
                                 size={20} 
-                                color={isEventActive ? COLORS.textSecondary : COLORS.darker} 
+                                color={isEventActive ? colors.text : colors.primary} 
                             />
                             <Text style={[
                                 styles.newPollButtonText,
-                                isEventActive && styles.disabledButtonText
+                                isEventActive && styles.disabledButtonText,
+                                { color: colors.primary, backgroundColor: colors.background }
                             ]}>
                                 {isEventActive ? 'Event In Progress' : 'Plan New Event'}
                             </Text>
                         </TouchableOpacity>
                         {isEventActive && (
-                            <Text style={styles.disabledButtonHint}>
+                            <Text style={[styles.disabledButtonHint, { color: colors.text }]}>
                                 New events can be planned after {nextAvailableDate.toLocaleDateString('en-US', {
                                     month: 'short', 
                                     day: 'numeric'
@@ -228,7 +232,6 @@ const EventConfirmedState = ({ eventData, onRsvp, onStartNewPoll }) => {
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: COLORS.dark,
         borderBottomLeftRadius: RADII.largeRounded,
         borderBottomRightRadius: RADII.largeRounded,
         padding: 15,
@@ -239,14 +242,12 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     title: {
-        color: COLORS.light,
         fontFamily: FONTS.heading,
         fontSize: 18,
         marginTop: 8,
         textAlign: 'center',
     },
     eventDetailsContainer: {
-        backgroundColor: COLORS.darker,
         borderRadius: RADII.rounded,
         padding: 10,
         marginBottom: 12,
@@ -271,8 +272,7 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     mapsButton: {
-        backgroundColor: COLORS.primary,
-        borderRadius: RADII.rounded,
+        borderRadius: RADII.pill,
         padding: 8,
         flexDirection: 'row',
         alignItems: 'center',
@@ -280,7 +280,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     mapsButtonText: {
-        color: COLORS.light,
         fontFamily: FONTS.body,
         fontSize: 12,
         fontWeight: '600',
@@ -337,7 +336,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -3,
         right: -3,
-        backgroundColor: COLORS.accent,
         borderRadius: 10,
         minWidth: 20,
         height: 20,
@@ -399,18 +397,21 @@ const styles = StyleSheet.create({
     },
 
     disabledButton: {
-        backgroundColor: COLORS.darker,
+
         opacity: 0.6,
     },
     disabledButtonText: {
-        color: COLORS.textSecondary,
     },
     disabledButtonHint: {
-        color: COLORS.textSecondary,
         fontFamily: FONTS.body,
         fontSize: 12,
         textAlign: 'center',
         marginTop: 8,
+    },
+    newPollContainer: {
+        borderRadius: RADII.rounded,
+        padding: 10,
+        marginBottom: 8,
     },
 });
 

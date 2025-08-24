@@ -4,27 +4,29 @@ import { COLORS, FONTS, RADII } from "../../../constants/constants";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from '@expo/vector-icons';
 import { getCircleImageUrl } from '../../../utils/imageUtils';
+import { useTheme } from "../../../context/ThemeContext";
 
 const CircleHeader = ({ name, circleId, circle }) => {
   const navigation = useNavigation();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background, borderBottomColor: colors.primary }]}>
       <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.goBack()}>
-        <Ionicons name="arrow-back" size={24} color={COLORS.light} />
+        <Ionicons name="arrow-back" size={24} color={colors.primary} />
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={styles.centerContainer}
+        style={[styles.centerContainer, { backgroundColor: colors.background, borderColor: colors.primary }]}
         onPress={() => navigation.navigate('CircleDetails', { circleId })}
       >
-        <Image source={{ uri: getCircleImageUrl(circle) }} style={styles.profilePic} />
-        <View style={styles.nameAndTimer}>
-          <Text style={styles.groupName}>{name}</Text>
+        <Image source={{ uri: getCircleImageUrl(circle) }} style={[styles.profilePic, { backgroundColor: colors.background }]} />
+        <View style={[styles.nameAndTimer, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+          <Text style={[styles.groupName, { color: colors.text }]}>{name}</Text>
         </View>
       </TouchableOpacity>
 
-      <View style={styles.iconContainer} />
+      <View style={[styles.iconContainer, { color: colors.primary }]} />
     </View>
   );
 };
@@ -36,9 +38,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: COLORS.dark,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.glass,
+    
   },
   iconContainer: {
     padding: 10,
@@ -60,12 +61,16 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: RADII.circle,
-    backgroundColor: COLORS.secondary,
   },
   groupName: {
-    color: COLORS.light,
     fontSize: 18,
     fontFamily: FONTS.heading,
+    fontWeight: "600",
+    marginBottom: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+    elevation: 3,
   },
 });
 
