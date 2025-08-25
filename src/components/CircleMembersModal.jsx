@@ -14,6 +14,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import useAuth from '../hooks/useAuth';
 import useCircleMembers from '../hooks/useCircleMembers';
+import useOnlinePresence from '../hooks/useOnlinePresence';
 import { circleMembersService } from '../firebase/circleMembersService';
 import { RADII } from '../constants/constants';
 import { getUserAvatarUrl } from '../utils/imageUtils';
@@ -25,6 +26,7 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
     const { currentLanguage } = useLanguage();
     const { user } = useAuth();
     const { members, loading, memberCount, owner, isOwner: currentUserIsOwner, isAdmin: currentUserIsAdmin } = useCircleMembers(circleId);
+    const { isUserOnline, getLastSeenText } = useOnlinePresence();
     const [actionLoading, setActionLoading] = useState(null);
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -179,17 +181,6 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
             (navigation && !isCurrentUser) // Can view profile
         );
 
-        // Debug: Log member data to see what's available
-        if (__DEV__) {
-            console.log('Member data:', {
-                userId: item.userId,
-                username: item.username,
-            photoURL: item.photoURL,
-                photoURL: item.photoURL,
-                avatar: item.avatar
-            });
-        }
-
         return (
             <TouchableOpacity
                 style={styles.memberItem}
@@ -201,20 +192,25 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                 activeOpacity={hasActions ? 0.7 : 1}
             >
                 <View style={styles.memberContent}>
-                    <Image
-                        source={{ uri: getUserAvatarUrl(item, 50) }}
-                        style={styles.memberAvatar}
-                        onError={(error) => {
-                            if (__DEV__) {
-                                console.log('Avatar load error for user:', item.username, error);
-                            }
-                        }}
-                        onLoad={() => {
-                            if (__DEV__) {
-                                console.log('Avatar loaded successfully for user:', item.username);
-                            }
-                        }}
-                    />
+                    <View style={styles.avatarContainer}>
+                        <Image
+                            source={{ uri: getUserAvatarUrl(item, 50) }}
+                            style={styles.memberAvatar}
+                            onError={(error) => {
+                                if (__DEV__) {
+                                    console.log('Avatar load error for user:', item.username, error);
+                                }
+                            }}
+                            onLoad={() => {
+                                if (__DEV__) {
+                                    console.log('Avatar loaded successfully for user:', item.username);
+                                }
+                            }}
+                        />
+                        {isUserOnline(item.userId) && (
+                            <View style={styles.onlineIndicator} />
+                        )}
+                    </View>
                     <View style={styles.memberInfo}>
                         <View style={styles.memberNameContainer}>
                             <Text style={styles.memberName}>
@@ -237,8 +233,11 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
                             </View>
                         </View>
                         {item.email && (
-            <Text style={styles.memberEmail}>{item.email}</Text>
-        )}
+                            <Text style={styles.memberEmail}>{item.email}</Text>
+                        )}
+                        <Text style={styles.lastSeenText}>
+                            {getLastSeenText(item.userId)}
+                        </Text>
                     </View>
                     {actionLoading === item.userId && (
                         <ActivityIndicator size="small" color={colors.primary} />
@@ -381,11 +380,25 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
             flexDirection: 'row',
             alignItems: 'center',
         },
+        avatarContainer: {
+            position: 'relative',
+        },
         memberAvatar: {
             width: 50,
             height: 50,
             borderRadius: RADII.circle,
             backgroundColor: colors.surface,
+        },
+        onlineIndicator: {
+            position: 'absolute',
+            bottom: 2,
+            right: 2,
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            backgroundColor: '#4CAF50',
+            borderWidth: 2,
+            borderColor: colors.background,
         },
         memberInfo: {
             marginLeft: 15,
@@ -434,6 +447,12 @@ const CircleMembersModal = ({ visible, onClose, circleId, navigation }) => {
             color: colors.textSecondary,
             fontSize: 14,
             marginTop: 2,
+        },
+        lastSeenText: {
+            color: colors.textSecondary,
+            fontSize: 12,
+            marginTop: 2,
+            fontStyle: 'italic',
         },
         emptyContainer: {
             justifyContent: 'center',

@@ -5,25 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="26316b1b-761b-4286-b009-d64b0993ff1b" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/functions/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/functions/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/CircleMembersModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/CircleMembersModal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/MessageInfoModal.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/MessageInfoModal.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/firebase/circleMembersService.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/firebase/circleMembersService.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle Creation/CreationForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle Creation/CreationForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle Creation/InviteAndShare.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle Creation/InviteAndShare.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/CircleDetailsScreen.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/CircleDetailsScreen.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/CircleScreen.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/CircleScreen.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/ChatFeed.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/ChatFeed.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/ChatInputBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/ChatInputBar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/CircleDetails/CircleActions.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/CircleDetails/CircleActions.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/CircleDetails/CircleMembers.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/CircleDetails/CircleMembers.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/CircleDetails/CircleOptions.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/CircleDetails/CircleOptions.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/ContextualPin/components/DefaultState/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/ContextualPin/components/DefaultState/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Circle/components/ContextualPin/components/EventConfirmedState/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Circle/components/ContextualPin/components/EventConfirmedState/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/Home/components/CircleCard.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/Home/components/CircleCard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/screens/InviteMembers.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/screens/InviteMembers.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/imageUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/imageUtils.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/userStatsManager.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/userStatsManager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/firebase/config.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/firebase/config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/localization/translations/en.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/localization/translations/en.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

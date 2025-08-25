@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getDatabase } from 'firebase/database';
 import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -7,6 +8,7 @@ import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 const firebaseConfig = {
     apiKey: "AIzaSyAW0f0DzBx3e769VkVdUimATL6-gnW4cTo",
     authDomain: "circle-26a87.firebaseapp.com",
+    databaseURL: "https://circle-26a87-default-rtdb.firebaseio.com/",
     projectId: "circle-26a87",
     storageBucket: "circle-26a87.firebasestorage.app",
     messagingSenderId: "141731835688",
@@ -30,6 +32,7 @@ try {
 }
 
 const db = getFirestore(app);
+const database = getDatabase(app);
 
-export { auth, db };
+export { auth, db, database };
 

@@ -168,6 +168,25 @@ export default {
         shareApp: 'شارك التطبيق',
     },
 
+    // Notifications
+    notifications: {
+        title: 'الإشعارات',
+        noInvitations: 'لا توجد دعوات',
+        noInvitationsSubtitle: 'ليس لديك دعوات دوائر معلقة',
+        invitedBy: 'دعوة من {{name}}',
+        unknownUser: 'مستخدم غير معروف',
+        unknownCircle: 'دائرة غير معروفة',
+        recently: 'مؤخراً',
+        accept: 'قبول',
+        decline: 'رفض',
+        success: 'نجح',
+        error: 'خطأ',
+        invitationAccepted: 'تم قبول الدعوة! لقد انضممت إلى الدائرة.',
+        invitationDeclined: 'تم رفض الدعوة.',
+        acceptError: 'فشل في قبول الدعوة. يرجى المحاولة مرة أخرى.',
+        declineError: 'فشل في رفض الدعوة. يرجى المحاولة مرة أخرى.',
+    },
+
     // Explore
     explore: {
         discover: 'اكتشف',
@@ -293,4 +312,4 @@ export default {
         add: 'إضافة',
         interests: 'الاهتمامات',
     },
-}; 
+};

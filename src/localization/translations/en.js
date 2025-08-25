@@ -168,6 +168,25 @@ export default {
         shareApp: 'Share App',
     },
 
+    // Notifications
+    notifications: {
+        title: 'Notifications',
+        noInvitations: 'No Invitations',
+        noInvitationsSubtitle: 'You have no pending circle invitations',
+        invitedBy: 'Invited by {{name}}',
+        unknownUser: 'Unknown User',
+        unknownCircle: 'Unknown Circle',
+        recently: 'Recently',
+        accept: 'Accept',
+        decline: 'Decline',
+        success: 'Success',
+        error: 'Error',
+        invitationAccepted: 'Invitation accepted! You have joined the circle.',
+        invitationDeclined: 'Invitation declined.',
+        acceptError: 'Failed to accept invitation. Please try again.',
+        declineError: 'Failed to decline invitation. Please try again.',
+    },
+
     // Explore
     explore: {
         discover: 'Discover',
@@ -293,4 +312,4 @@ export default {
         add: 'Add',
         interests: 'Interests',
     },
-}; 
+};
