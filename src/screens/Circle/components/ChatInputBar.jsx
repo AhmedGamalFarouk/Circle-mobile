@@ -21,6 +21,7 @@ import useAuth from "../../../hooks/useAuth";
 import { COLORS, RADII } from "../../../constants/constants";
 import useUserProfile from "../../../hooks/useUserProfile";
 import { uploadAudioToCloudinary, uploadChatMediaToCloudinary } from "../../../utils/cloudinaryUpload";
+import { useTheme } from "../../../context/ThemeContext";
 
 const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
     const [message, setMessage] = useState("");
@@ -36,6 +37,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
 
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
+    const { colors } = useTheme();
     const textInputRef = useRef(null);
     const timerRef = useRef(null);
     const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -117,7 +119,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
             textInputRef.current?.focus();
         } catch (error) {
             console.error("Error sending message: ", error);
-        }
+        }   
     };
 
     const startRecording = async () => {
@@ -428,12 +430,22 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
     };
 
     return (
-        <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+        <View style={[styles.wrapper, { 
+            backgroundColor: colors.background,
+            borderTopColor: colors.primary,
+            
+
+        }]}>
             {replyingTo && (
-                <View style={styles.replyingToContainer}>
+                <View style={[styles.replyingToContainer, { 
+                    backgroundColor: colors.surfaceLight,
+                    borderBottomColor: colors.glassLight,
+                    borderBottomWidth: 1,
+                    borderColor: colors.primary,
+                }]}>
                     <View style={styles.replyingToContent}>
-                        <Text style={styles.replyingToUser}>{replyingTo.user.userName}</Text>
-                        <Text style={styles.replyingToText} numberOfLines={1}>
+                        <Text style={[styles.replyingToUser, { color: colors.primary }]}>{replyingTo.user.userName}</Text>
+                        <Text style={[styles.replyingToText, { color: colors.textLight }]} numberOfLines={1}>
                             {replyingTo.text ||
                                 (replyingTo.messageType === 'image' ? 'Photo' :
                                     replyingTo.messageType === 'video' ? 'Video' :
@@ -441,25 +453,28 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                         </Text>
                     </View>
                     <TouchableOpacity onPress={onCancelReply}>
-                        <Text style={styles.cancelReply}>×</Text>
+                        <Text style={[styles.cancelReply, { color: colors.text }]}>×</Text>
                     </TouchableOpacity>
                 </View>
             )}
 
             {/* Selected Media Preview */}
             {selectedMedia && (
-                <View style={styles.mediaPreviewContainer}>
+                <View style={[styles.mediaPreviewContainer, { 
+                    backgroundColor: colors.surfaceLight,
+                    borderBottomColor: colors.glassLight
+                }]}>
                     <View style={styles.mediaPreview}>
                         {selectedMedia.type === 'image' ? (
                             <Image source={{ uri: selectedMedia.uri }} style={styles.previewImage} />
                         ) : (
-                            <View style={styles.videoPreview}>
-                                <Ionicons name="videocam" size={40} color={COLORS.primary} />
-                                <Text style={styles.videoText}>Video</Text>
+                            <View style={[styles.videoPreview, { backgroundColor: colors.surface }]}>
+                                <Ionicons name="videocam" size={40} color={colors.primary} />
+                                <Text style={[styles.videoText, { color: colors.text }]}>Video</Text>
                             </View>
                         )}
                         <TouchableOpacity
-                            style={styles.removeMediaButton}
+                            style={[styles.removeMediaButton, { backgroundColor: colors.error }]}
                             onPress={removeSelectedMedia}
                             activeOpacity={0.7}
                         >
@@ -467,7 +482,7 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity
-                        style={[styles.sendMediaButton, isUploadingMedia && styles.disabledButton]}
+                        style={[styles.sendMediaButton, { backgroundColor: colors.primary }, isUploadingMedia && styles.disabledButton]}
                         onPress={sendMediaMessage}
                         disabled={isUploadingMedia}
                         activeOpacity={0.8}
@@ -479,39 +494,39 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 </View>
             )}
 
-            <View style={styles.container}>
+            <View style={[styles.container, { backgroundColor: colors.backgroundLight }]}>
                 {isRecording ? (
                     // Recording Mode UI
                     <>
                         <TouchableOpacity
-                            style={styles.deleteButton}
+                            style={[styles.deleteButton, { backgroundColor: colors.error }]}
                             onPress={cancelRecording}
                             activeOpacity={0.7}
                         >
-                            <Ionicons name="trash-outline" size={20} color={COLORS.text} />
+                            <Ionicons name="trash-outline" size={20} color={COLORS.light} />
                         </TouchableOpacity>
 
-                        <View style={styles.recordingContainer}>
+                        <View style={[styles.recordingContainer, { backgroundColor: colors.surfaceLight, borderColor: colors.primary }]}>
                             <Animated.View style={[styles.recordingIndicator, { transform: [{ scale: pulseAnim }] }]}>
                                 <View style={styles.recordingDot} />
                             </Animated.View>
-                            <Text style={styles.recordingText}>Recording...</Text>
-                            <Text style={styles.recordingTimer}>{formatDuration(recordingDuration)}</Text>
+                            <Text style={[styles.recordingText, { color: colors.primary }]}>Recording...</Text>
+                            <Text style={[styles.recordingTimer, { color: colors.textLight }]}>{formatDuration(recordingDuration)}</Text>
                         </View>
 
                         <TouchableOpacity
-                            style={styles.sendVoiceButton}
+                            style={[styles.sendVoiceButton, { backgroundColor: colors.success }]}
                             onPress={stopRecording}
                             activeOpacity={0.8}
                         >
-                            <Ionicons name="send" size={20} color={COLORS.primary} />
+                            <Ionicons name="send" size={20} color={COLORS.light} />
                         </TouchableOpacity>
                     </>
                 ) : (
                     // Normal Mode UI
                     <>
                         <TouchableOpacity
-                            style={styles.attachButton}
+                            style={[styles.attachButton, { backgroundColor: colors.surfaceLight }]}
                             onPress={() => setShowMediaOptions(true)}
                             disabled={isUploadingVoice || isUploadingMedia || !!selectedMedia}
                             activeOpacity={0.7}
@@ -519,13 +534,13 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                             <Ionicons
                                 name="attach"
                                 size={20}
-                                color={(isUploadingVoice || isUploadingMedia || !!selectedMedia) ? COLORS.text : COLORS.primary}
+                                color={(isUploadingVoice || isUploadingMedia || !!selectedMedia) ? colors.textDark : colors.primary}
                                 style={(isUploadingVoice || isUploadingMedia || !!selectedMedia) && styles.disabledIcon}
                             />
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.voiceButton}
+                            style={[styles.voiceButton, { backgroundColor: colors.surfaceLight }]}
                             onPress={startRecording}
                             disabled={isUploadingVoice || !!selectedMedia}
                             activeOpacity={0.7}
@@ -533,15 +548,20 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                             <Ionicons
                                 name={isUploadingVoice ? "ellipsis-horizontal" : "mic"}
                                 size={20}
-                                color={(isUploadingVoice || !!selectedMedia) ? COLORS.text : COLORS.primary}
+                                color={(isUploadingVoice || !!selectedMedia) ? colors.textDark : colors.primary}
                                 style={(isUploadingVoice || !!selectedMedia) && styles.disabledIcon}
                             />
                         </TouchableOpacity>
                         <TextInput
                             ref={textInputRef}
-                            style={[styles.input, { height: Math.max(40, inputHeight) }]}
+                            style={[styles.input, { 
+                                height: Math.max(30, inputHeight),
+                                backgroundColor: colors.surfaceLight,
+                                borderColor: colors.glassLight,
+                                color: colors.light
+                            }]}
                             placeholder="Type your message"
-                            placeholderTextColor={COLORS.text}
+                            placeholderTextColor={colors.textDark}
                             value={message}
                             onChangeText={setMessage}
                             multiline={true}
@@ -554,12 +574,13 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                             }}
                         />
                         <TouchableOpacity
-                            style={[styles.sendButton, (!message.trim() || !!selectedMedia) && styles.disabledButton]}
+                            style={[styles.sendButton, { backgroundColor: colors.primary }, (!message.trim() || !!selectedMedia) && styles.disabledButton]}
                             disabled={!message.trim() || !!selectedMedia}
                             onPress={handleSend}
                             activeOpacity={0.8}
+                            
                         >
-                            <Text style={[styles.sendText, (!message.trim() || !!selectedMedia) && styles.disabledText]}>Send</Text>
+                            <Text style={[styles.sendText, (!message.trim() || !!selectedMedia) && styles.disabledText, { color: colors.light }]}>Send</Text>
                         </TouchableOpacity>
                     </>
                 )}
@@ -573,39 +594,39 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 onRequestClose={() => setShowMediaOptions(false)}
             >
                 <TouchableOpacity
-                    style={styles.modalOverlay}
+                    style={[styles.modalOverlay, { backgroundColor: colors.shadow }]}
                     activeOpacity={1}
                     onPress={() => setShowMediaOptions(false)}
                 >
-                    <View style={styles.mediaOptionsContainer}>
-                        <Text style={styles.mediaOptionsTitle}>Attach Media</Text>
+                    <View style={[styles.mediaOptionsContainer, { backgroundColor: colors.surface, borderColor: colors.glassLight }]}>
+                        <Text style={[styles.mediaOptionsTitle, { color: colors.light }]}>Attach Media</Text>
 
-                        <TouchableOpacity style={styles.mediaOption} onPress={takePhoto} activeOpacity={0.7}>
-                            <Ionicons name="camera" size={24} color={COLORS.primary} />
-                            <Text style={styles.mediaOptionText}>Take Photo</Text>
+                        <TouchableOpacity style={[styles.mediaOption, { backgroundColor: colors.surfaceLight, borderColor: colors.border }]} onPress={takePhoto} activeOpacity={0.7}>
+                            <Ionicons name="camera" size={24} color={colors.primary} />
+                            <Text style={[styles.mediaOptionText, { color: colors.light }]}>Take Photo</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.mediaOption} onPress={pickImageFromLibrary} activeOpacity={0.7}>
-                            <Ionicons name="image" size={24} color={COLORS.primary} />
-                            <Text style={styles.mediaOptionText}>Photo Library</Text>
+                        <TouchableOpacity style={[styles.mediaOption, { backgroundColor: colors.surfaceLight, borderColor: colors.glassLight }]} onPress={pickImageFromLibrary} activeOpacity={0.7}>
+                            <Ionicons name="image" size={24} color={colors.primary} />
+                            <Text style={[styles.mediaOptionText, { color: colors.light }]}>Photo Library</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.mediaOption} onPress={takeVideo} activeOpacity={0.7}>
-                            <Ionicons name="videocam" size={24} color={COLORS.primary} />
-                            <Text style={styles.mediaOptionText}>Take Video</Text>
+                        <TouchableOpacity style={[styles.mediaOption, { backgroundColor: colors.surfaceLight, borderColor: colors.glassLight }]} onPress={takeVideo} activeOpacity={0.7}>
+                            <Ionicons name="videocam" size={24} color={colors.primary} />
+                            <Text style={[styles.mediaOptionText, { color: colors.light }]}>Take Video</Text>
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.mediaOption} onPress={pickVideoFromLibrary} activeOpacity={0.7}>
-                            <Ionicons name="film" size={24} color={COLORS.primary} />
-                            <Text style={styles.mediaOptionText}>Video Library</Text>
+                        <TouchableOpacity style={[styles.mediaOption, { backgroundColor: colors.surfaceLight, borderColor: colors.glassLight }]} onPress={pickVideoFromLibrary} activeOpacity={0.7}>
+                            <Ionicons name="film" size={24} color={colors.primary} />
+                            <Text style={[styles.mediaOptionText, { color: colors.light }]}>Video Library</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.cancelOption}
+                            style={[styles.cancelOption, { borderTopColor: colors.glassLight }]}
                             onPress={() => setShowMediaOptions(false)}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.cancelOptionText}>Cancel</Text>
+                            <Text style={[styles.cancelOptionText, { color: colors.text }]}>Cancel</Text>
                         </TouchableOpacity>
                     </View>
                 </TouchableOpacity>
@@ -616,18 +637,16 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
 
 const styles = StyleSheet.create({
     wrapper: {
-        backgroundColor: COLORS.dark,
         borderTopWidth: 1,
-        borderTopColor: COLORS.glass,
+        borderTopColor: COLORS.glassLight,
+        backgroundColor: COLORS.backgroundLight,
     },
     replyingToContainer: {
-        backgroundColor: COLORS.darker,
         padding: 12,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
     },
     replyingToContent: {
         flex: 1,
@@ -639,7 +658,7 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
     replyingToText: {
-        color: COLORS.text,
+        color: COLORS.textLight,
         fontSize: 14,
     },
     cancelReply: {
@@ -654,15 +673,29 @@ const styles = StyleSheet.create({
         alignItems: "flex-end",
         paddingHorizontal: 12,
         paddingVertical: 10,
-        backgroundColor: COLORS.dark,
+        backgroundColor: COLORS.backgroundLight,
     },
     attachButton: {
         padding: 8,
         marginBottom: 2,
+        borderRadius: RADII.small,
+        backgroundColor: COLORS.surfaceLight,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
     },
     voiceButton: {
         padding: 8,
         marginBottom: 2,
+        borderRadius: RADII.small,
+        backgroundColor: COLORS.surfaceLight,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
     },
     voiceIcon: {
         fontSize: 20,
@@ -675,7 +708,6 @@ const styles = StyleSheet.create({
         flex: 1,
         minHeight: 40,
         maxHeight: 100,
-        backgroundColor: COLORS.darker,
         borderRadius: RADII.pill,
         paddingHorizontal: 16,
         paddingVertical: 10,
@@ -683,39 +715,88 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         fontSize: 16,
         textAlignVertical: Platform.OS === 'android' ? 'top' : 'center',
+        backgroundColor: COLORS.surfaceLight,
+        borderWidth: 1,
+        borderColor: COLORS.glassLight,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+        // Enhanced focus effect
+        ...Platform.select({
+            ios: {
+                shadowColor: COLORS.primary,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 4,
+            },
+        }),
     },
     sendButton: {
         paddingHorizontal: 12,
         paddingVertical: 10,
         marginBottom: 2,
+        borderRadius: RADII.small,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
+        // Enhanced interaction effects
+        ...Platform.select({
+            ios: {
+                shadowColor: COLORS.primary,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.4,
+                shadowRadius: 12,
+            },
+            android: {
+                elevation: 6,
+            },
+        }),
     },
     sendText: {
-        color: COLORS.primary,
         fontWeight: "600",
         fontSize: 16,
     },
     disabledButton: {
-        opacity: 0.5,
     },
     disabledText: {
-        color: COLORS.text,
+        color: COLORS.textDark,
     },
     // Recording Mode Styles
     deleteButton: {
         padding: 8,
         marginBottom: 2,
+        borderRadius: RADII.small,
+        backgroundColor: COLORS.error,
+        shadowColor: COLORS.error,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 2,
     },
 
     recordingContainer: {
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: COLORS.darker,
         borderRadius: RADII.pill,
         paddingHorizontal: 16,
         paddingVertical: 10,
         marginHorizontal: 10,
         minHeight: 40,
+        backgroundColor: COLORS.surfaceLight,
+        borderWidth: 2,
+        borderColor: COLORS.primary,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 4,
     },
     recordingIndicator: {
         width: 12,
@@ -723,6 +804,23 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: COLORS.primary,
         marginRight: 12,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.8,
+        shadowRadius: 4,
+        elevation: 3,
+        // Enhanced glow effect
+        ...Platform.select({
+            ios: {
+                shadowColor: COLORS.primary,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.6,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 6,
+            },
+        }),
     },
     recordingDot: {
         width: '100%',
@@ -737,7 +835,7 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     recordingTimer: {
-        color: COLORS.light,
+        color: COLORS.textLight,
         fontSize: 16,
         fontWeight: '600',
         fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
@@ -746,17 +844,24 @@ const styles = StyleSheet.create({
     sendVoiceButton: {
         padding: 8,
         marginBottom: 2,
+        borderRadius: RADII.small,
+        backgroundColor: COLORS.success,
+        shadowColor: COLORS.success,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
 
     // Media Preview Styles
     mediaPreviewContainer: {
-        backgroundColor: COLORS.darker,
         padding: 12,
         borderBottomWidth: 1,
-        borderBottomColor: COLORS.glass,
+        borderBottomColor: COLORS.glassLight,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        backgroundColor: COLORS.surfaceLight,
     },
     mediaPreview: {
         position: 'relative',
@@ -766,16 +871,26 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: RADII.small,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
     },
     videoPreview: {
         width: 60,
         height: 60,
         borderRadius: RADII.small,
-        backgroundColor: COLORS.dark,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: COLORS.glass,
+        borderColor: COLORS.glassLight,
+        backgroundColor: COLORS.surface,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
     },
     videoText: {
         color: COLORS.text,
@@ -786,18 +901,28 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: -8,
         right: -8,
-        backgroundColor: COLORS.primary,
+        backgroundColor: COLORS.error,
         borderRadius: 12,
         width: 24,
         height: 24,
         justifyContent: 'center',
         alignItems: 'center',
+        shadowColor: COLORS.error,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.4,
+        shadowRadius: 4,
+        elevation: 3,
     },
     sendMediaButton: {
         backgroundColor: COLORS.primary,
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: RADII.pill,
+        shadowColor: COLORS.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4,
     },
     sendMediaText: {
         color: COLORS.light,
@@ -808,16 +933,23 @@ const styles = StyleSheet.create({
     // Media Options Modal Styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: COLORS.shadowDark,
         justifyContent: 'center',
         alignItems: 'center',
     },
     mediaOptionsContainer: {
-        backgroundColor: COLORS.dark,
         borderRadius: RADII.large,
         padding: 20,
         width: '80%',
         maxWidth: 300,
+        backgroundColor: COLORS.surface,
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.3,
+        shadowRadius: 20,
+        elevation: 10,
+        borderWidth: 1,
+        borderColor: COLORS.glassLight,
     },
     mediaOptionsTitle: {
         color: COLORS.light,
@@ -833,6 +965,27 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         borderRadius: RADII.medium,
         marginBottom: 8,
+        backgroundColor: COLORS.surfaceLight,
+        borderWidth: 1,
+        borderColor: COLORS.glassLight,
+        // Enhanced interaction effects
+        shadowColor: COLORS.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 1,
+        // Hover-like effect for better visual feedback
+        ...Platform.select({
+            ios: {
+                shadowColor: COLORS.primary,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     mediaOptionText: {
         color: COLORS.light,
@@ -845,14 +998,13 @@ const styles = StyleSheet.create({
         paddingVertical: 15,
         alignItems: 'center',
         borderTopWidth: 1,
-        borderTopColor: COLORS.glass,
+        borderTopColor: COLORS.glassLight,
     },
     cancelOptionText: {
         color: COLORS.text,
         fontSize: 16,
         fontWeight: '500',
     },
-
 });
 
 export default ChatInputBar;

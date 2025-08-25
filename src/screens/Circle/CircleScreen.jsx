@@ -13,6 +13,7 @@ import SimplePollCreation from './components/PollCreation/SimplePollCreation';
 import useAuth from '../../hooks/useAuth';
 import useUserProfile from '../../hooks/useUserProfile';
 import useCircleMembers from '../../hooks/useCircleMembers';
+import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 const PLANNING_STAGES = {
@@ -28,6 +29,7 @@ const PLANNING_STAGES = {
 const CircleScreen = () => {
     const route = useRoute();
     const navigation = useNavigation();
+    const { colors } = useTheme();
     const { circleId, openPollModal } = route.params;
     const { user } = useAuth();
     const { profile: userProfile } = useUserProfile(user?.uid);
@@ -43,6 +45,7 @@ const CircleScreen = () => {
     const [isPinVisible, setPinVisible] = useState(true);
     const [isMember, setIsMember] = useState(true);
     const [membershipChecked, setMembershipChecked] = useState(false);
+    
 
     useEffect(() => {
         const fetchCircleData = async () => {
@@ -524,9 +527,9 @@ const CircleScreen = () => {
     // Don't render circle content if user is not a member
     if (!membershipChecked) {
         return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.loadingContainer}>
-                    <Text style={styles.loadingText}>Loading...</Text>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
                 </View>
             </SafeAreaView>
         );
@@ -534,26 +537,27 @@ const CircleScreen = () => {
 
     if (!isMember) {
         return (
-            <SafeAreaView style={styles.container}>
-                <View style={styles.errorContainer}>
-                    <Text style={styles.errorText}>You are not a member of this circle.</Text>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+                <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.errorText, { color: colors.text }]}>You are not a member of this circle.</Text>
                 </View>
             </SafeAreaView>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             <KeyboardAvoidingView
-                style={styles.keyboardContainer}
+                style={[styles.keyboardContainer, { backgroundColor: colors.background }]}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
             >
-                <View style={styles.innerContainer}>
+                <View style={[styles.innerContainer, { backgroundColor: colors.background }]}>
                     <CircleHeader
                         name={circle?.circleName || circle?.name}
                         circleId={circleId}
                         circle={circle}
+                        colors={colors}
                     />
                     {isPinVisible ? (
                         <ContextualPin
@@ -573,19 +577,19 @@ const CircleScreen = () => {
                         />
                     ) : (
                         getShowPlanButtonText() && (
-                            <View style={styles.showPlanButtonContainer}>
-                                <Pressable style={styles.showPlanButton} onPress={handleShow}>
-                                    <Text style={styles.showPlanButtonText}>{getShowPlanButtonText()}</Text>
+                            <View style={[styles.showPlanButtonContainer, { backgroundColor: colors.background }]}>
+                                <Pressable style={[styles.showPlanButton, { backgroundColor: colors.primary }]} onPress={handleShow}>
+                                    <Text style={[styles.showPlanButtonText, { color: colors.text }]}>{getShowPlanButtonText()}</Text>
                                 </Pressable>
                             </View>
                         )
                     )}
-                    <View style={styles.chatFeedContainer}>
-                        <ChatFeed circleId={circleId} onReply={handleReply} />
+                    <View style={[styles.chatFeedContainer, { backgroundColor: colors.background }]}>
+                        <ChatFeed circleId={circleId} onReply={handleReply} colors={colors} />
                     </View>
                 </View>
-                <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} />
-            </KeyboardAvoidingView>
+                <ChatInputBar circleId={circleId} replyingTo={replyingTo} onCancelReply={handleCancelReply} colors={colors} />
+                </KeyboardAvoidingView>
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -596,6 +600,8 @@ const CircleScreen = () => {
                     onLaunchPoll={handleLaunchPoll}
                     pollType={pollType}
                     onClose={() => setPollModalVisible(false)}
+                    colors={colors}
+                    circle={circle}
                 />
             </Modal>
         </SafeAreaView>
@@ -605,7 +611,6 @@ const CircleScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.darker,
     },
     keyboardContainer: {
         flex: 1,
@@ -623,35 +628,29 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     showPlanButton: {
-        backgroundColor: COLORS.primary,
         borderRadius: 20,
         paddingVertical: 10,
         paddingHorizontal: 20,
         alignSelf: 'center',
     },
     showPlanButtonText: {
-        color: 'white',
         fontWeight: 'bold',
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.darker,
     },
     loadingText: {
-        color: COLORS.light,
         fontSize: 16,
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: COLORS.darker,
         padding: 20,
     },
     errorText: {
-        color: COLORS.light,
         fontSize: 16,
         textAlign: 'center',
     },
