@@ -5,7 +5,7 @@ import { auth } from '../../../firebase/config';
 import { COLORS } from '../../../constants/constants';
 import {
   AuthContainer,
-  Logo,
+  LogoComponent,
   Title,
   AuthInput,
   ForgotPasswordLink,
@@ -93,7 +93,7 @@ const SignInScreen = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <AuthContainer>
-          <Logo />
+          <LogoComponent />
           <Title subtitle="Sign in to continue to your account">
             Welcome back!
           </Title>

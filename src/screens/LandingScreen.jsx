@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Animated, Easing } from 'react-native';
 import { COLORS, RADII } from '../constants/constants';
+import Logo from '../components/Logo';
 
 const avatars = [
   { id: 1, uri: 'https://avatar.iran.liara.run/public?id=1' },
@@ -128,7 +129,9 @@ const LandingScreen = ({ navigation }) => {
 
       {/* Text Content */}
       <View style={styles.textContent}>
-        <Text style={styles.title}>Circle</Text>
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
+          <Logo size={120} />
+        </View>
         <Text style={styles.logoText}>Where intention becomes connection.</Text>
       </View>
 

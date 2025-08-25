@@ -5,6 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { styles } from './styles';
 import { COLORS, SHADOWS } from '../../../constants/constants';
 import InterestsSelector from './InterestsSelector';
+import Logo from '../../../components/Logo';
 
 export const AuthContainer = ({ children, scrollable = false }) => {
     if (scrollable) {
@@ -23,7 +24,7 @@ export const AuthContainer = ({ children, scrollable = false }) => {
                     overScrollMode="never"
                 >
                     <View style={styles.headerSection}>
-                        <Logo />
+                        <LogoComponent />
                     </View>
                     <View style={styles.formContainer}>
                         {children}
@@ -42,12 +43,9 @@ export const AuthContainer = ({ children, scrollable = false }) => {
     );
 };
 
-export const Logo = () => (
+export const LogoComponent = () => (
     <View style={styles.headerSection}>
-        <Image
-            source={require('../../../../assets/icon.png')}
-            style={styles.logo}
-        />
+        <Logo size={80} />
     </View>
 );
 
@@ -84,7 +82,7 @@ export const AuthInput = ({
             <TextInput
                 style={styles.input}
                 placeholder={placeholder}
-                placeholderTextColor={COLORS.text}
+                placeholderTextColor={COLORS.placeholderText}
                 keyboardType={keyboardType}
                 autoCapitalize={autoCapitalize}
                 value={value}
@@ -213,7 +211,7 @@ export const LocationInput = ({
                 <TextInput
                     style={[styles.input, { flex: 1 }]}
                     placeholder={placeholder}
-                    placeholderTextColor={COLORS.text}
+                    placeholderTextColor={COLORS.placeholderText}
                     value={value}
                     onChangeText={onChangeText}
                     onFocus={() => setIsFocused(true)}

@@ -37,6 +37,7 @@ export const COLORS = {
   text: "#1c3161", // --color-text
   textLight: "#f0f0f0",
   textDark: "#94a3b8",
+  placeholderText: "#94a3b8", // Lighter color for better contrast with primary
   
   // Enhanced glass and overlay colors
   glass: "rgba(108, 95, 199, 0.4)", // --shadow-glass
@@ -116,6 +117,7 @@ export const THEMES = {
     textSecondary: "#f0f0f0",
     textLight: "#f0f0f0",
     textDark: "#94a3b8",
+    placeholderText: "#94a3b8", // Lighter placeholder text for dark theme
     border: "#555555", // Keep dark theme borders dark
     borderLight: "#6b6b6b",
     borderDark: "#3f3f3f",
@@ -167,6 +169,7 @@ export const THEMES = {
     textSecondary: "#475569",
     textLight: "#64748b",
     textDark: "#334155",
+    placeholderText: "#94a3b8", // Lighter placeholder text for light theme
     border: "#e2e8f0",
     borderLight: "#f1f5f9",
     borderDark: "#cbd5e1",

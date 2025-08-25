@@ -8,7 +8,6 @@ import { validateUsername, isUsernameUnique } from '../../../utils/userValidatio
 import useCurrentLocation from '../../../hooks/useCurrentLocation'; // Import the hook
 import {
   AuthContainer,
-  Logo,
   Title,
   AuthInput,
   DateOfBirthInput,

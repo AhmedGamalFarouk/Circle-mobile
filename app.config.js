@@ -10,9 +10,9 @@ export default {
     userInterfaceStyle: "light",
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/circle-logo.png",
       resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      backgroundColor: "#1a1a1a"
     },
     ios: {
       supportsTablet: true
@@ -20,7 +20,7 @@ export default {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        backgroundColor: "#1a1a1a"
       },
       edgeToEdgeEnabled: true,
       googleServicesFile: "./google-services.json",
