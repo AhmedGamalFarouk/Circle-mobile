@@ -518,7 +518,7 @@ const ChatFeed = ({ circleId, onReply }) => {
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return '';
 
-        const messageDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        const messageDate = timestamp.toDate ? timestamp.toDate() : (timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp));
         const now = new Date();
         const isToday = messageDate.toDateString() === now.toDateString();
         const isYesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString() === messageDate.toDateString();
@@ -714,7 +714,7 @@ const ChatFeed = ({ circleId, onReply }) => {
                                 >
                                     {message.replyTo && (
                                         <View style={styles.replyContainer}>
-                                            <Text style={styles.replyUser}>{message.replyTo.userName}</Text>
+                                            <Text style={styles.replyUser}>{message.replyTo.userName || message.replyTo.username}</Text>
                                             <View style={styles.replyTextContainer}>
                                                 {!message.replyTo.text && (
                                                     <Ionicons name="mic" size={12} color={COLORS.text} style={styles.voiceReplyIcon} />

@@ -82,7 +82,7 @@ export default function PendingEventCard({ event, isAdmin, circleId }) {
 
                     <View style={styles.eventDetails}>
                         <Text style={styles.eventName}>
-                            {event.title || "Pending Event"}
+                            {event.title || event.activity || "Pending Event"}
                         </Text>
                         <TouchableOpacity
                             style={styles.locationContainer}
@@ -90,7 +90,7 @@ export default function PendingEventCard({ event, isAdmin, circleId }) {
                         >
                             <MapPin size={14} color="#4ECDC4" />
                             <Text style={styles.locationText}>
-                                {event.location || "No location specified"}
+                                {event.location || event.place || "No location specified"}
                             </Text>
                         </TouchableOpacity>
                     </View>

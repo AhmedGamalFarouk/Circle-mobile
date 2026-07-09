@@ -103,8 +103,10 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
             },
             replyTo: replyingTo ? {
                 messageId: replyingTo.id,
+                id: replyingTo.id,
                 text: replyingTo.text,
-                username: replyingTo.user.username,
+                username: replyingTo.user?.username || replyingTo.user?.userName || replyingTo.username || replyingTo.userName || "",
+                userName: replyingTo.user?.username || replyingTo.user?.userName || replyingTo.username || replyingTo.userName || "",
             } : null,
             seenBy: [],
         };
@@ -216,8 +218,10 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 },
                 replyTo: replyingTo ? {
                     messageId: replyingTo.id,
+                    id: replyingTo.id,
                     text: replyingTo.text || "Voice message",
-                    username: replyingTo.user.username,
+                    username: replyingTo.user?.username || replyingTo.user?.userName || replyingTo.username || replyingTo.userName || "",
+                    userName: replyingTo.user?.username || replyingTo.user?.userName || replyingTo.username || replyingTo.userName || "",
                 } : null,
                 seenBy: [],
             };
@@ -400,8 +404,10 @@ const ChatInputBar = ({ circleId, replyingTo, onCancelReply }) => {
                 },
                 replyTo: replyingTo ? {
                     messageId: replyingTo.id,
+                    id: replyingTo.id,
                     text: replyingTo.text || `${selectedMedia.type} message`,
-                    username: replyingTo.user.username,
+                    username: replyingTo.user?.username || replyingTo.user?.userName || replyingTo.username || replyingTo.userName || "",
+                    userName: replyingTo.user?.username || replyingTo.user?.userName || replyingTo.username || replyingTo.userName || "",
                 } : null,
                 seenBy: [],
             };

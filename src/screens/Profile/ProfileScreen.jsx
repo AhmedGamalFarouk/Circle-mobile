@@ -147,7 +147,7 @@ const ProfileScreen = React.memo(({ route, navigation }) => {
             ) || false
         );
         setIsConnection(
-            profile?.connections?.some((c) => c.uid === currentUser.uid) || false
+            profile?.connections?.some((c) => (typeof c === 'object' ? c?.uid === currentUser.uid : c === currentUser.uid)) || false
         );
     }, [profile, currentUser]);
     const handleFollow = useCallback(async () => {

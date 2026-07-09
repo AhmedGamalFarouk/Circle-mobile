@@ -91,13 +91,15 @@ export const addFriend = async (userId, friendId) => {
         const userRef = doc(db, 'users', userId);
         const friendRef = doc(db, 'users', friendId);
 
-        // Only update stats counters as single source of truth
+        // Update stats counters and maintain the connections list
         await updateDoc(userRef, {
-            'stats.connections': increment(1)
+            'stats.connections': increment(1),
+            connections: arrayUnion(friendId)
         });
 
         await updateDoc(friendRef, {
-            'stats.connections': increment(1)
+            'stats.connections': increment(1),
+            connections: arrayUnion(userId)
         });
 
     } catch (error) {
@@ -116,13 +118,15 @@ export const removeFriend = async (userId, friendId) => {
         const userRef = doc(db, 'users', userId);
         const friendRef = doc(db, 'users', friendId);
 
-        // Only update stats counters as single source of truth
+        // Update stats counters and remove from connections list
         await updateDoc(userRef, {
-            'stats.connections': increment(-1)
+            'stats.connections': increment(-1),
+            connections: arrayRemove(friendId)
         });
 
         await updateDoc(friendRef, {
-            'stats.connections': increment(-1)
+            'stats.connections': increment(-1),
+            connections: arrayRemove(userId)
         });
 
     } catch (error) {
@@ -166,15 +170,17 @@ export const acceptFriendRequest = async (userId, requesterId) => {
         const userRef = doc(db, 'users', userId);
         const requesterRef = doc(db, 'users', requesterId);
 
-        // Remove from friend requests and update stats counters only
+        // Remove from friend requests, update stats counters, and push to connections string array
         await updateDoc(userRef, {
             'friendRequests.received': arrayRemove(requesterId),
-            'stats.connections': increment(1)
+            'stats.connections': increment(1),
+            connections: arrayUnion(requesterId)
         });
 
         await updateDoc(requesterRef, {
             'friendRequests.sent': arrayRemove(userId),
-            'stats.connections': increment(1)
+            'stats.connections': increment(1),
+            connections: arrayUnion(userId)
         });
 
     } catch (error) {
