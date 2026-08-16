@@ -4,24 +4,27 @@ import { COLORS, RADII } from '../constants/constants';
 import Logo from '../components/Logo';
 
 const avatars = [
-  { id: 1, uri: 'https://avatar.iran.liara.run/public?id=1' },
-  { id: 2, uri: 'https://avatar.iran.liara.run/public?id=2' },
-  { id: 3, uri: 'https://avatar.iran.liara.run/public?id=3' },
-  { id: 4, uri: 'https://avatar.iran.liara.run/public?id=4' },
-  { id: 5, uri: 'https://avatar.iran.liara.run/public?id=5' },
-  { id: 6, uri: 'https://avatar.iran.liara.run/public?id=6' },
-  { id: 7, uri: 'https://avatar.iran.liara.run/public?id=7' },
-  { id: 8, uri: 'https://avatar.iran.liara.run/public?id=8' },
-  { id: 9, uri: 'https://avatar.iran.liara.run/public?id=9' },
-  { id: 10, uri: 'https://avatar.iran.liara.run/public?id=10' },
-  { id: 11, uri: 'https://avatar.iran.liara.run/public?id=11' },
-  { id: 12, uri: 'https://avatar.iran.liara.run/public?id=12' },
+  { id: 1, uri: 'https://i.pravatar.cc/100?img=1' },
+  { id: 2, uri: 'https://i.pravatar.cc/100?img=2' },
+  { id: 3, uri: 'https://i.pravatar.cc/100?img=3' },
+  { id: 4, uri: 'https://i.pravatar.cc/100?img=4' },
+  { id: 5, uri: 'https://i.pravatar.cc/100?img=5' },
+  { id: 6, uri: 'https://i.pravatar.cc/100?img=6' },
+  { id: 7, uri: 'https://i.pravatar.cc/100?img=7' },
+  { id: 8, uri: 'https://i.pravatar.cc/100?img=8' },
+  { id: 9, uri: 'https://i.pravatar.cc/100?img=9' },
+  { id: 10, uri: 'https://i.pravatar.cc/100?img=10' },
+  { id: 11, uri: 'https://i.pravatar.cc/100?img=11' },
+  { id: 12, uri: 'https://i.pravatar.cc/100?img=12' },
 ];
 
 
 const LandingScreen = ({ navigation }) => {
-  const outerSpinValue = new Animated.Value(0);
-  const innerSpinValue = new Animated.Value(0);
+  // useRef ensures the same Animated.Value instance is used across re-renders.
+  // Without this, useEffect animates the first render's value while the JSX
+  // reads a brand-new (frozen at 0deg) value created on every re-render.
+  const outerSpinValue = React.useRef(new Animated.Value(0)).current;
+  const innerSpinValue = React.useRef(new Animated.Value(0)).current;
 
   React.useEffect(() => {
     Animated.loop(
@@ -29,7 +32,7 @@ const LandingScreen = ({ navigation }) => {
         outerSpinValue,
         {
           toValue: 1,
-          duration: 40000, // Slower rotation for outer circle
+          duration: 40000,
           easing: Easing.linear,
           useNativeDriver: true,
         }
@@ -41,7 +44,7 @@ const LandingScreen = ({ navigation }) => {
         innerSpinValue,
         {
           toValue: 1,
-          duration: 40000, // Slower rotation for inner circle
+          duration: 40000,
           easing: Easing.linear,
           useNativeDriver: true,
         }
@@ -56,7 +59,7 @@ const LandingScreen = ({ navigation }) => {
 
   const innerSpin = innerSpinValue.interpolate({
     inputRange: [0, 1],
-    outputRange: ['360deg', '0deg'], // Opposite direction for inner circle
+    outputRange: ['360deg', '0deg'],
   });
 
   return (

@@ -35,6 +35,8 @@ export default function App() {
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
         <LanguageProvider>
+          {/* AppStripeProvider uses native code — requires a Dev Build, not Expo Go.
+              Wrap in a try/catch at runtime via ErrorBoundary if needed. */}
           <AppStripeProvider>
             <AppContent />
           </AppStripeProvider>

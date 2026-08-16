@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../firebase/config';
 import { COLORS } from '../../../constants/constants';
@@ -81,6 +81,18 @@ const SignInScreen = ({ navigation }) => {
     Alert.alert("Forgot Password", "This feature will be implemented soon!");
   };
 
+  const handleSkip = async () => {
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, 'ahmedgamal5565@gmail.com', '123456');
+      navigation.navigate('Main', { screen: 'Home' });
+    } catch (error) {
+      Alert.alert('Skip Sign In Failed', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: COLORS.darker }}
@@ -130,10 +142,41 @@ const SignInScreen = ({ navigation }) => {
             linkText="Sign up"
             onPress={() => navigation.navigate('SignUp')}
           />
+
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={handleSkip}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={COLORS.darker} />
+            ) : (
+              <Text style={styles.skipText}>⚡ Skip (Dev Login)</Text>
+            )}
+          </TouchableOpacity>
         </AuthContainer>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
+
+const styles = StyleSheet.create({
+  skipButton: {
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    backgroundColor: '#F5C518',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  skipText: {
+    color: COLORS.darker,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+});
 
 export default SignInScreen;

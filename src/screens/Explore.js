@@ -52,6 +52,9 @@ const Explore = ({ navigation }) => {
     }
   };
 
+  // mapLocation is derived here so it is available inside the useEffect callback
+  const mapLocation = location || defaultLocation;
+
   useEffect(() => {
     let unsubscribers = [];
 
@@ -177,8 +180,7 @@ const Explore = ({ navigation }) => {
     );
   }
 
-  // Use current location if available, otherwise use default location
-  const mapLocation = location || defaultLocation;
+  // mapLocation is already declared above the useEffect
   const hasLocationError = !!error;
 
   return (
@@ -222,7 +224,6 @@ const Explore = ({ navigation }) => {
               latitude: marker.latitude,
               longitude: marker.longitude,
             }}
-            image={require('../../assets/circle.gif')}
             accessibilityLabel={`Marker for ${marker.title}`}
             onPress={() => { setSelectedEvent(marker); setIsDetailsVisible(true); }}
           >
