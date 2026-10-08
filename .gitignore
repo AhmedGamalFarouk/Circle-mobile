@@ -44,3 +44,6 @@ src/firebase/config.js
 
 # readme
 STRIPE_SETUP.md
+# secrets and local logs
+.env
+firebase-debug.log
