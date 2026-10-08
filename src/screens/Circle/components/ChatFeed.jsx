@@ -11,6 +11,22 @@ import VoicePlayer from '../../../components/VoicePlayer';
 import VideoPlayer from '../../../components/VideoPlayer';
 import ImageViewer from '../../../components/ImageViewer';
 import MessageInfoModal from '../../../components/MessageInfoModal';
+
+// Web writes image/video URLs to imageUrl/videoUrl, sizes to width/height and
+// reactions to `react`; mobile reads mediaUrl/mediaWidth/mediaHeight/reactions.
+const normalizeWebMessage = (message) => {
+    const reactions = [...(message.reactions || []), ...(message.react || [])].filter(
+        (r, i, all) => r && all.findIndex(o => o?.userId === r.userId && o?.emoji === r.emoji) === i
+    );
+    return {
+        ...message,
+        mediaUrl: message.mediaUrl || message.imageUrl || message.videoUrl,
+        mediaWidth: message.mediaWidth || message.width,
+        mediaHeight: message.mediaHeight || message.height,
+        reactions,
+    };
+};
+
 // import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 
@@ -77,7 +93,10 @@ const ChatFeed = ({ circleId, onReply }) => {
         const unsubscribe = onSnapshot(q, (querySnapshot) => {
             const messagesData = [];
             querySnapshot.forEach((doc) => {
-                messagesData.push({ id: doc.id, ...doc.data() });
+                const message = normalizeWebMessage({ id: doc.id, ...doc.data() });
+                // Web supports "delete for me" via deletedFor
+                if (message.deletedFor?.includes(user?.uid)) return;
+                messagesData.push(message);
             });
 
             // Animate new reactions
@@ -119,7 +138,7 @@ const ChatFeed = ({ circleId, onReply }) => {
             unsubscribe();
             //keyboardDidShowListener.remove();
         };
-    }, [circleId]);
+    }, [circleId, user?.uid]);
 
     // Handle back button press to close options menu
     useEffect(() => {

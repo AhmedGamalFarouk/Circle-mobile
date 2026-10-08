@@ -444,7 +444,9 @@ const CircleScreen = () => {
                 const eventsRef = collection(db, 'circles', circleId, 'events');
                 await addDoc(eventsRef, {
                     title: poll.winningActivity,
+                    activity: poll.winningActivity, // web reads activity/place
                     location: poll.winningPlace,
+                    place: poll.winningPlace,
                     status: 'pending',
                     createdAt: serverTimestamp(),
                     createdBy: user.uid,
