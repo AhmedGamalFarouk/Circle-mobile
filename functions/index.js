@@ -1,12 +1,17 @@
-const functions = require("firebase-functions");
+// This code uses the v1 API; since firebase-functions v6 the package root
+// exports v2, where functions.pubsub.schedule / firestore.document don't exist.
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
 const cloudinary = require("cloudinary").v2;
+// Optional chaining so the module still loads (deploy analysis, emulator)
+// when runtime config is not set.
+const cloudinaryConfig = functions.config().cloudinary || {};
 cloudinary.config({
-  cloud_name: functions.config().cloudinary.cloud_name,
-  api_key: functions.config().cloudinary.api_key,
-  api_secret: functions.config().cloudinary.api_secret,
+  cloud_name: cloudinaryConfig.cloud_name,
+  api_key: cloudinaryConfig.api_key,
+  api_secret: cloudinaryConfig.api_secret,
 });
 
 exports.deleteExpiredFlashCircles = functions.pubsub
@@ -339,7 +344,7 @@ exports.submitJoinRequest = functions.https.onCall(async (data, context) => {
         .doc(userId);
     const memberDoc = await memberRef.get();
 
-    if (memberDoc.exists()) {
+    if (memberDoc.exists) {
       throw new functions.https.HttpsError(
           "already-exists",
           "User is already a member of this circle.",
@@ -355,7 +360,7 @@ exports.submitJoinRequest = functions.https.onCall(async (data, context) => {
         .doc(userId);
     const requestDoc = await requestRef.get();
 
-    if (requestDoc.exists()) {
+    if (requestDoc.exists) {
       throw new functions.https.HttpsError(
           "already-exists",
           "Join request already submitted.",
@@ -367,7 +372,7 @@ exports.submitJoinRequest = functions.https.onCall(async (data, context) => {
     const userDoc = await userRef.get();
 
     let userData = {};
-    if (userDoc.exists()) {
+    if (userDoc.exists) {
       userData = userDoc.data();
     }
 
@@ -430,7 +435,7 @@ exports.handleJoinRequest = functions.https.onCall(async (data, context) => {
         .doc(adminUserId);
     const adminMemberDoc = await adminMemberRef.get();
 
-    if (!adminMemberDoc.exists() || !adminMemberDoc.data().isAdmin) {
+    if (!adminMemberDoc.exists || !adminMemberDoc.data().isAdmin) {
       throw new functions.https.HttpsError(
           "permission-denied",
           "Only circle admins can handle join requests.",
@@ -446,7 +451,7 @@ exports.handleJoinRequest = functions.https.onCall(async (data, context) => {
         .doc(requestUserId);
     const requestDoc = await requestRef.get();
 
-    if (!requestDoc.exists()) {
+    if (!requestDoc.exists) {
       throw new functions.https.HttpsError(
           "not-found",
           "Join request not found.",
@@ -539,7 +544,7 @@ exports.bulkHandleJoinRequests = functions.https.onCall(
             .doc(adminUserId);
         const adminMemberDoc = await adminMemberRef.get();
 
-        if (!adminMemberDoc.exists() || !adminMemberDoc.data().isAdmin) {
+        if (!adminMemberDoc.exists || !adminMemberDoc.data().isAdmin) {
           throw new functions.https.HttpsError(
               "permission-denied",
               "Only circle admins can handle join requests.",
@@ -642,16 +647,6 @@ exports.onCircleCreated = functions.firestore
       }
 
       try {
-      // Get creator's profile data
-        const userRef = admin.firestore().collection("users").doc(creatorId);
-        const userDoc = await userRef.get();
-
-        let userData = {};
-        if (userDoc.exists()) {
-          userData = userDoc.data();
-        }
-
-        // Create the creator as the first member in the members subcollection
         const memberRef = admin
             .firestore()
             .collection("circles")
@@ -659,11 +654,24 @@ exports.onCircleCreated = functions.firestore
             .collection("members")
             .doc(creatorId);
 
+        // Both apps add the creator themselves; only fill in when missing so
+        // this trigger never overwrites their member doc.
+        const existingMember = await memberRef.get();
+        if (existingMember.exists) {
+          return;
+        }
+
+        const userRef = admin.firestore().collection("users").doc(creatorId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+
         await memberRef.set({
           email: userData.email || "",
           isAdmin: true,
-          photoURL: userData.profilePicture || "",
-          username: userData.displayName || "Unknown User",
+          isOwner: true,
+          photoURL:
+            userData.photoUrl || userData.avatarPhoto || "",
+          username: userData.username || "Unknown User",
           joinedAt: admin.firestore.FieldValue.serverTimestamp(),
           userId: creatorId,
         });
