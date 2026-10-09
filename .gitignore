@@ -48,3 +48,6 @@ STRIPE_SETUP.md
 .env
 firebase-debug.log
 .idea/
+
+# Emulator logs
+*-debug.log

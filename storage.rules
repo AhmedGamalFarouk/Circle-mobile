@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Neither app uses Firebase Storage (media goes to Cloudinary), so keep it
+// closed until something needs it.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
