@@ -41,6 +41,7 @@ export const useProfileImages = (userId) => {
             const updateData = {};
             if (imageType === 'avatar') {
                 updateData.avatarPhoto = optimizedUrl;
+                updateData.photoUrl = optimizedUrl; // web reads photoUrl
                 updateData.avatarPhotoPublicId = result.publicId;
             } else if (imageType === 'cover') {
                 updateData.coverPhoto = optimizedUrl;
@@ -88,6 +89,7 @@ export const useProfileImages = (userId) => {
             const updateData = {};
             if (imageType === 'avatar') {
                 updateData.avatarPhoto = PLACEHOLDER_AVATAR_URL;
+                updateData.photoUrl = PLACEHOLDER_AVATAR_URL;
                 updateData.avatarPhotoPublicId = null;
             } else if (imageType === 'cover') {
                 updateData.coverPhoto = PLACEHOLDER_COVER_URL;

@@ -10,7 +10,7 @@ import {
     ScrollView,
 } from "react-native";
 import { useTranslation } from "react-i18next";
-import { doc, updateDoc, serverTimestamp, query, collection, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { db } from "../../../../firebase/config";
 import { useRoute } from "@react-navigation/native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
@@ -63,14 +63,12 @@ export default function EventForm({ event, onClose, circleId }) {
             await updateDoc(eventRef, updateData);
 
             // Update the poll stage to EVENT_CONFIRMED
-            const pollsQuery = query(
-                collection(db, "circles", circleId, "polls"),
-                where("archived", "!=", true)
-            );
-            const pollsSnapshot = await getDocs(pollsQuery);
-            
-            if (!pollsSnapshot.empty) {
-                const activePoll = pollsSnapshot.docs[0];
+            // Polls are created without an `archived` field, and Firestore's
+            // "!=" filter skips documents missing the field, so filter here.
+            const pollsSnapshot = await getDocs(collection(db, "circles", circleId, "polls"));
+            const activePoll = pollsSnapshot.docs.find(pollDoc => !pollDoc.data().archived);
+
+            if (activePoll) {
                 const pollRef = doc(db, "circles", circleId, "polls", activePoll.id);
                 await updateDoc(pollRef, {
                     stage: "Event Confirmed",

@@ -111,11 +111,12 @@ export const circleMembersService = {
             const pollDeletePromises = pollsSnapshot.docs.map(doc => deleteDoc(doc.ref));
             await Promise.all(pollDeletePromises);
 
-            // Delete all messages
-            const messagesRef = collection(db, 'circles', circleId, 'messages');
-            const messagesSnapshot = await getDocs(messagesRef);
-            const messageDeletePromises = messagesSnapshot.docs.map(doc => deleteDoc(doc.ref));
-            await Promise.all(messageDeletePromises);
+            // Delete chat messages, events and memories (chat lives in "chat",
+            // not "messages")
+            for (const subcollection of ['chat', 'events', 'memories']) {
+                const subSnapshot = await getDocs(collection(db, 'circles', circleId, subcollection));
+                await Promise.all(subSnapshot.docs.map(doc => deleteDoc(doc.ref)));
+            }
 
             // Delete all join requests
             const requestsRef = collection(db, 'circleRequests');
