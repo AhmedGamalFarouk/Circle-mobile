@@ -94,9 +94,38 @@ describe("circles", () => {
     await assertSucceeds(deleteDoc(doc(db, `circles/${CIRCLE}/chat/m1`)));
     await assertSucceeds(deleteDoc(doc(db, `circles/${CIRCLE}`)));
   });
-  it("users join as plain members, never as admin", async () => {
-    await assertSucceeds(setDoc(doc(as("eve"), `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve" }));
-    await assertFails(setDoc(doc(as("eve"), `circles/${CIRCLE}/members/eve2`), { isAdmin: false }));
+  it("users join only by accepting their own pending invitation, never as admin", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "circleRequests/inv-eve"), { circleId: CIRCLE, type: "invitation", invitedUserId: "eve", inviterId: "bob", status: "pending" });
+      await setDoc(doc(db, "circleRequests/inv-mod"), { circleId: CIRCLE, type: "invitation", invitedUserId: "mod", inviterId: "bob", status: "pending" });
+      await setDoc(doc(db, "circleRequests/inv-old"), { circleId: CIRCLE, type: "invitation", invitedUserId: "eve", inviterId: "bob", status: "declined" });
+    });
+    const db = as("eve");
+    // No invitation, someone else's, a join request, an answered one: refused.
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve" }));
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve", invitationId: "inv-mod" }));
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve", invitationId: "r1" }));
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve", invitationId: "inv-old" }));
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: true, userId: "eve", invitationId: "inv-eve" }));
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve2`), { isAdmin: false, invitationId: "inv-eve" }));
+    await assertSucceeds(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve", invitationId: "inv-eve" }));
+  });
+  it("an invitation to one circle can't be redirected to another", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      const db = ctx.firestore();
+      await setDoc(doc(db, "circles/open"), { circleName: "O", createdBy: "eve", circlePrivacy: "public" });
+      await setDoc(doc(db, "circles/open/members/eve"), { isAdmin: true, isOwner: true });
+    });
+    const db = as("eve");
+    const inv = await addDoc(collection(db, "circleRequests"), { circleId: "open", type: "invitation", invitedUserId: "eve", inviterId: "eve", status: "pending" });
+    await assertFails(updateDoc(inv, { circleId: CIRCLE }));
+    await assertFails(updateDoc(doc(db, "circleRequests/r1"), { type: "invitation" }));
+    await assertFails(setDoc(doc(db, `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve", invitationId: inv.id }));
+    await assertSucceeds(updateDoc(inv, { status: "declined" }));
+  });
+  it("admins add anyone who asked to join", async () => {
+    await assertSucceeds(setDoc(doc(as("owner"), `circles/${CIRCLE}/members/eve`), { isAdmin: false, userId: "eve" }));
   });
   it("members cannot promote themselves; admins can promote", async () => {
     await assertFails(updateDoc(doc(as("bob"), `circles/${CIRCLE}/members/bob`), { isAdmin: true }));
