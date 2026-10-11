@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../../firebase/config';
+import { DEMO_EMAIL, DEMO_PASSWORD } from '../../../utils/demoAccount';
 import { COLORS } from '../../../constants/constants';
 import {
   AuthContainer,
@@ -84,7 +85,7 @@ const SignInScreen = ({ navigation }) => {
   const handleSkip = async () => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, 'ahmedgamal5565@gmail.com', '123456');
+      await signInWithEmailAndPassword(auth, DEMO_EMAIL, DEMO_PASSWORD);
       navigation.navigate('Main', { screen: 'Home' });
     } catch (error) {
       Alert.alert('Skip Sign In Failed', error.message);

@@ -1,7 +1,7 @@
 import {
     collection,
-    addDoc,
     doc,
+    setDoc,
     getDoc,
     serverTimestamp,
     query,
@@ -44,7 +44,9 @@ export const circleMembersService = {
                 addedBy: 'join_request'
             };
 
-            await addDoc(membersRef, memberData);
+            // Member docs are keyed by uid: the security rules look members up
+            // by circles/{circleId}/members/{uid}.
+            await setDoc(doc(membersRef, userId), memberData);
 
             // Update user stats using single source of truth
             const { joinCircle } = await import('../utils/userStatsManager');
@@ -364,7 +366,7 @@ export const circleMembersService = {
                 addedBy: 'circle_creation'
             };
 
-            await addDoc(collection(db, 'circles', circleId, 'members'), memberData);
+            await setDoc(doc(db, 'circles', circleId, 'members', userId), memberData);
 
             // Update user stats using single source of truth
             const { joinCircle } = await import('../utils/userStatsManager');
@@ -406,7 +408,7 @@ export const circleMembersService = {
                 addedBy: 'auto_fix'
             };
 
-            await addDoc(membersRef, memberData);
+            await setDoc(doc(membersRef, creatorId), memberData);
 
             return { success: true, message: 'Creator added as admin member' };
         } catch (error) {
