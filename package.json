@@ -4,6 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "npx expo start",
+    "test": "node --test src/shared/schema.test.mjs",
+    "check:schema": "node scripts/sync-schema.mjs --check",
     "android": "npx expo run:android",
     "ios": "npx expo run:ios",
     "web": "npx expo start --web"
