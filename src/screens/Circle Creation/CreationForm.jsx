@@ -65,25 +65,22 @@ const CreationForm = ({ navigation }) => {
 
     const handleCreate = async () => {
         if (!user) {
-            alert("Please log in to create a circle."); // Provide UI feedback
+            Alert.alert('Not signed in', 'Please log in to create a circle.');
             return;
         }
-        if (description.trim() === '') {
-            Alert.alert('Description required', 'Please add a description for your circle.');
+        const missing = [
+            circleName.trim() === '' && '• a name',
+            description.trim() === '' && '• a description',
+            interests.length === 0 && '• at least one interest',
+            circleType === 'flash' && !expiresAt && '• an expiration date (Flash circles)',
+        ].filter(Boolean);
+        if (missing.length > 0) {
+            Alert.alert('Missing information', `Your circle still needs:\n${missing.join('\n')}`);
             return;
         }
-        if (interests.length === 0) {
-            Alert.alert('Interests required', 'Please add at least one interest to create your circle.');
-            return;
-        }
-        
+
         // Validate Flash circle expiration date
         if (circleType === 'flash') {
-            if (!expiresAt) {
-                Alert.alert('Expiration Date Required', 'Please select an expiration date for your Flash circle.');
-                return;
-            }
-            
             const now = new Date();
             const minDate = new Date(now.getTime() + 60 * 60 * 1000); // At least 1 hour from now
             
@@ -353,8 +350,8 @@ const CreationForm = ({ navigation }) => {
                         styles.fullWidthButton,
                         { backgroundColor: isCreateDisabled ? colorVars.disabled : colorVars.primary }
                     ]}
+                    // Not disabled when incomplete: the tap shows which field is missing.
                     onPress={handleCreate}
-                    disabled={isCreateDisabled}
                 >
                     <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>{t('circleCreation.createCircle')}</Text>
                 </TouchableOpacity>
