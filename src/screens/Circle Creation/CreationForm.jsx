@@ -127,7 +127,6 @@ const CreationForm = ({ navigation }) => {
             // Create members subcollection and add creator as first member (owner)
             const memberRef = doc(db, 'circles', circleRef.id, 'members', user.uid);
             await setDoc(memberRef, {
-                email: userProfile?.email || user.email || '',
                 isAdmin: true,
                 isOwner: true,
                 photoURL: userProfile?.avatarPhoto || user.photoURL || '',

@@ -15,6 +15,7 @@ import useUserProfile from '../../hooks/useUserProfile';
 import useCircleMembers from '../../hooks/useCircleMembers';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { getWinningOption } from '../../shared/schema.mjs';
 
 const PLANNING_STAGES = {
     IDLE: 'Idle',
@@ -209,6 +210,7 @@ const CircleScreen = () => {
                 await addDoc(pollRef, {
                     stage: PLANNING_STAGES.PLANNING_ACTIVITY,
                     activityPoll: { ...pollDataWithTimestamp, votes: {} },
+                    createdBy: user.uid,
                     timeStamp: serverTimestamp(),
                 });
 
@@ -355,32 +357,6 @@ const CircleScreen = () => {
         } catch (error) {
             console.error('Error finishing voting:', error);
         }
-    };
-
-    const getWinningOption = (votes) => {
-        if (!votes || Object.keys(votes).length === 0) {
-            console.warn('No votes to count');
-            return null;
-        }
-
-        const voteCounts = Object.values(votes).reduce((acc, option) => {
-            if (option && typeof option === 'string') {
-                acc[option] = (acc[option] || 0) + 1;
-            }
-            return acc;
-        }, {});
-
-        const options = Object.keys(voteCounts);
-        if (options.length === 0) {
-            console.warn('No valid votes found');
-            return null;
-        }
-
-        const winner = options.reduce((a, b) =>
-            voteCounts[a] > voteCounts[b] ? a : b
-        );
-
-        return winner;
     };
 
     const handleRsvp = async (status) => {

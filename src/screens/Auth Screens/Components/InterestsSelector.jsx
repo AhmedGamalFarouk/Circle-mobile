@@ -73,7 +73,7 @@ const InterestsSelector = ({ selectedInterests, onInterestsChange }) => {
                 <Ionicons
                     name="heart-outline"
                     size={20}
-                    color={isExpanded ? COLORS.primary : COLORS.text}
+                    color={isExpanded ? COLORS.primary : COLORS.placeholderText}
                     style={{ marginRight: 12 }}
                 />
                 <Text style={[styles.input, { paddingVertical: 18 }]}>
@@ -85,7 +85,7 @@ const InterestsSelector = ({ selectedInterests, onInterestsChange }) => {
                 <Ionicons
                     name={isExpanded ? "chevron-up" : "chevron-down"}
                     size={20}
-                    color={COLORS.text}
+                    color={COLORS.placeholderText}
                 />
             </TouchableOpacity>
 
@@ -175,7 +175,7 @@ const styles = {
         borderColor: COLORS.primary,
     },
     interestChipText: {
-        color: COLORS.text,
+        color: COLORS.light,
         fontSize: 14,
         fontFamily: FONTS.body,
         textAlign: 'center',
