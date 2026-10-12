@@ -185,6 +185,40 @@ describe("circleRequests", () => {
   });
 });
 
+describe("private docs", () => {
+  it("only the owner reads and writes users/{uid}/private/*", async () => {
+    await assertSucceeds(setDoc(doc(as("bob"), "users/bob/private/moderation"), { blockedUsers: ["eve"] }));
+    await assertSucceeds(getDoc(doc(as("bob"), "users/bob/private/moderation")));
+    await assertFails(getDoc(doc(as("eve"), "users/bob/private/moderation")));
+    await assertFails(setDoc(doc(as("eve"), "users/bob/private/profile"), { dateOfBirth: "2000-01-01" }));
+    await assertFails(getDoc(doc(anon(), "users/bob/private/profile")));
+  });
+});
+
+describe("reports", () => {
+  const report = (extra = {}) => ({ reporterId: "eve", reportedId: "bob", reason: "spam", createdAt: serverTimestamp(), ...extra });
+  it("a user files a report about someone else", async () => {
+    await assertSucceeds(addDoc(collection(as("eve"), "reports"), report()));
+    await assertSucceeds(addDoc(collection(as("eve"), "reports"), report({ circleId: CIRCLE, messageId: "m1" })));
+  });
+  it("rejects forged, self, malformed and back-dated reports", async () => {
+    await assertFails(addDoc(collection(as("eve"), "reports"), report({ reporterId: "bob", reportedId: "owner" })));
+    await assertFails(addDoc(collection(as("eve"), "reports"), report({ reportedId: "eve" })));
+    await assertFails(addDoc(collection(as("eve"), "reports"), report({ extra: 1 })));
+    await assertFails(addDoc(collection(as("eve"), "reports"), report({ reason: "" })));
+    await assertFails(addDoc(collection(as("eve"), "reports"), report({ reason: "x".repeat(501) })));
+    await assertFails(addDoc(collection(as("eve"), "reports"), report({ createdAt: new Date(2020, 0, 1) })));
+    const { reason, ...noReason } = report();
+    await assertFails(addDoc(collection(as("eve"), "reports"), noReason));
+  });
+  it("only app admins read reports", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "reports/r1"), { reporterId: "eve", reportedId: "bob", reason: "x" }));
+    await assertFails(getDoc(doc(as("eve"), "reports/r1")));
+    await assertFails(getDocs(collection(as("bob"), "reports")));
+    await assertSucceeds(getDoc(doc(as("mod"), "reports/r1")));
+  });
+});
+
 describe("presence (Realtime Database)", () => {
   it("users write only their own presence; signed-in users read all", async () => {
     const bob = env.authenticatedContext("bob").database();
