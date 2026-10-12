@@ -65,7 +65,11 @@ const CreationForm = ({ navigation }) => {
 
     const handleCreate = async () => {
         if (!user) {
-            alert("Please log in to create a circle."); // Provide UI feedback
+            Alert.alert('Not signed in', 'Please log in to create a circle.');
+            return;
+        }
+        if (circleName.trim() === '') {
+            Alert.alert('Name required', 'Please give your circle a name.');
             return;
         }
         if (description.trim() === '') {
@@ -354,8 +358,8 @@ const CreationForm = ({ navigation }) => {
                         styles.fullWidthButton,
                         { backgroundColor: isCreateDisabled ? colorVars.disabled : colorVars.primary }
                     ]}
+                    // Not disabled when incomplete: the tap shows which field is missing.
                     onPress={handleCreate}
-                    disabled={isCreateDisabled}
                 >
                     <Text style={[styles.fullWidthButtonText, { color: colorVars.background }]}>{t('circleCreation.createCircle')}</Text>
                 </TouchableOpacity>
