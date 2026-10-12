@@ -89,36 +89,6 @@ export const isUserBlocked = async (userId) => {
 };
 
 /**
- * Gets user's friends list
- * @param {string} userId - The user's ID
- * @returns {Array} Array of friend user IDs
- */
-export const getUserFriends = async (userId) => {
-    try {
-        const profile = await getUserProfile(userId);
-        return profile.friends || [];
-    } catch (error) {
-        console.error('Error getting user friends:', error);
-        return [];
-    }
-};
-
-/**
- * Gets user's friend requests
- * @param {string} userId - The user's ID
- * @returns {Object} Object with sent and received friend requests
- */
-export const getUserFriendRequests = async (userId) => {
-    try {
-        const profile = await getUserProfile(userId);
-        return profile.friendRequests || { sent: [], received: [] };
-    } catch (error) {
-        console.error('Error getting user friend requests:', error);
-        return { sent: [], received: [] };
-    }
-};
-
-/**
  * Gets user's joined circles
  * @param {string} userId - The user's ID
  * @returns {Array} Array of joined circle IDs

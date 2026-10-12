@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; // Import doc and setDoc
 import { auth, db } from '../../../firebase/config'; // Import auth and db
+import { ageFrom } from '../../../shared/schema.mjs';
 import { validateUsername, isUsernameUnique } from '../../../utils/userValidation'; // Import username validation
 import useCurrentLocation from '../../../hooks/useCurrentLocation'; // Import the hook
 import {
@@ -116,15 +117,12 @@ const SignUpScreen = () => {
         avatarPhoto: '', // Placeholder for profile image
         coverPhoto: '', // Placeholder for cover image
         bio: '', // Placeholder for bio
-        dateOfBirth: dateOfBirth.toISOString(), // Store as ISO string
+        age: ageFrom(dateOfBirth), // The birth date itself is private (below)
         location: locationText,
         interests: selectedInterests, // Store selected interests
-        createdAt: new Date().toISOString(), // Account creation timestamp
-        friends: [], // Empty friends array
-        friendRequests: {
-          sent: [],
-          received: []
-        },
+        createdAt: new Date(), // Stored as a Timestamp, like web
+        connections: [],
+        connectionRequests: [],
         joinedCircles: [], // Empty joined circles array
         joinedEvents: [], // Empty joined events array
         stats: {
@@ -134,6 +132,12 @@ const SignUpScreen = () => {
         },
         reported: 0, // No reports initially
         isBlocked: false // Not blocked initially
+      });
+
+      // Only the user can read users/{uid}/private/*. Local date, so no time-zone shift.
+      const y = dateOfBirth.getFullYear(), m = dateOfBirth.getMonth() + 1, d = dateOfBirth.getDate();
+      await setDoc(doc(db, 'users', user.uid, 'private', 'profile'), {
+        dateOfBirth: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
       });
 
       Alert.alert("Success", "Account created successfully!");

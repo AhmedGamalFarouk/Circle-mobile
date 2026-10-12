@@ -36,7 +36,6 @@ export const circleMembersService = {
             const memberData = {
                 userId,
                 username: userData.displayName || userData.username || userData.name || 'Unknown User',
-                email: userData.email || '',
                 photoURL: userData.photoURL || userData.avatar || '',
                 isAdmin: false,
                 isOwner: false,
@@ -358,7 +357,6 @@ export const circleMembersService = {
             const memberData = {
                 userId,
                 username: userData.displayName || userData.username || userData.name || 'Unknown User',
-                email: userData.email || '',
                 photoURL: userData.photoURL || userData.avatar || '',
                 isAdmin: true,
                 isOwner: true,
@@ -400,7 +398,6 @@ export const circleMembersService = {
             const memberData = {
                 userId: creatorId,
                 username: userData.displayName || userData.username || userData.name || 'Unknown User',
-                email: userData.email || '',
                 photoURL: userData.photoURL || userData.avatar || '',
                 isAdmin: true,
                 isOwner: true,
