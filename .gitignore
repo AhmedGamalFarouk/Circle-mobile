@@ -51,3 +51,9 @@ firebase-debug.log
 
 # Emulator logs
 *-debug.log
+
+# Data exports from scripts/reset-data.mjs (contain personal data)
+reset-backup-*.json
+# Service-account keys for the admin scripts (never commit)
+*service-account*.json
+*-firebase-adminsdk-*.json

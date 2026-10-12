@@ -25,6 +25,9 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: npm test
+      # scripts/reset-data.mjs against the emulators, using the firebase-tools above
+      - run: npm ci --prefix ../scripts
+      - run: npm test --prefix ../scripts
 
   functions-lint:
     runs-on: ubuntu-latest

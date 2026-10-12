@@ -1,0 +1,11 @@
+{
+  "name": "circle-scripts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "cd ../rules-tests && npx firebase emulators:exec --config ../scripts/firebase.json --only auth,firestore --project demo-circle \"node --test ../scripts/reset-data.test.mjs\""
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  }
+}
