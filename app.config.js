@@ -33,7 +33,6 @@ export default {
       eas: {
         projectId: "55e87d87-070f-49de-9af1-41160bd0bcc9"
       },
-      aiSuggestOptionsKey: process.env.AI_SUGGEST_OPTIONS_KEY,
     },
   },
 };

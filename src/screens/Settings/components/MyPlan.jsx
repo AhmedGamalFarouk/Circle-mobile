@@ -1,10 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { RADII } from '../../../constants/constants';
 import { useTheme } from '../../../context/ThemeContext';
-import { SUBSCRIPTION_PLANS } from '../../../config/stripe';
-import StripePayment from '../../../components/StripePayment';
-import stripeService from '../../../services/stripeService';
 
 const plans = [
     {
@@ -35,50 +32,16 @@ const plans = [
 
 const MyPlan = () => {
     const { colors } = useTheme();
-    const [selectedPlan, setSelectedPlan] = useState('Free');
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [selectedPlanForPayment, setSelectedPlanForPayment] = useState(null);
-    const [customerId, setCustomerId] = useState('customer_123'); // Replace with actual user's customer ID
-
-    const handlePlanSelect = (planName) => {
-        setSelectedPlan(planName);
-
-        // If it's not the Free plan, show payment modal
-        if (planName !== 'Free') {
-            const plan = SUBSCRIPTION_PLANS[planName.toUpperCase()];
-            if (plan) {
-                setSelectedPlanForPayment(plan);
-                setShowPaymentModal(true);
-            }
-        }
-    };
-
-    const handlePaymentSuccess = (subscriptionId, plan) => {
-        setSelectedPlan(plan.name);
-        setShowPaymentModal(false);
-        Alert.alert(
-            'Subscription Activated!',
-            `Your ${plan.name} plan is now active.`,
-            [{ text: 'OK' }]
-        );
-    };
-
-    const handlePaymentFailure = (error) => {
-        console.error('Payment failed:', error);
-        setShowPaymentModal(false);
-    };
-
-    const handleCancelPayment = () => {
-        setShowPaymentModal(false);
-        setSelectedPlanForPayment(null);
-    };
+    // Billing is deferred: nothing records a purchase yet, so everyone is on
+    // Free and paid plans can't be bought.
+    const selectedPlan = 'Free';
 
     return (
         <View style={styles.container}>
             <Text style={[styles.title, { color: colors.primary }]}>My Plan</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Choose the plan that fits your needs</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Paid plans are coming soon</Text>
             {plans.map((plan, index) => (
-                <TouchableOpacity
+                <View
                     key={index}
                     style={[
                         styles.planContainer,
@@ -94,7 +57,6 @@ const MyPlan = () => {
                             }
                         ]
                     ]}
-                    onPress={() => handlePlanSelect(plan.name)}
                 >
                     <View style={styles.planHeader}>
                         <Text style={[
@@ -123,28 +85,11 @@ const MyPlan = () => {
                         { color: colors.accent },
                         selectedPlan === plan.name && [styles.selectedPrice, { color: colors.primary }]
                     ]}>
-                        {plan.price}
+                        {plan.name === 'Free' ? plan.price : `${plan.price} · Coming soon`}
                     </Text>
-                </TouchableOpacity>
+                </View>
             ))}
 
-            {/* Payment Modal */}
-            <Modal
-                visible={showPaymentModal}
-                animationType="slide"
-                presentationStyle="pageSheet"
-                onRequestClose={handleCancelPayment}
-            >
-                {selectedPlanForPayment && (
-                    <StripePayment
-                        plan={selectedPlanForPayment}
-                        customerId={customerId}
-                        onPaymentSuccess={handlePaymentSuccess}
-                        onPaymentFailure={handlePaymentFailure}
-                        onCancel={handleCancelPayment}
-                    />
-                )}
-            </Modal>
         </View>
     );
 };

@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../context/ThemeContext';
 import { RADII } from '../../../../constants/constants';
-import { getAiPollOptions } from '../../../../services/aiSuggestOptions';
 
 const SimplePollCreation = ({ onLaunchPoll, pollType, onClose, circle }) => {
     const { colors } = useTheme();
     const [question, setQuestion] = useState('');
     const [options, setOptions] = useState(['', '']);
     const [deadline, setDeadline] = useState('24');
-    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
 
     console.log('SimplePollCreation: Rendering with pollType:', pollType);
     console.log('SimplePollCreation: Circle data:', circle);
@@ -32,35 +30,6 @@ const SimplePollCreation = ({ onLaunchPoll, pollType, onClose, circle }) => {
         const newOptions = [...options];
         newOptions[index] = value;
         setOptions(newOptions);
-    };
-
-    const handleAiSuggestions = async () => {
-        if (!circle?.interests || circle.interests.length === 0) {
-            Alert.alert('Error', 'This circle has no interests to base suggestions on');
-            return;
-        }
-
-        setIsLoadingSuggestions(true);
-        try {
-            // Create a prompt based on circle interests
-            const interestsText = circle.interests.join(', ');
-            const prompt = `Generate 3 activity options for a group interested in: ${interestsText}`;
-            
-            const aiOptions = await getAiPollOptions(prompt);
-            
-            if (aiOptions && aiOptions.length > 0) {
-                // Take only the first 3 options and clear existing options
-                const threeOptions = aiOptions.slice(0, 3);
-                setOptions(threeOptions);
-            } else {
-                Alert.alert('Error', 'Failed to get AI suggestions. Please try again.');
-            }
-        } catch (error) {
-            console.error('AI suggestion error:', error);
-            Alert.alert('Error', 'Failed to get AI suggestions. Please try again.');
-        } finally {
-            setIsLoadingSuggestions(false);
-        }
     };
 
     const handleLaunchPoll = () => {
@@ -122,26 +91,6 @@ const SimplePollCreation = ({ onLaunchPoll, pollType, onClose, circle }) => {
                         onChangeText={setQuestion}
                         multiline
                     />
-
-                    {/* AI Suggestions Button - Only show for activity polls */}
-                    {pollType === 'activity' && circle?.interests && circle.interests.length > 0 && (
-                        <TouchableOpacity 
-                            style={styles.aiSuggestButton} 
-                            onPress={handleAiSuggestions}
-                            disabled={isLoadingSuggestions}
-                        >
-                            {isLoadingSuggestions ? (
-                                <ActivityIndicator size="small" color={colors.background} />
-                            ) : (
-                                <Ionicons name="sparkles" size={20} color={colors.background} />
-                            )}
-                            <Text style={styles.aiSuggestButtonText}>
-                                {isLoadingSuggestions ? 'Getting Suggestions...' : 'AI Suggestions'}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-
-                   
 
                     <Text style={styles.sectionTitle}>Options:</Text>
                     {options.map((option, index) => (
@@ -233,21 +182,6 @@ const getStyles = (colors) => StyleSheet.create({
         minHeight: 50,
         borderWidth: 1,
         borderColor: colors.border,
-    },
-    aiSuggestButton: {
-        backgroundColor: colors.primary,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 15,
-        borderRadius: RADII.medium,
-        marginBottom: 20,
-        gap: 10,
-    },
-    aiSuggestButtonText: {
-        color: colors.background,
-        fontSize: 16,
-        fontWeight: 'bold',
     },
     interestsInfo: {
         backgroundColor: colors.background + '20',
