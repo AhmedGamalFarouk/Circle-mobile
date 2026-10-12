@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Linking, Text, View } from 'react-native';
+import { Alert, Linking, Platform, Text, View } from 'react-native';
 import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
@@ -164,6 +164,16 @@ const SignUpScreen = () => {
           : [{ text: 'Cancel', style: 'cancel' }, { text: 'Open Settings', onPress: () => Linking.openSettings() }]
       );
       return;
+    }
+    // Permission alone isn't enough when the phone's location switch is off;
+    // on Android, show the system "turn on location" dialog.
+    if (!(await Location.hasServicesEnabledAsync()) && Platform.OS === 'android') {
+      try {
+        await Location.enableNetworkProviderAsync();
+      } catch {
+        Alert.alert('Location is off', 'Turn on location for your phone, or type your city in.');
+        return;
+      }
     }
     await getCurrentLocation();
   };

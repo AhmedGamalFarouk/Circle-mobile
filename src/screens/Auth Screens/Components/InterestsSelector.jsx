@@ -175,7 +175,7 @@ const styles = {
         borderColor: COLORS.primary,
     },
     interestChipText: {
-        color: COLORS.text,
+        color: COLORS.light,
         fontSize: 14,
         fontFamily: FONTS.body,
         textAlign: 'center',
