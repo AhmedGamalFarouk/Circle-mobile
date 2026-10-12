@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Linking, Text, View } from 'react-native';
+import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; // Import doc and setDoc
 import { auth, db } from '../../../firebase/config'; // Import auth and db
 import { ageFrom } from '../../../shared/schema.mjs';
-import { validateUsername, isUsernameUnique } from '../../../utils/userValidation'; // Import username validation
+import { validateUsername } from '../../../utils/userValidation';
 import useCurrentLocation from '../../../hooks/useCurrentLocation'; // Import the hook
 import {
   AuthContainer,
@@ -43,7 +44,7 @@ const SignUpScreen = () => {
 
     setIsCheckingUsername(true);
     try {
-      const validation = await validateUsername(usernameToCheck);
+      const validation = await validateUsername(usernameToCheck, { checkAvailability: !!auth.currentUser });
       setUsernameValidation(validation);
     } catch (error) {
       setUsernameValidation({ isValid: false, error: 'Error checking username' });
@@ -94,20 +95,23 @@ const SignUpScreen = () => {
     }
 
     try {
-      // Validate username format and uniqueness
-      // Use cached validation if available and current, otherwise validate again
-      let currentUsernameValidation = usernameValidation;
-      if (usernameValidation.isValid === null || isCheckingUsername) {
-        currentUsernameValidation = await validateUsername(username);
-      }
-
-      if (!currentUsernameValidation.isValid) {
-        Alert.alert("Username Error", currentUsernameValidation.error);
+      const format = await validateUsername(username, { checkAvailability: false });
+      if (!format.isValid) {
+        Alert.alert("Username Error", format.error);
         return;
       }
 
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      // Profiles can only be queried once signed in, so check availability now
+      // and undo the account if the name is taken (same as web).
+      const availability = await validateUsername(username);
+      if (!availability.isValid) {
+        await user.delete();
+        Alert.alert("Username Error", availability.error);
+        return;
+      }
 
       // Save user profile data to Firestore
       await setDoc(doc(db, 'users', user.uid), {
@@ -148,6 +152,19 @@ const SignUpScreen = () => {
   };
 
   const handleGetLocation = async () => {
+    const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert(
+        'Location permission needed',
+        canAskAgain
+          ? 'Allow location access to fill in your city, or type it in.'
+          : 'Location access is turned off for this app. Turn it on in Settings, or type your city in.',
+        canAskAgain
+          ? [{ text: 'OK' }]
+          : [{ text: 'Cancel', style: 'cancel' }, { text: 'Open Settings', onPress: () => Linking.openSettings() }]
+      );
+      return;
+    }
     await getCurrentLocation();
   };
 
@@ -183,7 +200,7 @@ const SignUpScreen = () => {
             </Text>
           ) : usernameValidation.isValid === true ? (
             <Text style={{ color: '#4CAF50', fontSize: 12 }}>
-              ✓ Username is available
+              {usernameValidation.availabilityChecked === false ? '✓ Username looks good' : '✓ Username is available'}
             </Text>
           ) : usernameValidation.isValid === false ? (
             <Text style={{ color: '#ff6b6b', fontSize: 12 }}>
@@ -216,6 +233,12 @@ const SignUpScreen = () => {
         placeholder="Enter your location"
       />
 
+      {locationErrorMsg && (
+        <Text style={{ color: '#ff6b6b', fontSize: 12, marginBottom: 16, marginTop: -8 }}>
+          {locationErrorMsg}
+        </Text>
+      )}
+
       <InterestsSelector
         selectedInterests={selectedInterests}
         onInterestsChange={setSelectedInterests}
@@ -240,18 +263,6 @@ const SignUpScreen = () => {
         toggleShowPassword={() => setShowConfirmPassword(!showConfirmPassword)}
         icon="lock-closed-outline"
       />
-
-      {locationErrorMsg && (
-        <Text style={{
-          color: '#ff6b6b',
-          fontSize: 14,
-          marginBottom: 16,
-          textAlign: 'center',
-          fontStyle: 'italic'
-        }}>
-          {locationErrorMsg}
-        </Text>
-      )}
 
       <View style={styles.buttonSection}>
         <SubmitButton title="Create Account" onPress={handleSignUp} />

@@ -12,7 +12,8 @@ export const AuthContainer = ({ children, scrollable = false }) => {
         return (
             <KeyboardAvoidingView
                 style={styles.keyboardContainer}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                // Android is edge-to-edge (app.json), so the window no longer resizes for the keyboard.
+                behavior="padding"
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
             >
                 <ScrollView
@@ -75,7 +76,7 @@ export const AuthInput = ({
                 <Ionicons
                     name={icon}
                     size={20}
-                    color={isFocused ? COLORS.primary : COLORS.text}
+                    color={isFocused ? COLORS.primary : COLORS.placeholderText}
                     style={{ marginRight: 12 }}
                 />
             )}
@@ -100,7 +101,7 @@ export const AuthInput = ({
                     <Ionicons
                         name={showPassword ? 'eye-off' : 'eye'}
                         size={20}
-                        color={COLORS.text}
+                        color={COLORS.placeholderText}
                     />
                 </TouchableOpacity>
             )}
@@ -162,7 +163,7 @@ export const DateOfBirthInput = ({ value, onChange, placeholder = "Date of Birth
                 <Ionicons
                     name="calendar-outline"
                     size={20}
-                    color={isFocused ? COLORS.primary : COLORS.text}
+                    color={isFocused ? COLORS.primary : COLORS.placeholderText}
                     style={{ marginRight: 12 }}
                 />
                 <Text style={[styles.input, { paddingVertical: 18 }]}>
@@ -171,7 +172,7 @@ export const DateOfBirthInput = ({ value, onChange, placeholder = "Date of Birth
                 <Ionicons
                     name="chevron-down"
                     size={20}
-                    color={COLORS.text}
+                    color={COLORS.placeholderText}
                 />
             </TouchableOpacity>
             {showPicker && (
@@ -205,7 +206,7 @@ export const LocationInput = ({
                 <Ionicons
                     name="location-outline"
                     size={20}
-                    color={isFocused ? COLORS.primary : COLORS.text}
+                    color={isFocused ? COLORS.primary : COLORS.placeholderText}
                     style={{ marginRight: 12 }}
                 />
                 <TextInput

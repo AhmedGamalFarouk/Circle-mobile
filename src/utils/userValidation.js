@@ -29,11 +29,13 @@ export const isUsernameUnique = async (username) => {
 };
 
 /**
- * Validate username format and uniqueness
+ * Validate username format and uniqueness. Signed-out users can't query
+ * profiles (rules), so sign-up checks the format first and availability after
+ * the account exists, with checkAvailability: false before that.
  * @param {string} username - The username to validate
- * @returns {Promise<{isValid: boolean, error?: string}>}
+ * @returns {Promise<{isValid: boolean, error?: string, availabilityChecked?: boolean}>}
  */
-export const validateUsername = async (username) => {
+export const validateUsername = async (username, { checkAvailability = true } = {}) => {
     const trimmedUsername = username.trim();
 
     // Check if username is empty
@@ -59,6 +61,10 @@ export const validateUsername = async (username) => {
     // Check if username starts with a letter or number (not underscore)
     if (trimmedUsername.startsWith('_')) {
         return { isValid: false, error: 'Username cannot start with an underscore.' };
+    }
+
+    if (!checkAvailability) {
+        return { isValid: true, availabilityChecked: false };
     }
 
     try {
