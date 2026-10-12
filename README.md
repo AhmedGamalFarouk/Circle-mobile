@@ -192,6 +192,8 @@ cd functions && npm run serve
 
 ## 📊 Database Structure
 
+Field shapes shared with the web app live in `src/shared/schema.mjs`, a copy of the web repo's file pinned by `src/shared/schema.sha`. Don't edit it here: change the web copy, merge it, then run `node scripts/sync-schema.mjs <web merge commit sha>`. CI (`npm run check:schema`) fails if the copy drifts.
+
 ### Users Collection
 ```javascript
 {
