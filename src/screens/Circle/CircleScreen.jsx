@@ -53,12 +53,14 @@ const CircleScreen = () => {
     useEffect(() => {
         const fetchCircleData = async () => {
             const docRef = doc(db, "circles", circleId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const circleData = { id: docSnap.id, ...docSnap.data() };
-                setCircle(circleData);
-            } else {
-                // No such document, handle accordingly (e.g., navigate back or show error)
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setCircle({ id: docSnap.id, ...docSnap.data() });
+                }
+            } catch (error) {
+                // A private circle you're no longer in is unreadable; checkMembership shows the alert.
+                console.warn('Circle not readable:', error.message);
             }
         };
 

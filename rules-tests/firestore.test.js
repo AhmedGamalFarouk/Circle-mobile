@@ -238,6 +238,90 @@ describe("reports", () => {
   });
 });
 
+describe("B2 restrictive rules", () => {
+  const DEMO_EMAIL = "demo@circle-26a87.firebaseapp.com";
+  const seed = (path, data) => env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), path), data));
+
+  it("private circles are readable only by members and the creator", async () => {
+    await seed("circles/pub", { circleName: "P", createdBy: "owner", circlePrivacy: "public" });
+    await seed("circles/mine", { circleName: "M", createdBy: "eve", circlePrivacy: "private" });
+    await assertFails(getDoc(doc(as("eve"), `circles/${CIRCLE}`)));
+    await assertSucceeds(getDoc(doc(as("bob"), `circles/${CIRCLE}`)));
+    await assertSucceeds(getDoc(doc(as("eve"), "circles/pub")));
+    // The creator reads their circle before the first member doc exists.
+    await assertSucceeds(getDoc(doc(as("eve"), "circles/mine")));
+    // A missing circle reads as "doesn't exist", not permission denied.
+    const missing = await assertSucceeds(getDoc(doc(as("eve"), "circles/nope")));
+    if (missing.exists()) throw new Error("expected no doc");
+    // The Explore / For You query.
+    await assertSucceeds(getDocs(query(collection(as("eve"), "circles"), where("circlePrivacy", "==", "public"))));
+    await assertFails(getDocs(collection(as("eve"), "circles")));
+  });
+
+  it("a private circle's members are hidden from non-members; a public one's are not", async () => {
+    await seed("circles/pub", { circleName: "P", createdBy: "owner", circlePrivacy: "public" });
+    await seed("circles/pub/members/owner", { userId: "owner", isAdmin: true });
+    await assertFails(getDocs(collection(as("eve"), `circles/${CIRCLE}/members`)));
+    await assertSucceeds(getDocs(collection(as("bob"), `circles/${CIRCLE}/members`)));
+    await assertSucceeds(getDocs(collection(as("eve"), "circles/pub/members")));
+    // The membership check every screen runs still works for a non-member.
+    await assertSucceeds(getDocs(query(collection(as("eve"), `circles/${CIRCLE}/members`), where("userId", "==", "eve"))));
+  });
+
+  it("member docs can't be created for a circle that doesn't exist", async () => {
+    await assertFails(setDoc(doc(as("owner"), "circles/ghost/members/owner"), { userId: "owner", isAdmin: true }));
+  });
+
+  it("members change only their own vote; admins may reset votes", async () => {
+    await seed(`circles/${CIRCLE}/polls/p1`, {
+      stage: "Planning the Activity",
+      activityPoll: { question: "Q", options: [{ text: "A" }, { text: "B" }], votes: { owner: "A" } },
+    });
+    const poll = (uid) => doc(as(uid), `circles/${CIRCLE}/polls/p1`);
+    await assertSucceeds(updateDoc(poll("bob"), { "activityPoll.votes.bob": "B" }));
+    await assertSucceeds(updateDoc(poll("bob"), { "activityPoll.votes.bob": "A" }));
+    await assertFails(updateDoc(poll("bob"), { "activityPoll.votes.owner": "B" }));
+    // Old mobile builds wrote the whole map; that's fine while only their key changes.
+    await assertSucceeds(updateDoc(poll("bob"), { "activityPoll.votes": { owner: "A", bob: "B" } }));
+    await assertFails(updateDoc(poll("bob"), { "activityPoll.votes": { bob: "B" } }));
+    // Stage changes and launching the place poll stay open to members.
+    await assertSucceeds(updateDoc(poll("bob"), { stage: "Planning the Place", placePoll: { question: "Where", options: [], votes: {} } }));
+    await assertSucceeds(updateDoc(poll("bob"), { "placePoll.votes.bob": "Cafe" }));
+    await assertFails(updateDoc(poll("eve"), { "placePoll.votes.eve": "Cafe" }));
+    await assertSucceeds(updateDoc(poll("owner"), { "activityPoll.votes": {} }));
+  });
+
+  it("others add or remove only their own connection entries", async () => {
+    await seed("users/bob", {
+      username: "bob", joinedCircles: [CIRCLE],
+      connections: ["owner"], connectionRequests: [{ uid: "owner", username: "owner" }],
+      friends: [], stats: { connections: 1 },
+    });
+    const bob = (uid) => doc(as(uid), "users/bob");
+    await assertSucceeds(updateDoc(bob("eve"), { connectionRequests: arrayUnion({ uid: "eve", username: "eve", sentAt: new Date() }) }));
+    await assertSucceeds(updateDoc(bob("eve"), { connectionRequests: [{ uid: "owner", username: "owner" }] }));
+    await assertSucceeds(updateDoc(bob("eve"), { connectionRequests: arrayUnion("eve") }));
+    await assertSucceeds(updateDoc(bob("eve"), { connectionRequests: [{ uid: "owner", username: "owner" }] }));
+    await assertFails(updateDoc(bob("eve"), { connectionRequests: [] }));
+    await assertFails(updateDoc(bob("eve"), { connectionRequests: arrayUnion("mod") }));
+    await assertSucceeds(updateDoc(bob("eve"), { connections: ["owner", "eve"], "stats.connections": 2 }));
+    await assertFails(updateDoc(bob("eve"), { connections: ["eve"] }));
+    await assertFails(updateDoc(bob("eve"), { friends: arrayUnion("eve") }));
+  });
+
+  it("the demo profile can't be deleted or have its email or admin flag changed", async () => {
+    await seed("users/demo", { username: "circledemo", email: DEMO_EMAIL, isAdmin: false, bio: "" });
+    await assertSucceeds(updateDoc(doc(as("demo"), "users/demo"), { bio: "hi" }));
+    await assertFails(updateDoc(doc(as("demo"), "users/demo"), { email: "x@example.com" }));
+    await assertFails(deleteDoc(doc(as("demo"), "users/demo")));
+    await assertFails(updateDoc(doc(as("mod"), "users/demo"), { isAdmin: true }));
+    await assertFails(deleteDoc(doc(as("mod"), "users/demo")));
+    await assertSucceeds(updateDoc(doc(as("mod"), "users/demo"), { isBlocked: false }));
+    // Other users can still be deleted by themselves.
+    await assertSucceeds(deleteDoc(doc(as("eve"), "users/eve")));
+  });
+});
+
 describe("presence (Realtime Database)", () => {
   it("users write only their own presence; signed-in users read all", async () => {
     const bob = env.authenticatedContext("bob").database();
