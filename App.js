@@ -6,6 +6,7 @@ import { useTheme } from './src/context/ThemeContext';
 import { COLORS } from './src/constants/constants';
 import { NavigationContainer } from '@react-navigation/native';
 import DynamicNativeStack from './src/navigation/DynamicNativeStack';
+import UpdateGate from './src/components/UpdateGate/UpdateGate';
 
 // Import localization
 import i18n from './src/localization/i18n'; // Import the i18n instance
@@ -20,10 +21,12 @@ const AppContent = () => {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <NavigationContainer>
-          <DynamicNativeStack />
-          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-        </NavigationContainer>
+        <UpdateGate>
+          <NavigationContainer>
+            <DynamicNativeStack />
+          </NavigationContainer>
+        </UpdateGate>
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

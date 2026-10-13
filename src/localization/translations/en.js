@@ -261,6 +261,14 @@ export default {
         eventStartsIn: 'Event starts in {{time}}',
     },
 
+    // Update gate
+    update: {
+        title: 'Update the app',
+        body: 'This version of Circle is no longer supported. Update to keep using it.',
+        button: 'Update',
+        currentVersion: 'Your version: {{version}}',
+    },
+
     // Errors
     errors: {
         networkError: 'Network error. Please check your connection.',

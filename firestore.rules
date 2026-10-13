@@ -181,6 +181,12 @@ service cloud.firestore {
       allow read: if signedIn() && resource.data.userId == request.auth.uid;
     }
 
+    // ---------- app config ----------
+    // config/mobile.minVersion gates old app builds (SPEC C8). Edited in the console.
+    match /config/{docId} {
+      allow read: if signedIn();
+    }
+
     // ---------- reports ----------
     // Written by the reporter, read by app admins in the console.
     match /reports/{reportId} {
