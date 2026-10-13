@@ -261,6 +261,30 @@ export default {
         eventStartsIn: 'Event starts in {{time}}',
     },
 
+    // Account deletion
+    deleteAccount: {
+        title: 'Delete account',
+        settingsDescription: 'Permanently delete your account and data',
+        body: "This removes your profile, photos, memberships, votes, connections and requests. Circles you own go to an admin (or the longest-standing member); circles where you're the only member are deleted. Messages you sent stay in their circles. This can't be undone.",
+        finishTitle: 'Finish deleting your account',
+        finishBody: 'Your profile is already gone, but your sign-in still exists. Enter your password to finish.',
+        demo: "The demo account can't be deleted.",
+        password: 'Password',
+        confirm: 'Delete my account',
+        retry: 'Retry',
+        signOut: 'Sign out instead',
+        wrongPassword: "That password isn't right.",
+        reauthFailed: "Couldn't confirm it's you. Try again.",
+        reauth: 'Please enter your password again.',
+        network: "Couldn't reach the server. Try again.",
+        failedStep: 'Deleting stopped at {{step}}. Nothing is lost; try again.',
+        steps: {
+            ownedCircles: 'your circles', votes: 'your votes', memberships: 'your memberships',
+            relationships: 'your connections', requests: 'your requests and notifications',
+            media: 'your photos', profile: 'your profile', auth: 'your sign-in',
+        },
+    },
+
     // Errors
     errors: {
         networkError: 'Network error. Please check your connection.',

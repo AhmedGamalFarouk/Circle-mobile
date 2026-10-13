@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { useTheme } from '../../context/ThemeContext';
 import { useLocalization } from '../../hooks/useLocalization';
 import { auth } from '../../firebase/config';
+import { DEMO_EMAIL } from '../../utils/demoAccount';
 import SettingsSection from './components/SettingsSection';
 import SelectOption from './components/SelectOption';
 import ActionButton from './components/ActionButton';
@@ -85,6 +86,15 @@ const SettingsScreen = ({ navigation }) => {
                         confirmMessage={t('settings.areYouSureLogout')}
                         onPress={handleLogout}
                     />
+                    {auth.currentUser?.email !== DEMO_EMAIL && (
+                        <ActionButton
+                            title={t('deleteAccount.title')}
+                            description={t('deleteAccount.settingsDescription')}
+                            icon="trash-outline"
+                            variant="danger"
+                            onPress={() => navigation.navigate('DeleteAccount')}
+                        />
+                    )}
                 </SettingsSection>
             </ScrollView>
 
