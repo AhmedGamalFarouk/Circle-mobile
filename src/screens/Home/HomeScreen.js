@@ -1,29 +1,22 @@
 import { StyleSheet, View } from 'react-native'
 import React, { useState } from 'react'
-import { useFocusEffect } from '@react-navigation/native'
 import useAuth from '../../hooks/useAuth'
+import useJoinedCircleIds from '../../hooks/useJoinedCircleIds'
 import { useTheme } from '../../context/ThemeContext'
 import StandardHeader from '../../components/StandardHeader'
 import TabBar from './components/TabBar'
 import MyCirclesTab from './components/MyCirclesTab'
 import ForYouTab from './components/ForYouTab'
-import useExpiredCircleCleanup from '../../hooks/useExpiredCircleCleanup'
 
 
 
 const HomeScreen = ({ navigation }) => {
     const [activeTab, setActiveTab] = useState('myCircles')
+    // Tabs stay mounted after their first visit, so switching keeps loaded pages and scroll position.
+    const [visitedTabs, setVisitedTabs] = useState({ myCircles: true })
     const { user } = useAuth()
     const { colors } = useTheme()
-    const { cleanupExpiredCircles } = useExpiredCircleCleanup()
-
-    // Trigger cleanup when screen comes into focus
-    useFocusEffect(
-        React.useCallback(() => {
-            // Run cleanup when user navigates to home screen
-            cleanupExpiredCircles();
-        }, [cleanupExpiredCircles])
-    );
+    const joined = useJoinedCircleIds(user?.uid)
 
     const tabs = [
         { key: 'myCircles', title: 'My circles' },
@@ -45,22 +38,27 @@ const HomeScreen = ({ navigation }) => {
 
     const handleTabPress = (tabKey) => {
         setActiveTab(tabKey)
+        setVisitedTabs((visited) => ({ ...visited, [tabKey]: true }))
     }
 
-    const renderTabContent = () => {
-        switch (activeTab) {
+    const renderTab = (key) => {
+        switch (key) {
             case 'myCircles':
                 return (
                     <MyCirclesTab
-                        navigation={navigation}
                         onCirclePress={handleCirclePress}
+                        joinedIds={joined.ids}
+                        joinedLoaded={joined.loaded}
+                        joinedError={joined.error}
+                        refreshJoined={joined.refresh}
                     />
                 )
             case 'forYou':
                 return (
                     <ForYouTab
-                        navigation={navigation}
                         onCirclePress={handleCirclePress}
+                        joinedIds={joined.ids}
+                        refreshJoined={joined.refresh}
                     />
                 )
             default:
@@ -83,7 +81,11 @@ const HomeScreen = ({ navigation }) => {
                 tabs={tabs}
             />
 
-            {renderTabContent()}
+            {tabs.map(({ key }) => visitedTabs[key] && (
+                <View key={key} style={[styles.tab, activeTab !== key && styles.hidden]}>
+                    {renderTab(key)}
+                </View>
+            ))}
         </View>
     )
 }
@@ -94,5 +96,11 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingTop: 20,
+    },
+    tab: {
+        flex: 1,
+    },
+    hidden: {
+        display: 'none',
     },
 })

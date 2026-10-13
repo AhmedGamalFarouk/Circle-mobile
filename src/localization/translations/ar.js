@@ -63,6 +63,11 @@ export default {
         recentActivity: 'النشاط الأخير',
         noCircles: 'لا توجد دوائر بعد',
         joinYourFirstCircle: 'انضم لأول دائرة للبدء',
+        loadError: 'تعذّر تحميل الدوائر.',
+        tryAgain: 'حاول مرة أخرى',
+        loadMoreError: 'تعذّر تحميل المزيد من الدوائر.',
+        allCaughtUp: 'لقد شاهدت كل الدوائر',
+        moreCircles: '{{count}} دائرة إضافية',
     },
 
     // Circles
@@ -232,6 +237,7 @@ export default {
         results: 'النتائج',
         totalVotes: '{{count}} صوت',
         noVotes: 'لا توجد أصوات بعد',
+        voteFailed: 'لم يُحفظ صوتك. اضغط للمحاولة مرة أخرى.',
     },
 
     // Events

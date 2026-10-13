@@ -46,6 +46,8 @@ const CircleScreen = () => {
     const [isPinVisible, setPinVisible] = useState(true);
     const [isMember, setIsMember] = useState(true);
     const [membershipChecked, setMembershipChecked] = useState(false);
+    const [votingOption, setVotingOption] = useState(null);
+    const [voteError, setVoteError] = useState(false);
     
 
     useEffect(() => {
@@ -241,23 +243,33 @@ const CircleScreen = () => {
         }
     };
 
+    // The vote error clears itself after 4 seconds (or on the next tap).
+    useEffect(() => {
+        if (!voteError) return;
+        const timer = setTimeout(() => setVoteError(false), 4000);
+        return () => clearTimeout(timer);
+    }, [voteError]);
+
     const handleVote = async (option) => {
         if (!poll?.id || !userProfile) return;
 
-        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+        // Same stage value that picks which poll card renders.
+        const pollField = currentStage === PLANNING_STAGES.PLANNING_ACTIVITY ? 'activityPoll'
+            : currentStage === PLANNING_STAGES.PLANNING_PLACE ? 'placePoll' : null;
+        if (!pollField) return;
 
+        const pollRef = doc(db, 'circles', circleId, 'polls', poll.id);
+        setVotingOption(option);
+        setVoteError(false);
         try {
-            if (currentStage === PLANNING_STAGES.PLANNING_ACTIVITY) {
-                const newVotes = { ...poll.activityPoll.votes };
-                newVotes[user.uid] = option;
-                await updateDoc(pollRef, { 'activityPoll.votes': newVotes });
-            } else if (currentStage === PLANNING_STAGES.PLANNING_PLACE) {
-                const newVotes = { ...poll.placePoll.votes };
-                newVotes[user.uid] = option;
-                await updateDoc(pollRef, { 'placePoll.votes': newVotes });
-            }
+            // Write only this user's entry, so two people voting at once don't
+            // overwrite each other's votes.
+            await updateDoc(pollRef, { [`${pollField}.votes.${user.uid}`]: option });
         } catch (error) {
             console.error('Error casting vote:', error);
+            setVoteError(true);
+        } finally {
+            setVotingOption((current) => (current === option ? null : current));
         }
     };
 
@@ -545,6 +557,8 @@ const CircleScreen = () => {
                             placePollData={poll?.placePoll}
                             onFinishVoting={handleFinishVoting}
                             onVote={handleVote}
+                            votingOption={votingOption}
+                            voteError={voteError}
                             onAddOption={handleAddOption}
                             eventData={event}
                             pollData={poll ? { ...poll, memberCount } : null}

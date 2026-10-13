@@ -1,115 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FlatList, View, Text, StyleSheet, RefreshControl } from 'react-native';
-import { collection, query, where, getDocs, doc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
 import { db } from '../../../firebase/config';
-import useAuth from '../../../hooks/useAuth';
 import CircleCard from './CircleCard';
 import EmptyState from './EmptyState';
 import { useTheme } from '../../../context/ThemeContext';
-import useExpiredCircleCleanup from '../../../hooks/useExpiredCircleCleanup';
 
-const MyCirclesTab = ({ navigation, onCirclePress }) => {
+// joinedIds come from useJoinedCircleIds in HomeScreen (member docs, not users.joinedCircles).
+const MyCirclesTab = ({ onCirclePress, joinedIds, joinedLoaded, joinedError, refreshJoined }) => {
     const [myCircles, setMyCircles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const { user } = useAuth();
     const { colors } = useTheme();
-    const { cleanupExpiredCircles } = useExpiredCircleCleanup();
+    const { t } = useTranslation();
+    const requestRef = useRef(0);
 
-    const fetchMyCircles = async () => {
-        if (!user?.uid) {
+    useEffect(() => {
+        if (!joinedLoaded) return;
+        const request = ++requestRef.current;
+        (async () => {
+            // One missing or unreadable circle must not hide the others.
+            const circles = await Promise.all(joinedIds.map(async (circleId) => {
+                try {
+                    const circleDoc = await getDoc(doc(db, 'circles', circleId));
+                    return circleDoc.exists() ? { id: circleDoc.id, ...circleDoc.data() } : null;
+                } catch (error) {
+                    console.warn(`Skipping circle ${circleId}:`, error.message);
+                    return null;
+                }
+            }));
+            if (request !== requestRef.current) return;
+
+            const now = Timestamp.now().toMillis();
+            const active = circles.filter((circle) => circle
+                && !(circle.circleType === 'flash' && circle.expiresAt && circle.expiresAt.toMillis() <= now));
+            active.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+            setMyCircles(active);
             setLoading(false);
-            return;
-        }
+            setRefreshing(false);
+        })();
+    }, [joinedIds, joinedLoaded]);
 
-        try {
-            // Get user's joined circles from user document
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            const userData = userDoc.data();
-            const joinedCircleIds = userData?.joinedCircles || [];
-
-            if (joinedCircleIds.length === 0) {
-                setMyCircles([]);
-                setLoading(false);
-                setRefreshing(false);
-                return;
-            }
-
-            // Fetch circle details for joined circles
-            const circlePromises = joinedCircleIds.map(async (circleId) => {
-                const circleDoc = await getDoc(doc(db, 'circles', circleId));
-                if (circleDoc.exists()) {
-                    return {
-                        id: circleDoc.id,
-                        ...circleDoc.data()
-                    };
-                }
-                return null;
-            });
-
-            const circles = await Promise.all(circlePromises);
-            const validCircles = circles.filter(circle => circle !== null);
-
-            // Filter out expired flash circles
-            const now = Timestamp.now();
-            const activeCircles = validCircles.filter(circle => {
-                // Keep all non-flash circles
-                if (circle.circleType !== 'flash') {
-                    return true;
-                }
-                // For flash circles, check if they haven't expired
-                if (circle.expiresAt && circle.expiresAt.toDate() <= now.toDate()) {
-                    console.log(`Filtering out expired flash circle: ${circle.circleName || 'Unknown'} (${circle.id})`);
-                    return false;
-                }
-                return true;
-            });
-
-            // Sort by most recently joined or created
-            activeCircles.sort((a, b) => {
-                const aTime = a.createdAt?.toDate() || new Date(0);
-                const bTime = b.createdAt?.toDate() || new Date(0);
-                return bTime - aTime;
-            });
-
-            setMyCircles(activeCircles);
-            
-            // Trigger cleanup of expired circles in the background
-            if (validCircles.length !== activeCircles.length) {
-                cleanupExpiredCircles();
-            }
-        } catch (error) {
-            console.error('Error fetching my circles:', error);
-        } finally {
+    // A failed member lookup keeps its old list (or none) and shows the error.
+    useEffect(() => {
+        if (joinedError) {
             setLoading(false);
             setRefreshing(false);
         }
-    };
+    }, [joinedError]);
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchMyCircles();
+        refreshJoined();
     };
-
-    useEffect(() => {
-        fetchMyCircles();
-    }, [user?.uid]);
 
     if (loading) {
         return (
             <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
                 <Text style={[styles.loadingText, { color: colors.text }]}>Loading your circles...</Text>
             </View>
-        );
-    }
-
-    if (myCircles.length === 0) {
-        return (
-            <EmptyState
-                onRefresh={onRefresh}
-                message="You haven't joined any circles yet"
-                subMessage="Explore the 'For you' tab to discover circles that match your interests"
-            />
         );
     }
 
@@ -120,6 +71,20 @@ const MyCirclesTab = ({ navigation, onCirclePress }) => {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
                 <CircleCard circle={item} onPress={onCirclePress} />
+            )}
+            ListEmptyComponent={joinedError ? (
+                <EmptyState
+                    onRefresh={onRefresh}
+                    message={t('home.loadError')}
+                    subMessage=""
+                    buttonLabel={t('home.tryAgain')}
+                />
+            ) : (
+                <EmptyState
+                    onRefresh={onRefresh}
+                    message="You haven't joined any circles yet"
+                    subMessage="Explore the 'For you' tab to discover circles that match your interests"
+                />
             )}
             refreshControl={
                 <RefreshControl
@@ -141,6 +106,7 @@ const styles = StyleSheet.create({
     },
     listContent: {
         padding: 15,
+        flexGrow: 1,
     },
     loadingContainer: {
         flex: 1,
