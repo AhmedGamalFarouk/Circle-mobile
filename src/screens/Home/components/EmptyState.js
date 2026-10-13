@@ -4,7 +4,7 @@ import { COLORS, RADII } from "../../../constants/constants";
 import { Text, TouchableOpacity } from "react-native";
 import { useTheme } from "../../../context/ThemeContext";
 
-const EmptyState = ({ onRefresh, message = "No Circles Found", subMessage = "Create your first circle or join existing ones to get started!" }) => {
+const EmptyState = ({ onRefresh, message = "No Circles Found", subMessage = "Create your first circle or join existing ones to get started!", buttonLabel = "Refresh" }) => {
     const { colors } = useTheme()
     return (
         <View style={styles.emptyState}>
@@ -13,9 +13,9 @@ const EmptyState = ({ onRefresh, message = "No Circles Found", subMessage = "Cre
             <Text style={[styles.emptySubtitle, { color: colors.text }]}>
                 {subMessage}
             </Text>
-            <TouchableOpacity style={[styles.refreshButton, { backgroundColor: colors.primary }]} onPress={onRefresh}>
+            <TouchableOpacity style={[styles.refreshButton, { backgroundColor: colors.primary }]} onPress={onRefresh} accessibilityRole="button">
                 <Ionicons name="refresh" size={20} color={colors.background} />
-                <Text style={[styles.refreshButtonText, { color: colors.background }]}>Refresh</Text>
+                <Text style={[styles.refreshButtonText, { color: colors.background }]}>{buttonLabel}</Text>
             </TouchableOpacity>
         </View>
     )
@@ -47,6 +47,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 20,
         paddingVertical: 12,
+        minHeight: 44,
         borderRadius: RADII.rounded,
         gap: 8,
     },

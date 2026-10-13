@@ -13,16 +13,19 @@ import { Ionicons } from '@expo/vector-icons';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../../../../../context/ThemeContext';
 import { RADII, SHADOWS } from '../../../../../../constants/constants';
+import { useTranslation } from 'react-i18next';
+import useAuth from '../../../../../../hooks/useAuth';
 
 const { width } = Dimensions.get('window');
 
-const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollType = 'activity' }) => {
+const ActivePollState = ({ pollData, onFinishVoting, onVote, votingOption, voteError, onAddOption, pollType = 'activity' }) => {
     const { colors } = useTheme();
+    const { t } = useTranslation();
+    const { user } = useAuth();
     const [remainingTime, setRemainingTime] = useState('');
     const [isExpired, setIsExpired] = useState(false);
     const [showAddOption, setShowAddOption] = useState(false);
     const [newOptionText, setNewOptionText] = useState('');
-    const [selectedOption, setSelectedOption] = useState(null);
     const [voteAnimations] = useState({});
     const [progressAnimations] = useState({});
 
@@ -92,9 +95,7 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollTy
     };
 
     const handleVote = (optionText) => {
-        if (isExpired) return;
-
-        setSelectedOption(optionText);
+        if (isExpired || votingOption === optionText) return;
 
         // Animate vote button
         if (!voteAnimations[optionText]) {
@@ -165,6 +166,8 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollTy
     const canAddOptions = pollData.allowNewOptions && !isExpired;
     const totalVotes = getTotalVotes();
     const styles = getStyles(colors);
+    // The saved vote, from the poll's live snapshot.
+    const selectedOption = pollData.votes?.[user?.uid] ?? null;
 
     return (
         <View style={styles.container}>
@@ -222,7 +225,8 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollTy
                                     isSelected && styles.selectedOption
                                 ]}
                                 onPress={() => handleVote(option.text)}
-                                disabled={isExpired}
+                                disabled={isExpired || votingOption === option.text}
+                                accessibilityState={{ selected: isSelected, busy: votingOption === option.text }}
                             >
                                 {/* Progress Bar Background */}
                                 <Animated.View
@@ -281,6 +285,15 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollTy
                         </Animated.View>
                     );
                 })}
+            </View>
+
+            {/* Fixed-height slot so the error never shifts the layout */}
+            <View style={styles.voteErrorSlot}>
+                {voteError && (
+                    <Text style={[styles.voteErrorText, { color: colors.error || '#E53935' }]} accessibilityRole="alert">
+                        {t('polls.voteFailed')}
+                    </Text>
+                )}
             </View>
 
             {/* Add Option */}
@@ -352,6 +365,14 @@ const ActivePollState = ({ pollData, onFinishVoting, onVote, onAddOption, pollTy
 };
 
 const getStyles = (colors) => StyleSheet.create({
+    voteErrorSlot: {
+        minHeight: 20,
+        justifyContent: 'center',
+    },
+    voteErrorText: {
+        fontSize: 13,
+        textAlign: 'center',
+    },
     container: {
         paddingBottom: 8,
     },

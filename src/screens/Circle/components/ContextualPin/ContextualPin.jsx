@@ -36,6 +36,8 @@ const ContextualPin = ({
     placePollData,
     onFinishVoting,
     onVote,
+    votingOption,
+    voteError,
     onAddOption,
     eventData,
     pollData,
@@ -139,6 +141,8 @@ const ContextualPin = ({
                         pollData={activityPollData}
                         onFinishVoting={onFinishVoting}
                         onVote={onVote}
+                        votingOption={votingOption}
+                        voteError={voteError}
                         onAddOption={(option) => onAddOption(option, 'activity')}
                         pollType="activity"
                     />
@@ -160,6 +164,8 @@ const ContextualPin = ({
                         pollData={placePollData}
                         onFinishVoting={onFinishVoting}
                         onVote={onVote}
+                        votingOption={votingOption}
+                        voteError={voteError}
                         onAddOption={(option) => onAddOption(option, 'place')}
                         pollType="place"
                     />

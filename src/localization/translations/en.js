@@ -63,6 +63,11 @@ export default {
         recentActivity: 'Recent Activity',
         noCircles: 'No circles yet',
         joinYourFirstCircle: 'Join your first circle to get started',
+        loadError: "Couldn't load circles.",
+        tryAgain: 'Try again',
+        loadMoreError: "Couldn't load more circles.",
+        allCaughtUp: "You've seen all circles",
+        moreCircles: '{{count}} more circles',
     },
 
     // Circles
@@ -232,6 +237,7 @@ export default {
         results: 'Results',
         totalVotes: '{{count}} votes',
         noVotes: 'No votes yet',
+        voteFailed: "Vote didn't save. Tap to try again.",
     },
 
     // Events
