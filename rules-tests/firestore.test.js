@@ -156,6 +156,16 @@ describe("member lookup across circles", () => {
   });
 });
 
+describe("config", () => {
+  it("signed-in users read config/mobile; nobody writes it; signed out reads nothing", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "config/mobile"), { minVersion: "1.0.0" }));
+    await assertSucceeds(getDoc(doc(as("bob"), "config/mobile")));
+    await assertFails(getDoc(doc(anon(), "config/mobile")));
+    await assertFails(setDoc(doc(as("bob"), "config/mobile"), { minVersion: "0.0.1" }));
+    await assertFails(setDoc(doc(as("mod"), "config/mobile"), { minVersion: "0.0.1" }));
+  });
+});
+
 describe("chat", () => {
   it("is members-only", async () => {
     await assertFails(getDocs(collection(as("eve"), `circles/${CIRCLE}/chat`)));

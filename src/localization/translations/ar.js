@@ -261,6 +261,14 @@ export default {
         eventStartsIn: 'يبدأ الحدث في {{time}}',
     },
 
+    // Update gate
+    update: {
+        title: 'حدّث التطبيق',
+        body: 'هذا الإصدار من Circle لم يعد مدعومًا. حدّث التطبيق لمواصلة استخدامه.',
+        button: 'تحديث',
+        currentVersion: 'إصدارك: {{version}}',
+    },
+
     // Errors
     errors: {
         networkError: 'خطأ في الشبكة. يرجى التحقق من اتصالك.',
