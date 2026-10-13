@@ -9,7 +9,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import {
   addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs,
-  increment, query, serverTimestamp, setDoc, updateDoc, where,
+  collectionGroup, increment, query, serverTimestamp, setDoc, updateDoc, where,
 } from "firebase/firestore";
 import { ref, set, get } from "firebase/database";
 
@@ -36,7 +36,7 @@ beforeEach(async () => {
     await setDoc(doc(db, "users/eve"), { username: "eve", joinedCircles: [] });
     await setDoc(doc(db, "users/mod"), { username: "mod", isAdmin: true });
     await setDoc(doc(db, `circles/${CIRCLE}`), { circleName: "C", createdBy: "owner", circlePrivacy: "private" });
-    await setDoc(doc(db, `circles/${CIRCLE}/members/owner`), { isAdmin: true, isOwner: true });
+    await setDoc(doc(db, `circles/${CIRCLE}/members/owner`), { isAdmin: true, isOwner: true, userId: "owner" });
     await setDoc(doc(db, `circles/${CIRCLE}/members/bob`), { isAdmin: false, isOwner: false, userId: "bob" });
     await setDoc(doc(db, `circles/${CIRCLE}/chat/m1`), { text: "hi", user: { userId: "owner" }, timeStamp: new Date() });
     await setDoc(doc(db, `circles/${CIRCLE}/events/e1`), { status: "pending", activity: "A", place: "P" });
@@ -134,6 +134,25 @@ describe("circles", () => {
   it("members leave; non-admins cannot remove others", async () => {
     await assertFails(deleteDoc(doc(as("bob"), `circles/${CIRCLE}/members/owner`)));
     await assertSucceeds(deleteDoc(doc(as("bob"), `circles/${CIRCLE}/members/bob`)));
+  });
+});
+
+describe("member lookup across circles", () => {
+  it("reads your own member docs with a collection-group query", async () => {
+    const snap = await assertSucceeds(getDocs(query(collectionGroup(as("bob"), "members"), where("userId", "==", "bob"))));
+    if (snap.size !== 1) throw new Error(`expected 1 member doc, got ${snap.size}`);
+  });
+  it("cannot query someone else's member docs", async () => {
+    await assertFails(getDocs(query(collectionGroup(as("eve"), "members"), where("userId", "==", "bob"))));
+  });
+  it("cannot run an unfiltered collection-group query", async () => {
+    await assertFails(getDocs(collectionGroup(as("bob"), "members")));
+  });
+  it("signed out cannot query member docs", async () => {
+    await assertFails(getDocs(query(collectionGroup(anon(), "members"), where("userId", "==", "bob"))));
+  });
+  it("a direct get of another member's doc still works", async () => {
+    await assertSucceeds(getDoc(doc(as("bob"), `circles/${CIRCLE}/members/owner`)));
   });
 });
 
